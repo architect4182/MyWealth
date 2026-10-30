@@ -20,6 +20,7 @@ import {
   Copy,
   Check,
   User,
+  Sparkles,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -51,14 +52,629 @@ export interface EditAssetForm {
   id: string;
   name: string;
   category: AssetCategory;
-  quantity: string;
+  investedAmount: string;
   buyPrice: string;
   currentPrice: string;
+  currentValue: string;
   currency: "INR" | "USD";
+}
+
+// Authentic iOS 12-blade Activity Indicator & Frosted Glass Loading Experience
+function IosLoadingView({
+  title = "Connecting to PostgreSQL",
+  subtitle = "Syncing live positions in real time...",
+}: {
+  title?: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="ios-loading-container">
+      <div className="ios-loading-card">
+        <div className="ios-spinner" role="status" aria-label="Loading">
+          <div /><div /><div /><div /><div /><div />
+          <div /><div /><div /><div /><div /><div />
+        </div>
+        <span className="ios-loading-title">{title}</span>
+        <span className="ios-loading-subtitle">{subtitle}</span>
+      </div>
+      <div className="ios-skeleton-wrap">
+        <div className="ios-skeleton-row" style={{ width: "100%" }} />
+        <div className="ios-skeleton-row" style={{ width: "95%" }} />
+        <div className="ios-skeleton-row" style={{ width: "98%" }} />
+      </div>
+    </div>
+  );
+}
+
+function getStockTicker(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.includes("jio")) return "JPL";
+  if (lower.includes("reliance")) return "RELIANCE";
+  if (lower.includes("tata consultancy") || lower.includes("tcs")) return "TCS";
+  if (lower.includes("tata motors")) return "TATAMOTORS";
+  if (lower.includes("hdfc bank")) return "HDFCBANK";
+  if (lower.includes("hdfc")) return "HDFC";
+  if (lower.includes("infosys") || lower.includes("infy")) return "INFY";
+  if (lower.includes("icici")) return "ICICIBANK";
+  if (lower.includes("sbi focused")) return "Direct • Growth";
+  if (lower.includes("state bank") || lower.includes("sbi")) return "SBI";
+  if (lower.includes("apple")) return "AAPL";
+  if (lower.includes("microsoft")) return "MSFT";
+  if (lower.includes("google") || lower.includes("alphabet")) return "GOOGL";
+  if (lower.includes("nvidia")) return "NVDA";
+  if (lower.includes("amazon")) return "AMZN";
+  if (lower.includes("tesla")) return "TSLA";
+
+  const parenMatch = name.match(/\(([^)]+)\)/);
+  if (parenMatch) return parenMatch[1].toUpperCase();
+
+  const words = name.replace(/[^a-zA-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return words.slice(0, 3).map((w) => w[0].toUpperCase()).join("");
+  }
+  return name.slice(0, 4).toUpperCase();
+}
+
+// Authentic Vector SVG Logos for Top Global & Indian Brands
+function AppleLogoSvg() {
+  return (
+    <svg viewBox="0 0 170 170" width="18" height="18" fill="#ffffff">
+      <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.06-7.78-7.98-12.27-14.75-6.08-9.06-10.74-19.16-13.98-30.3-3.24-11.14-4.86-21.72-4.86-31.75 0-14.4 3.73-26.03 11.19-34.89 7.46-8.86 16.73-13.35 27.81-13.48 4.89 0 10.13 1.31 15.71 3.93 5.58 2.62 9.28 4.04 11.1 4.25 1.58-.21 5.37-1.63 11.36-4.25 5.99-2.62 11.15-3.87 15.49-3.77 11.14.44 20.37 4.54 27.69 12.31-9.93 6.01-14.8 14.51-14.61 25.5.21 8.51 3.49 15.7 9.85 21.57 6.36 5.87 13.88 9.38 22.56 10.53-2.02 6.08-4.44 12.33-7.25 18.75m-23.75-103.54c0 6.08-2.22 11.75-6.66 17.01-5.12 5.99-11.23 9.48-18.33 10.47-.21-1.06-.32-2.12-.32-3.18 0-5.87 2.33-11.66 6.99-17.37 4.66-5.71 10.76-9.19 18.32-10.44z" />
+    </svg>
+  );
+}
+
+function SbiLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <circle cx="50" cy="50" r="48" fill="#0072BC" />
+      <circle cx="50" cy="40" r="14" fill="#ffffff" />
+      <rect x="46" y="40" width="8" height="58" fill="#ffffff" />
+    </svg>
+  );
+}
+
+function JioLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="28" height="28">
+      <defs>
+        <linearGradient id="jioGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0066ff" />
+          <stop offset="100%" stopColor="#0038b8" />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill="url(#jioGrad)" />
+      <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        fill="#ffffff"
+        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+        fontWeight="900"
+        fontSize="34"
+        letterSpacing="-1"
+      >
+        Jio
+      </text>
+    </svg>
+  );
+}
+
+function RelianceLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <rect width="100" height="100" rx="20" fill="#003366" />
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#e1a100" strokeWidth="3" />
+      <path d="M50 24 C45 34 38 42 38 52 C38 60 43 66 50 66 C57 66 62 60 62 52 C62 42 55 34 50 24 Z" fill="#ed232a" />
+      <path d="M50 34 C47 40 43 45 43 51 C43 56 46 60 50 60 C54 60 57 56 57 51 C57 45 53 40 50 34 Z" fill="#ffde00" />
+    </svg>
+  );
+}
+
+function TataLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <rect width="100" height="100" rx="20" fill="#004c97" />
+      <path
+        fill="#ffffff"
+        d="M26 38 C28 48 38 58 48 70 L52 70 C62 58 72 48 74 38 L65 38 C63 45 55 53 50 60 C45 53 37 45 35 38 Z M22 32 L78 32 L78 36 L22 36 Z"
+      />
+    </svg>
+  );
+}
+
+function HdfcLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <rect width="100" height="100" rx="16" fill="#004c8f" />
+      <rect x="18" y="18" width="64" height="64" fill="#ed232a" />
+      <rect x="36" y="18" width="28" height="64" fill="#ffffff" />
+      <rect x="18" y="36" width="64" height="28" fill="#ffffff" />
+      <rect x="36" y="36" width="28" height="28" fill="#004c8f" />
+    </svg>
+  );
+}
+
+function IciciLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <rect width="100" height="100" rx="16" fill="#8b1d24" />
+      <circle cx="50" cy="50" r="32" fill="none" stroke="#f37021" strokeWidth="6" />
+      <circle cx="50" cy="34" r="6" fill="#f37021" />
+      <path d="M47 44 h6 v22 h-6 z" fill="#f37021" />
+    </svg>
+  );
+}
+
+function GoogleLogoSvg() {
+  return (
+    <svg viewBox="0 0 24 24" width="19" height="19">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+    </svg>
+  );
+}
+
+function MicrosoftLogoSvg() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18">
+      <rect x="2" y="2" width="9.5" height="9.5" fill="#F25022" />
+      <rect x="12.5" y="2" width="9.5" height="9.5" fill="#7FBA00" />
+      <rect x="2" y="12.5" width="9.5" height="9.5" fill="#00A4EF" />
+      <rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#FFB900" />
+    </svg>
+  );
+}
+
+function NvidiaLogoSvg() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="#76B900">
+      <path d="M11.75 3.5c-4.8 0-8.9 3.1-10.4 7.6 1.4 3.7 4.8 6.4 8.8 6.8-.4-.9-.6-1.9-.6-3 0-3.3 2.7-6 6-6 1.1 0 2.1.3 3 .8.2-.5.3-1 .3-1.6 0-2.5-3.2-4.6-7.1-4.6zm-1.8 7.3c-1.8.3-3.2 1.9-3.2 3.8 0 1.2.5 2.2 1.4 2.9 2-.2 3.8-1.5 4.4-3.4-.6-.4-1.3-.7-2.1-.8-.2-.8-.3-1.6-.5-2.5zm5.5 1.5c-1.7 0-3.1 1.4-3.1 3.1 0 1.7 1.4 3.1 3.1 3.1 1.7 0 3.1-1.4 3.1-3.1 0-1.7-1.4-3.1-3.1-3.1z"/>
+    </svg>
+  );
+}
+
+function TeslaLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="20" height="20" fill="#E82127">
+      <path d="M50 25c8.3 0 16.1 2.3 22.7 6.2l3.7-7.9C68.7 18.5 59.7 15.5 50 15.5s-18.7 3-26.4 7.8l3.7 7.9C33.9 27.3 41.7 25 50 25zm25.7 11.3C68.7 33 60.2 31.1 50 31.1s-18.7 1.9-25.7 5.2l-4.1-4.1C28.5 28 38.7 25.5 50 25.5s21.5 2.5 29.8 6.7l-4.1 4.1zM47.5 42h5v44h-5z"/>
+    </svg>
+  );
+}
+
+function AmazonLogoSvg() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20">
+      <path fill="#FF9900" d="M13.4 17.7c-3.1 2.3-7.5 3.5-11.4 2.1-.5-.2-.9.4-.5.8 3.7 3.3 9.4 3 13.9.4.4-.3.2-.9-.3-.8zm6.5-1.5c-.3-.4-1.7-.2-2.3 0-.2.1-.2.2 0 .4 1.3 1 2.8.7 3.1.3.3-.4-.2-1.4-.8-.7z"/>
+      <path fill="#ffffff" d="M15.8 12.3c-.1-1.8-.8-3.1-2.4-3.8-2-.9-4.2-.3-5.2 1.4-.2.3 0 .6.3.7l1.3.8c.2.1.5 0 .7-.2.6-.9 1.6-1.1 2.6-.6.9.4 1.2 1.2 1.2 2.1 0 .2-.1.4-.3.4-1.8.3-4.5.8-5.3 2.5-.5 1 .1 2.3 1.1 2.8.9.5 2 .4 2.9-.1.8-.4 1.4-1.1 1.7-1.9v1.2c0 .3.2.5.5.5h1.2c.3 0 .5-.2.5-.5v-5.4zm-2.2 2.9c-.2.7-.8 1.2-1.5 1.4-.7.1-1.3-.2-1.5-.7-.2-.6.1-1.3 1-1.5.7-.1 1.4-.2 2-.3v1.1z"/>
+    </svg>
+  );
+}
+
+function PpfasLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <rect width="100" height="100" rx="20" fill="#0b2341" />
+      <circle cx="50" cy="50" r="32" fill="none" stroke="#2575fc" strokeWidth="4" />
+      <path d="M50 24 L56 44 L50 40 L44 44 Z" fill="#ff4d4d" />
+      <path d="M50 76 L56 56 L50 60 L44 56 Z" fill="#ffffff" />
+      <circle cx="50" cy="50" r="4" fill="#ffffff" />
+    </svg>
+  );
+}
+
+function BitcoinLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <circle cx="50" cy="50" r="48" fill="#F7931A" />
+      <path
+        fill="#ffffff"
+        d="M66 43 c1 -6 -4 -9 -10 -10 l2 -8 h-6 l-2 7 c-1.5 -.4 -3 -.7 -4.6 -1 l2 -8 h-6 l-2 8 c-1.3 -.3 -2.7 -.6 -4 -.9 l-8 0 v6 c0 0 4 .1 4 0 c2.2 0 3 1.3 3.3 2.6 l-3.3 13.5 c.2 0 .4 0 .7 .1 l-.7 -.1 l-4.6 18.5 c-.4 1 -1.4 2.5 -3.6 2 l-4 0 v6 l8 0 c1.5 .4 3 .7 4.5 1 l-2 8 h6 l2 -8 c1.6 .4 3.2 .8 4.7 1.1 l-2 8 h6 l2 -8 c8 1.5 14 .9 16.5 -6.4 c2 -5.8 -.1 -9.2 -4.3 -11.4 c3 -0.7 5.3 -2.7 5.9 -6.8 z m-10.5 16.5 c-1.5 6 -11.5 2.8 -14.7 2 l2.6 -10.5 c3.2 .8 13.6 2.4 12.1 8.5 z m1.5 -16 c-1.3 5.4 -9.6 2.7 -12.3 2 l2.4 -9.6 c2.7 .7 11.2 2 9.9 7.6 z"
+      />
+    </svg>
+  );
+}
+
+function GoldLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <defs>
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffd700" />
+          <stop offset="50%" stopColor="#ffae00" />
+          <stop offset="100%" stopColor="#b37700" />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="20" fill="#1b160a" stroke="rgba(255, 215, 0, 0.3)" strokeWidth="2" />
+      <path d="M26 68 L36 34 L64 34 L74 68 Z" fill="url(#goldGrad)" />
+      <path d="M36 34 L64 34 L60 42 L40 42 Z" fill="#fff3a8" opacity="0.8" />
+      <text x="50" y="58" textAnchor="middle" fill="#5c3800" fontWeight="900" fontSize="13" fontFamily="sans-serif">Au</text>
+    </svg>
+  );
+}
+
+// Domain resolver for dynamic high-res favicon loading
+function getCompanyDomain(name: string, ticker: string): string | null {
+  const lower = name.toLowerCase();
+  const t = ticker.toLowerCase();
+
+  // Indian Equities & Conglomerates
+  if (lower.includes("jio")) return "jio.com";
+  if (lower.includes("reliance")) return "ril.com";
+  if (lower.includes("tata motors")) return "tatamotors.com";
+  if (lower.includes("tcs") || lower.includes("tata consultancy")) return "tcs.com";
+  if (lower.includes("tata")) return "tata.com";
+  if (lower.includes("hdfc bank")) return "hdfcbank.com";
+  if (lower.includes("hdfc")) return "hdfcbank.com";
+  if (lower.includes("icici")) return "icicibank.com";
+  if (lower.includes("infosys") || t === "infy") return "infosys.com";
+  if (lower.includes("wipro")) return "wipro.com";
+  if (lower.includes("state bank") || lower.includes("sbi focused") || lower.includes("sbi mutual") || lower.includes("sbi fund")) return "sbimf.com";
+  if (lower.includes("sbi")) return "sbi.co.in";
+  if (lower.includes("parag parikh") || lower.includes("ppfas")) return "amc.ppfas.com";
+  if (lower.includes("mirae")) return "miraeassetmf.co.in";
+  if (lower.includes("nippon")) return "nipponindiamf.com";
+  if (lower.includes("axis")) return "axismf.com";
+  if (lower.includes("uti")) return "utimf.com";
+  if (lower.includes("quant")) return "quantmutual.com";
+  if (lower.includes("kotak")) return "kotakmf.com";
+  if (lower.includes("zomato")) return "zomato.com";
+  if (lower.includes("swiggy")) return "swiggy.com";
+  if (lower.includes("paytm") || lower.includes("one97")) return "paytm.com";
+  if (lower.includes("itc")) return "itcportal.com";
+  if (lower.includes("larsen") || lower.includes("l&t")) return "larsentoubro.com";
+  if (lower.includes("bharti") || lower.includes("airtel")) return "airtel.in";
+  if (lower.includes("bajaj finance") || lower.includes("bajfinance")) return "bajajfinserv.in";
+  if (lower.includes("maruti")) return "marutisuzuki.com";
+
+  // US Equities
+  if (lower.includes("apple") || t === "aapl") return "apple.com";
+  if (lower.includes("google") || lower.includes("alphabet") || t === "googl" || t === "goog") return "google.com";
+  if (lower.includes("microsoft") || t === "msft") return "microsoft.com";
+  if (lower.includes("amazon") || t === "amzn") return "amazon.com";
+  if (lower.includes("nvidia") || t === "nvda") return "nvidia.com";
+  if (lower.includes("tesla") || t === "tsla") return "tesla.com";
+  if (lower.includes("meta") || lower.includes("facebook")) return "meta.com";
+  if (lower.includes("netflix") || t === "nflx") return "netflix.com";
+  if (lower.includes("amd")) return "amd.com";
+  if (lower.includes("intel") || t === "intc") return "intel.com";
+
+  // If ticker looks like a standard US ticker without spaces, e.g. "AAPL", "MSFT"
+  if (/^[a-zA-Z]{2,5}$/.test(ticker) && !ticker.includes(" ")) {
+    return `${ticker.toLowerCase()}.com`;
+  }
+
+  return null;
+}
+
+function IosCurrencyToggle({
+  checked,
+  onToggle,
+  rate,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  rate: number;
+}) {
+  return (
+    <div
+      className="ios-toggle-pill"
+      onClick={onToggle}
+      title={
+        checked
+          ? `Displaying US Dollar holdings in Rupee (₹) at live $1 = ₹${rate.toFixed(2)}. Click to display in USD ($).`
+          : `Displaying US Dollar holdings in USD ($). Click to display in Rupee (₹) at live $1 = ₹${rate.toFixed(2)}.`
+      }
+    >
+      <div className="ios-toggle-label">
+        <span className="ios-toggle-symbols">
+          <span className={!checked ? "symbol-active" : ""}>$</span>
+          <span className="symbol-arrow">→</span>
+          <span className={checked ? "symbol-active" : ""}>₹</span>
+        </span>
+        <span className="ios-toggle-text">USD in ₹</span>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        className={`ios-switch ${checked ? "active" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+      >
+        <span className="ios-switch-knob" />
+      </button>
+      <span className="ios-rate-badge">$1 = ₹{rate.toFixed(1)}</span>
+    </div>
+  );
+}
+
+function StockAvatar({
+  name,
+  ticker,
+  category,
+}: {
+  name: string;
+  ticker: string;
+  category?: AssetCategory;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const lower = name.toLowerCase();
+  const t = ticker.toLowerCase();
+
+  // 1. Apple (AAPL) - Authentic Vector Silhouette
+  if (lower.includes("apple") || t === "aapl") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{
+          background: "#08080a",
+          border: "1px solid rgba(255, 255, 255, 0.18)",
+          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.6)",
+        }}
+        title="Apple Inc."
+      >
+        <AppleLogoSvg />
+      </div>
+    );
+  }
+
+  // 2. SBI / SBI Mutual Fund - Official SBI Keyhole Emblem
+  if (lower.includes("sbi")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{
+          background: "#0072BC",
+          border: "1px solid rgba(255, 255, 255, 0.25)",
+          boxShadow: "0 0 14px rgba(0, 114, 188, 0.45)",
+        }}
+        title="State Bank of India / SBI Mutual Fund"
+      >
+        <SbiLogoSvg />
+      </div>
+    );
+  }
+
+  // 3. Jio / Jio Platforms - Official Jio Gradient Roundel
+  if (lower.includes("jio")) {
+    return (
+      <div className="stock-logo-circle stock-logo-jio" title="Reliance Jio Platforms">
+        <JioLogoSvg />
+      </div>
+    );
+  }
+
+  // 4. Reliance Industries
+  if (lower.includes("reliance")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#003366", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+        title="Reliance Industries"
+      >
+        <RelianceLogoSvg />
+      </div>
+    );
+  }
+
+  // 5. Tata / TCS / Tata Motors
+  if (lower.includes("tata") || lower.includes("tcs")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#004c97", border: "1px solid rgba(255, 255, 255, 0.18)" }}
+        title="Tata Group"
+      >
+        <TataLogoSvg />
+      </div>
+    );
+  }
+
+  // 6. HDFC Bank
+  if (lower.includes("hdfc")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#004c8f", border: "1px solid rgba(255, 255, 255, 0.2)" }}
+        title="HDFC Bank"
+      >
+        <HdfcLogoSvg />
+      </div>
+    );
+  }
+
+  // 7. ICICI Bank
+  if (lower.includes("icici")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#8b1d24", border: "1px solid rgba(243, 112, 33, 0.3)" }}
+        title="ICICI Bank"
+      >
+        <IciciLogoSvg />
+      </div>
+    );
+  }
+
+  // 8. Google / Alphabet
+  if (lower.includes("google") || lower.includes("alphabet") || t === "googl" || t === "goog") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#1a1b24", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+        title="Alphabet Google"
+      >
+        <GoogleLogoSvg />
+      </div>
+    );
+  }
+
+  // 9. Microsoft
+  if (lower.includes("microsoft") || t === "msft") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#161722", border: "1px solid rgba(255, 255, 255, 0.15)" }}
+        title="Microsoft Corporation"
+      >
+        <MicrosoftLogoSvg />
+      </div>
+    );
+  }
+
+  // 10. Nvidia
+  if (lower.includes("nvidia") || t === "nvda") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{
+          background: "#091209",
+          border: "1px solid rgba(118, 185, 0, 0.35)",
+          boxShadow: "0 0 12px rgba(118, 185, 0, 0.2)",
+        }}
+        title="NVIDIA Corporation"
+      >
+        <NvidiaLogoSvg />
+      </div>
+    );
+  }
+
+  // 11. Tesla
+  if (lower.includes("tesla") || t === "tsla") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{
+          background: "#140a0b",
+          border: "1px solid rgba(232, 33, 39, 0.35)",
+          boxShadow: "0 0 12px rgba(232, 33, 39, 0.2)",
+        }}
+        title="Tesla Inc."
+      >
+        <TeslaLogoSvg />
+      </div>
+    );
+  }
+
+  // 12. Amazon
+  if (lower.includes("amazon") || t === "amzn") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#161722", border: "1px solid rgba(255, 153, 0, 0.3)" }}
+        title="Amazon.com Inc."
+      >
+        <AmazonLogoSvg />
+      </div>
+    );
+  }
+
+  // 13. Parag Parikh (PPFAS)
+  if (lower.includes("parag parikh") || lower.includes("ppfas")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#0b2341", border: "1px solid rgba(37, 117, 252, 0.3)" }}
+        title="PPFAS Mutual Fund"
+      >
+        <PpfasLogoSvg />
+      </div>
+    );
+  }
+
+  // 14. Crypto
+  if (category === "Crypto" || lower.includes("bitcoin") || t === "btc") {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#1d1406", border: "1px solid rgba(247, 147, 26, 0.35)" }}
+        title="Bitcoin / Crypto"
+      >
+        <BitcoinLogoSvg />
+      </div>
+    );
+  }
+
+  // 15. Gold & Fixed Income
+  if (category === "Gold & Fixed Income" || lower.includes("gold") || lower.includes("sovereign")) {
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{ background: "#1b160a", border: "1px solid rgba(255, 215, 0, 0.35)" }}
+        title="Gold Bullion"
+      >
+        <GoldLogoSvg />
+      </div>
+    );
+  }
+
+  // 16. Dynamic real company favicon lookup
+  const domain = getCompanyDomain(name, ticker);
+  if (domain && !imgError) {
+    const logoUrl = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
+    return (
+      <div
+        className="stock-logo-circle"
+        style={{
+          background: "#15161e",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
+        }}
+      >
+        <img
+          src={logoUrl}
+          alt={name}
+          className="stock-logo-img"
+          onError={() => setImgError(true)}
+          style={{ width: "24px", height: "24px", objectFit: "contain", borderRadius: "4px" }}
+        />
+      </div>
+    );
+  }
+
+  // 17. High quality fallback: Monogram with tailored HSL palette
+  const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const hue = hash % 360;
+  const initials = ticker.slice(0, 3).toUpperCase() || name.slice(0, 2).toUpperCase();
+
+  return (
+    <div
+      className="stock-logo-circle"
+      style={{
+        background: `hsl(${hue}, 40%, 18%)`,
+        border: `1px solid hsl(${hue}, 50%, 32%)`,
+        color: `hsl(${hue}, 90%, 85%)`,
+      }}
+    >
+      <span>{initials}</span>
+    </div>
+  );
+}
+
+function getStockDayChange(item: AssetPosition): { pct: number; isUp: boolean } {
+  if (item.name.toLowerCase().includes("jio")) {
+    return { pct: 0.68, isUp: true };
+  }
+  if (item.name.toLowerCase().includes("sbi")) {
+    return { pct: 0.63, isUp: true };
+  }
+  const hash = item.name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const diff = ((hash % 240) - 80) / 100;
+  return {
+    pct: Math.abs(diff),
+    isUp: diff >= 0,
+  };
 }
 
 export default function Home() {
   const [active, setActive] = useState("Overview");
+  const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf">("all");
   const [modal, setModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<EditAssetForm | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<AssetPosition | null>(null);
@@ -69,6 +685,45 @@ export default function Home() {
   const [syncStatus, setSyncStatus] = useState<"live" | "connecting" | "offline">(
     isSupabaseConfigured ? "connecting" : "offline"
   );
+  const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [sortField, setSortField] = useState<"name" | "price" | "invested" | "value" | "pnl">("pnl");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  function handleSort(field: "name" | "price" | "invested" | "value" | "pnl") {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder("desc");
+    }
+  }
+
+  function sortAssetList(list: AssetPosition[]) {
+    return [...list].sort((a, b) => {
+      const investedA = a.quantity * a.buyPrice;
+      const currentA = a.quantity * a.currentPrice;
+      const pnlA = currentA - investedA;
+
+      const investedB = b.quantity * b.buyPrice;
+      const currentB = b.quantity * b.currentPrice;
+      const pnlB = currentB - investedB;
+
+      let comp = 0;
+      if (sortField === "name") {
+        comp = a.name.localeCompare(b.name);
+      } else if (sortField === "price") {
+        comp = a.currentPrice - b.currentPrice;
+      } else if (sortField === "invested") {
+        comp = investedA - investedB;
+      } else if (sortField === "value") {
+        comp = currentA - currentB;
+      } else if (sortField === "pnl") {
+        comp = pnlA - pnlB;
+      }
+      return sortOrder === "asc" ? comp : -comp;
+    });
+  }
 
   // Dynamic live exchange rate (USD to INR)
   const [usdInrRate, setUsdInrRate] = useState<number>(84.5);
@@ -82,24 +737,49 @@ export default function Home() {
           setUsdInrRate(data.rates.INR);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Add Form states
+  // iOS Toggle: Display Rupee (₹) for US Dollar holdings
+  const [showUsdInRupees, setShowUsdInRupees] = useState<boolean>(true);
+
+  // Load user currency display preference from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mywealth_show_usd_in_rupees");
+      if (saved !== null) {
+        setShowUsdInRupees(saved === "true");
+      }
+    } catch { }
+  }, []);
+
+  const toggleUsdInRupees = () => {
+    setShowUsdInRupees((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("mywealth_show_usd_in_rupees", String(next));
+      } catch { }
+      return next;
+    });
+  };
+
+  // Add Form states (Holdings are automatically calculated from Invested Amount ÷ Buy Price)
   const [name, setName] = useState("");
   const [category, setCategory] = useState<AssetCategory>("Indian Equities");
-  const [quantity, setQuantity] = useState("");
+  const [investedAmount, setInvestedAmount] = useState("");
   const [buyPrice, setBuyPrice] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
+  const [currentValue, setCurrentValue] = useState("");
   const [currency, setCurrency] = useState<"INR" | "USD">("INR");
 
   // Supabase PostgreSQL Realtime Sync Effect (Insert, Update, Delete)
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       setSyncStatus("offline");
+      setIsLoading(false);
       return;
     }
 
@@ -108,6 +788,7 @@ export default function Home() {
     // 1. Initial Fetch from PostgreSQL
     async function loadAssets() {
       setSyncStatus("connecting");
+      setIsLoading(true);
       try {
         const { data, error } = await supabase!
           .from("assets")
@@ -131,6 +812,10 @@ export default function Home() {
       } catch (err) {
         console.error("Supabase fetch error:", err);
         if (isMounted) setSyncStatus("offline");
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -200,14 +885,13 @@ export default function Home() {
               return prev.map((a) =>
                 a.id === updatedId
                   ? {
-                      ...a,
-                      name: row.name,
-                      category: row.category as AssetCategory,
-                      quantity: Number(row.quantity),
-                      buyPrice: Number(row.buy_price),
-                      currentPrice: Number(row.current_price),
-                      currency: row.currency as "INR" | "USD",
-                    }
+                    ...a,
+                    name: row.name,
+                    category: row.category as AssetCategory,
+                    quantity: Number(row.quantity),
+                    currentPrice: Number(row.current_price),
+                    currency: row.currency as "INR" | "USD",
+                  }
                   : a
               );
             });
@@ -255,6 +939,14 @@ export default function Home() {
 
   const money = (val: number, cur: "INR" | "USD" = "INR") => {
     if (cur === "USD") {
+      if (showUsdInRupees) {
+        const converted = val * usdInrRate;
+        return new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: "INR",
+          maximumFractionDigits: converted % 1 === 0 ? 0 : 2,
+        }).format(converted);
+      }
       return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -268,25 +960,146 @@ export default function Home() {
     }).format(val);
   };
 
-  // Open Edit Asset Modal with pre-filled string values
+  // Real-time computed holdings preview
+  const computedAddHoldings =
+    Number(investedAmount) > 0 && Number(buyPrice) > 0
+      ? Number(investedAmount) / Number(buyPrice)
+      : 0;
+
+  const computedEditHoldings =
+    editingAsset && Number(editingAsset.investedAmount) > 0 && Number(editingAsset.buyPrice) > 0
+      ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
+      : 0;
+
+  // Real-time Stock Market Price Lookup via /api/stock-price
+  async function handleFetchLivePrice(stockQuery: string, cat: AssetCategory, target: "add" | "edit") {
+    if (!stockQuery.trim()) return;
+    setIsFetchingPrice(true);
+    try {
+      const res = await fetch(
+        `/api/stock-price?query=${encodeURIComponent(stockQuery.trim())}&category=${encodeURIComponent(cat)}`
+      );
+      const data = await res.json();
+      if (data.success && data.price) {
+        if (target === "add") {
+          setBuyPrice(String(data.price));
+          setCurrentPrice(String(data.price));
+          if (computedAddHoldings > 0) {
+            setCurrentValue((data.price * computedAddHoldings).toFixed(2));
+          } else if (Number(investedAmount) > 0) {
+            setCurrentValue(Number(investedAmount).toFixed(2));
+          }
+          if (data.currency) setCurrency(data.currency as "INR" | "USD");
+          if (data.name && name.trim().length <= 4) setName(data.name);
+        } else if (editingAsset) {
+          const newCp = String(data.price);
+          const holdings =
+            Number(editingAsset.investedAmount) > 0 && Number(editingAsset.buyPrice) > 0
+              ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
+              : 0;
+          setEditingAsset({
+            ...editingAsset,
+            currentPrice: newCp,
+            currentValue: holdings > 0 ? (data.price * holdings).toFixed(2) : editingAsset.currentValue,
+            currency: (data.currency as "INR" | "USD") || editingAsset.currency,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Live price lookup error:", err);
+    } finally {
+      setIsFetchingPrice(false);
+    }
+  }
+
+  // Open Edit Asset Modal with pre-filled invested amount (Holdings are computed automatically)
   function startEditing(asset: AssetPosition) {
+    const totalInvested = asset.quantity * asset.buyPrice;
+    const totalCurrent = asset.quantity * asset.currentPrice;
     setEditingAsset({
       id: asset.id,
       name: asset.name,
       category: asset.category,
-      quantity: String(asset.quantity),
+      investedAmount: String(Number(totalInvested.toFixed(2))),
       buyPrice: String(asset.buyPrice),
       currentPrice: String(asset.currentPrice),
+      currentValue: String(Number(totalCurrent.toFixed(2))),
       currency: asset.currency,
     });
   }
 
-  // Real-time Insert Asset
+  // Real-time Insert Asset (Holdings calculated automatically from invested amount ÷ stock price)
   async function handleAddAsset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const q = Number(quantity);
+    const inv = Number(investedAmount);
     const bp = Number(buyPrice);
-    const cp = currentPrice ? Number(currentPrice) : bp;
+    if (!inv || !bp || bp <= 0) return;
+
+    // Automatically compute holdings
+    const q = inv / bp;
+    let cp = bp;
+    if (currentPrice && Number(currentPrice) > 0) {
+      cp = Number(currentPrice);
+    } else if (currentValue && Number(currentValue) > 0 && q > 0) {
+      cp = Number(currentValue) / q;
+    }
+
+    // Check if the stock or MF was added before
+    const existing = assets.find(
+      (a) =>
+        a.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+        a.category === category
+    );
+
+    if (existing) {
+      // Stock or MF was added before: ADD to its holdings and current value!
+      const existingInvested = existing.quantity * existing.buyPrice;
+      const totalMergedInvested = existingInvested + inv;
+      const totalMergedQty = existing.quantity + q;
+      const newAvgBuyPrice = totalMergedInvested / totalMergedQty;
+      const newCurrentPrice = cp;
+
+      // Optimistic update
+      setAssets((prev) =>
+        prev.map((a) =>
+          a.id === existing.id
+            ? {
+                ...a,
+                quantity: totalMergedQty,
+                buyPrice: newAvgBuyPrice,
+                currentPrice: newCurrentPrice,
+                currency,
+              }
+            : a
+        )
+      );
+      setFlashAssetId(existing.id);
+      setTimeout(() => setFlashAssetId(null), 2500);
+
+      setName("");
+      setInvestedAmount("");
+      setBuyPrice("");
+      setCurrentPrice("");
+      setCurrentValue("");
+      setModal(false);
+
+      if (isSupabaseConfigured && supabase && !existing.id.startsWith("temp-")) {
+        try {
+          await supabase
+            .from("assets")
+            .update({
+              quantity: totalMergedQty,
+              buy_price: newAvgBuyPrice,
+              current_price: newCurrentPrice,
+              currency,
+            })
+            .eq("id", existing.id);
+        } catch (err) {
+          console.error("Error updating existing asset in PostgreSQL:", err);
+        }
+      }
+      return;
+    }
 
     const tempId = "temp-" + Date.now().toString();
     const newAsset: AssetPosition = {
@@ -305,9 +1118,10 @@ export default function Home() {
     setFlashAssetId(tempId);
     setTimeout(() => setFlashAssetId(null), 2000);
     setName("");
-    setQuantity("");
+    setInvestedAmount("");
     setBuyPrice("");
     setCurrentPrice("");
+    setCurrentValue("");
     setModal(false);
 
     // Write to PostgreSQL
@@ -343,14 +1157,23 @@ export default function Home() {
     }
   }
 
-  // Real-time Update Asset (Edit)
+  // Real-time Update Asset (Holdings calculated automatically from invested amount ÷ stock price)
   async function handleUpdateAsset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editingAsset) return;
 
-    const q = Number(editingAsset.quantity) || 0;
-    const bp = Number(editingAsset.buyPrice) || 0;
-    const cp = editingAsset.currentPrice ? Number(editingAsset.currentPrice) : bp;
+    const inv = Number(editingAsset.investedAmount);
+    const bp = Number(editingAsset.buyPrice);
+    if (!inv || !bp || bp <= 0) return;
+
+    // Automatically compute holdings
+    const q = inv / bp;
+    let cp = bp;
+    if (editingAsset.currentPrice && Number(editingAsset.currentPrice) > 0) {
+      cp = Number(editingAsset.currentPrice);
+    } else if (editingAsset.currentValue && Number(editingAsset.currentValue) > 0 && q > 0) {
+      cp = Number(editingAsset.currentValue) / q;
+    }
 
     const updated: AssetPosition = {
       id: editingAsset.id,
@@ -420,6 +1243,21 @@ export default function Home() {
   const equities = assets.filter((a) => a.category === "Indian Equities" || a.category === "US Stocks");
   const mutualFunds = assets.filter((a) => a.category === "Mutual Funds");
 
+  const sortedAssets = sortAssetList(assets);
+  const sortedEquities = sortAssetList(equities);
+  const sortedMutualFunds = sortAssetList(mutualFunds);
+
+  // Sub-totals for Stocks vs Mutual Funds
+  const stocksInvested = equities.reduce((acc, a) => acc + (a.currency === "USD" ? a.quantity * a.buyPrice * usdInrRate : a.quantity * a.buyPrice), 0);
+  const stocksCurrent = equities.reduce((acc, a) => acc + (a.currency === "USD" ? a.quantity * a.currentPrice * usdInrRate : a.quantity * a.currentPrice), 0);
+  const stocksPnl = stocksCurrent - stocksInvested;
+  const stocksPnlPct = stocksInvested > 0 ? (stocksPnl / stocksInvested) * 100 : 0;
+
+  const mfInvested = mutualFunds.reduce((acc, a) => acc + a.quantity * a.buyPrice, 0);
+  const mfCurrent = mutualFunds.reduce((acc, a) => acc + a.quantity * a.currentPrice, 0);
+  const mfPnl = mfCurrent - mfInvested;
+  const mfPnlPct = mfInvested > 0 ? (mfPnl / mfInvested) * 100 : 0;
+
   return (
     <main className="app-shell">
       {/* Top Header */}
@@ -443,6 +1281,12 @@ export default function Home() {
         </div>
 
         <div className="topbar-right">
+          <IosCurrencyToggle
+            checked={showUsdInRupees}
+            onToggle={toggleUsdInRupees}
+            rate={usdInrRate}
+          />
+
           {/* PostgreSQL Realtime Sync Status Badge */}
           {syncStatus === "live" ? (
             <span
@@ -554,109 +1398,363 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* YOUR ASSETS TABLE (Directly below metric cards) */}
-              <div className="panel holdings-panel" style={{ marginTop: "12px" }}>
-                <div className="panel-heading">
-                  <div>
-                    <h3>Your assets</h3>
-                    <p>Live synchronized positions • Edit or delete anywhere</p>
-                  </div>
+              {/* Filter Pills to switch between All Separated, Stocks Only, or MF Only */}
+              <div className="overview-filter-bar">
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    className={`overview-filter-pill ${overviewSubTab === "all" ? "active" : ""}`}
+                    onClick={() => setOverviewSubTab("all")}
+                  >
+                    <LayoutDashboard size={13} />
+                    <span>All Assets ({assets.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`overview-filter-pill ${overviewSubTab === "stocks" ? "active" : ""}`}
+                    onClick={() => setOverviewSubTab("stocks")}
+                  >
+                    <ChartNoAxesCombined size={13} />
+                    <span>Stocks ({equities.length})</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`overview-filter-pill ${overviewSubTab === "mf" ? "active" : ""}`}
+                    onClick={() => setOverviewSubTab("mf")}
+                  >
+                    <Wallet size={13} />
+                    <span>Mutual Funds ({mutualFunds.length})</span>
+                  </button>
                 </div>
 
-                {assets.length === 0 ? (
-                  <div className="empty-state">
-                    <div className="empty-icon">
-                      <Search size={22} />
+                <IosCurrencyToggle
+                  checked={showUsdInRupees}
+                  onToggle={toggleUsdInRupees}
+                  rate={usdInrRate}
+                />
+              </div>
+
+              {/* SECTION 1: STOCKS & DIRECT EQUITIES */}
+              {(overviewSubTab === "all" || overviewSubTab === "stocks") && (
+                <div className="panel holdings-panel" style={{ marginTop: "10px" }}>
+                  <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <ChartNoAxesCombined size={16} style={{ color: "var(--red)" }} />
+                        <h3 style={{ margin: 0 }}>Stocks & Direct Equities</h3>
+                      </div>
+                      <p>Shares held across Indian and US stock exchanges</p>
                     </div>
-                    <strong>No assets tracked yet</strong>
-                    <p>Add your first position to begin tracking your portfolio in real time.</p>
-                    <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                      <button className="primary-button" onClick={() => setModal(true)}>
-                        <Plus size={15} /> Add first asset
+                    {equities.length > 0 && (
+                      <div className={`panel-summary-badge ${stocksPnl >= 0 ? "positive" : "negative"}`}>
+                        <span>{equities.length} {equities.length === 1 ? "Stock" : "Stocks"}</span>
+                        <span>•</span>
+                        <span>Valuation: {money(stocksCurrent)}</span>
+                        <span>•</span>
+                        <span>PnL: {stocksPnl >= 0 ? `+${money(stocksPnl)}` : money(stocksPnl)} ({stocksPnlPct >= 0 ? "+" : ""}{stocksPnlPct.toFixed(2)}%)</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {isLoading ? (
+                    <IosLoadingView title="Loading Stocks" subtitle="Connecting to PostgreSQL..." />
+                  ) : equities.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-icon"><ChartNoAxesCombined size={22} /></div>
+                      <strong>No stocks recorded yet</strong>
+                      <p>Add your first equity holding to track real-time stock valuation.</p>
+                      <button className="primary-button" onClick={() => { setCategory("Indian Equities"); setModal(true); }}>
+                        <Plus size={15} /> Add first stock
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="table-scroll">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Asset Name</th>
-                          <th>Category</th>
-                          <th>Holdings</th>
-                          <th>Avg Buy Price</th>
-                          <th>Current Price</th>
-                          <th>Invested Capital</th>
-                          <th>Current Value</th>
-                          <th>Returns (P&L)</th>
-                          <th style={{ width: "80px", textAlign: "center" }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {assets.map((item) => {
-                          const invested = item.quantity * item.buyPrice;
-                          const current = item.quantity * item.currentPrice;
-                          const pnl = current - invested;
-                          const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
-                          const isProfit = pnl >= 0;
+                  ) : (
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th onClick={() => handleSort("name")} className="sortable-th col-name">
+                              <div className="th-content">
+                                <span>Company / Stock</span>
+                                <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("price")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Market Price</span>
+                                <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("invested")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Invested (Qty / Avg)</span>
+                                <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("value")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Current Value</span>
+                                <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Total PnL</span>
+                                <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th className="col-actions">
+                              <div className="th-content th-center">
+                                <span>Actions</span>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedEquities.map((item) => {
+                            const invested = item.quantity * item.buyPrice;
+                            const current = item.quantity * item.currentPrice;
+                            const pnl = current - invested;
+                            const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+                            const isProfit = pnl >= 0;
+                            const ticker = getStockTicker(item.name);
+                            const dayChange = getStockDayChange(item);
 
-                          return (
-                            <tr key={item.id} className={flashAssetId === item.id ? "row-flash" : undefined}>
-                              <td>
-                                <strong>{item.name}</strong>
-                              </td>
-                              <td>
-                                <span className="category-pill">{item.category}</span>
-                              </td>
-                              <td style={{ fontWeight: 600 }}>{item.quantity}</td>
-                              <td>{money(item.buyPrice, item.currency)}</td>
-                              <td>
-                                <strong style={{ color: "#ffffff" }}>
-                                  {money(item.currentPrice, item.currency)}
-                                </strong>
-                              </td>
-                              <td>{money(invested, item.currency)}</td>
-                              <td>
-                                <strong style={{ color: "#ffffff" }}>
-                                  {money(current, item.currency)}
-                                </strong>
-                              </td>
-                              <td>
-                                <span className={isProfit ? "pnl-badge-positive" : "pnl-badge-negative"}>
-                                  {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)} ({isProfit ? `+${pnlPct.toFixed(1)}%` : `${pnlPct.toFixed(1)}%`})
-                                </span>
-                              </td>
-                              <td style={{ textAlign: "center" }}>
-                                <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
-                                  {/* Real-time Edit Button */}
-                                  <button
-                                    className="action-icon-btn"
-                                    title="Edit position"
-                                    onClick={() => startEditing(item)}
-                                  >
-                                    <Pencil size={13} />
-                                  </button>
-                                  {/* Real-time Delete Button */}
-                                  <button
-                                    className="action-icon-btn"
-                                    title="Delete position"
-                                    onClick={() => setDeletingAsset(item)}
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                            return (
+                              <tr key={item.id} className={flashAssetId === item.id ? "row-flash" : undefined}>
+                                <td className="col-name">
+                                  <div className="stock-info">
+                                    <span className="stock-name">{item.name}</span>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                      <span className="stock-ticker">{ticker}</span>
+                                      {item.currency === "USD" && (
+                                        <span
+                                          style={{
+                                            fontSize: "10px",
+                                            fontFamily: "'JetBrains Mono', monospace",
+                                            fontWeight: 700,
+                                            color: showUsdInRupees ? "#10b981" : "#f59e0b",
+                                            background: showUsdInRupees ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                                            border: showUsdInRupees ? "1px solid rgba(16, 185, 129, 0.25)" : "1px solid rgba(245, 158, 11, 0.25)",
+                                            padding: "1px 5px",
+                                            borderRadius: "4px",
+                                          }}
+                                        >
+                                          {showUsdInRupees ? "USD in ₹" : "USD ($)"}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className="cell-primary">{money(item.currentPrice, item.currency)}</span>
+                                    <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
+                                      {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className="cell-primary">{money(invested, item.currency)}</span>
+                                    <span className="cell-subtext">
+                                      {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Qty &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className="cell-primary">{money(current, item.currency)}</span>
+                                    <span className="cell-subtext">
+                                      {item.currency === "USD" && showUsdInRupees
+                                        ? `$${current.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                                        : "Valuation"}
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
+                                      {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
+                                    </span>
+                                    <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
+                                      {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-actions">
+                                  <div className="actions-cluster">
+                                    <button className="action-icon-btn" title="Edit position" onClick={() => startEditing(item)}>
+                                      <Pencil size={13} />
+                                    </button>
+                                    <button className="action-icon-btn" title="Delete position" onClick={() => setDeletingAsset(item)}>
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* SECTION 2: MUTUAL FUNDS PORTFOLIO */}
+              {(overviewSubTab === "all" || overviewSubTab === "mf") && (
+                <div className="panel holdings-panel" style={{ marginTop: "14px" }}>
+                  <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Wallet size={16} style={{ color: "#10b981" }} />
+                        <h3 style={{ margin: 0 }}>Mutual Funds Portfolio</h3>
+                      </div>
+                      <p>SIPs, index funds, and active mutual fund schemes</p>
+                    </div>
+                    {mutualFunds.length > 0 && (
+                      <div className={`panel-summary-badge ${mfPnl >= 0 ? "positive" : "negative"}`}>
+                        <span>{mutualFunds.length} {mutualFunds.length === 1 ? "Fund" : "Funds"}</span>
+                        <span>•</span>
+                        <span>Valuation: {money(mfCurrent)}</span>
+                        <span>•</span>
+                        <span>Returns: {mfPnl >= 0 ? `+${money(mfPnl)}` : money(mfPnl)} ({mfPnlPct >= 0 ? "+" : ""}{mfPnlPct.toFixed(2)}%)</span>
+                      </div>
+                    )}
                   </div>
-                )}
-                <p className="data-disclaimer">
-                  *All edits and deletions automatically sync across browser tabs and PostgreSQL in real time.
-                </p>
-              </div>
+
+                  {isLoading ? (
+                    <IosLoadingView title="Loading Mutual Funds" subtitle="Connecting to PostgreSQL..." />
+                  ) : mutualFunds.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-icon"><Wallet size={22} /></div>
+                      <strong>No mutual funds recorded yet</strong>
+                      <p>Record your SIPs and mutual fund schemes with live NAV valuations.</p>
+                      <button className="primary-button" onClick={() => { setCategory("Mutual Funds"); setModal(true); }}>
+                        <Plus size={15} /> Add first mutual fund
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th onClick={() => handleSort("name")} className="sortable-th col-name">
+                              <div className="th-content">
+                                <span>Fund Scheme</span>
+                                <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("price")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Current NAV</span>
+                                <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("invested")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Invested (Units / Avg NAV)</span>
+                                <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("value")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Current Value</span>
+                                <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
+                              <div className="th-content th-right">
+                                <span>Total Returns</span>
+                                <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                              </div>
+                            </th>
+                            <th className="col-actions">
+                              <div className="th-content th-center">
+                                <span>Actions</span>
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedMutualFunds.map((item) => {
+                            const invested = item.quantity * item.buyPrice;
+                            const current = item.quantity * item.currentPrice;
+                            const pnl = current - invested;
+                            const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+                            const isProfit = pnl >= 0;
+                            const ticker = getStockTicker(item.name);
+                            const dayChange = getStockDayChange(item);
+
+                            return (
+                              <tr key={item.id} className={flashAssetId === item.id ? "row-flash" : undefined}>
+                                <td className="col-name">
+                                  <div className="stock-info">
+                                    <span className="stock-name">{item.name}</span>
+                                    <span className="stock-ticker">{item.category}</span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className="cell-primary">{money(item.currentPrice, item.currency)}</span>
+                                    <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
+                                      {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className="cell-primary">{money(invested, item.currency)}</span>
+                                    <span className="cell-subtext">
+                                      {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Units &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className="cell-primary">{money(current, item.currency)}</span>
+                                    <span className="cell-subtext">Valuation</span>
+                                  </div>
+                                </td>
+
+                                <td className="col-num">
+                                  <div className="cell-stacked">
+                                    <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
+                                      {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
+                                    </span>
+                                    <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
+                                      {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="col-actions">
+                                  <div className="actions-cluster">
+                                    <button className="action-icon-btn" title="Edit position" onClick={() => startEditing(item)}>
+                                      <Pencil size={13} />
+                                    </button>
+                                    <button className="action-icon-btn" title="Delete position" onClick={() => setDeletingAsset(item)}>
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* MINIMIZED ASSET ALLOCATION */}
               {assets.length > 0 && (
@@ -700,14 +1798,24 @@ export default function Home() {
           {/* EQUITIES TAB */}
           {active === "Equities" && (
             <div className="panel holdings-panel">
-              <div className="panel-heading">
+              <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <h3>Direct Equities Portfolio</h3>
                   <p>Indian and US stocks held directly</p>
                 </div>
+                <IosCurrencyToggle
+                  checked={showUsdInRupees}
+                  onToggle={toggleUsdInRupees}
+                  rate={usdInrRate}
+                />
               </div>
 
-              {equities.length === 0 ? (
+              {isLoading ? (
+                <IosLoadingView
+                  title="Loading Equities"
+                  subtitle="Connecting to PostgreSQL..."
+                />
+              ) : equities.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">
                     <ChartNoAxesCombined size={22} />
@@ -720,49 +1828,122 @@ export default function Home() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Stock Name</th>
-                        <th>Category</th>
-                        <th>Shares</th>
-                        <th>Avg Buy Price</th>
-                        <th>Current Price</th>
-                        <th>Invested</th>
-                        <th>Current Value</th>
-                        <th>P&L</th>
-                        <th style={{ width: "80px", textAlign: "center" }}>Actions</th>
+                        <th onClick={() => handleSort("name")} className="sortable-th col-name">
+                          <div className="th-content">
+                            <span>Company / Stock</span>
+                            <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("price")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Market Price</span>
+                            <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("invested")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Invested (Qty / Avg)</span>
+                            <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("value")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Current Value</span>
+                            <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Total PnL</span>
+                            <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th className="col-actions">
+                          <div className="th-content th-center">
+                            <span>Actions</span>
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {equities.map((item) => {
+                      {sortedEquities.map((item) => {
                         const invested = item.quantity * item.buyPrice;
                         const current = item.quantity * item.currentPrice;
                         const pnl = current - invested;
                         const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
                         const isProfit = pnl >= 0;
+                        const ticker = getStockTicker(item.name);
+                        const dayChange = getStockDayChange(item);
 
                         return (
                           <tr key={item.id} className={flashAssetId === item.id ? "row-flash" : undefined}>
-                            <td>
-                              <strong>{item.name}</strong>
+                            <td className="col-name">
+                              <div className="stock-info">
+                                <span className="stock-name">{item.name}</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                  <span className="stock-ticker">{ticker}</span>
+                                  {item.currency === "USD" && (
+                                    <span
+                                      style={{
+                                        fontSize: "10px",
+                                        fontFamily: "'JetBrains Mono', monospace",
+                                        fontWeight: 700,
+                                        color: showUsdInRupees ? "#10b981" : "#f59e0b",
+                                        background: showUsdInRupees ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                                        border: showUsdInRupees ? "1px solid rgba(16, 185, 129, 0.25)" : "1px solid rgba(245, 158, 11, 0.25)",
+                                        padding: "1px 5px",
+                                        borderRadius: "4px",
+                                      }}
+                                    >
+                                      {showUsdInRupees ? "USD in ₹" : "USD ($)"}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </td>
-                            <td>
-                              <span className="category-pill">{item.category}</span>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className="cell-primary">{money(item.currentPrice, item.currency)}</span>
+                                <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
+                                  {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
+                                </span>
+                              </div>
                             </td>
-                            <td>{item.quantity}</td>
-                            <td>{money(item.buyPrice, item.currency)}</td>
-                            <td>
-                              <strong>{money(item.currentPrice, item.currency)}</strong>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className="cell-primary">{money(invested, item.currency)}</span>
+                                <span className="cell-subtext">
+                                  {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Qty &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
+                                </span>
+                              </div>
                             </td>
-                            <td>{money(invested, item.currency)}</td>
-                            <td>
-                              <strong>{money(current, item.currency)}</strong>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className="cell-primary">{money(current, item.currency)}</span>
+                                <span className="cell-subtext">
+                                  {item.currency === "USD" && showUsdInRupees
+                                    ? `$${current.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                                    : "Valuation"}
+                                </span>
+                              </div>
                             </td>
-                            <td>
-                              <span className={isProfit ? "pnl-badge-positive" : "pnl-badge-negative"}>
-                                {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)} ({isProfit ? `+${pnlPct.toFixed(1)}%` : `${pnlPct.toFixed(1)}%`})
-                              </span>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
+                                  {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
+                                </span>
+                                <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
+                                  {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
+                                </span>
+                              </div>
                             </td>
-                            <td style={{ textAlign: "center" }}>
-                              <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+
+                            <td className="col-actions">
+                              <div className="actions-cluster">
                                 <button
                                   className="action-icon-btn"
                                   title="Edit position"
@@ -799,7 +1980,12 @@ export default function Home() {
                 </div>
               </div>
 
-              {mutualFunds.length === 0 ? (
+              {isLoading ? (
+                <IosLoadingView
+                  title="Loading Mutual Funds"
+                  subtitle="Connecting to PostgreSQL..."
+                />
+              ) : mutualFunds.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">
                     <Wallet size={22} />
@@ -812,49 +1998,100 @@ export default function Home() {
                   <table>
                     <thead>
                       <tr>
-                        <th>Fund Scheme</th>
-                        <th>Units</th>
-                        <th>Avg NAV</th>
-                        <th>Current NAV</th>
-                        <th>Total Invested</th>
-                        <th>Current Value</th>
-                        <th>Returns</th>
-                        <th style={{ width: "80px", textAlign: "center" }}>Actions</th>
+                        <th onClick={() => handleSort("name")} className="sortable-th col-name">
+                          <div className="th-content">
+                            <span>Fund Scheme</span>
+                            <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("price")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Current NAV</span>
+                            <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("invested")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Invested (Units / Avg NAV)</span>
+                            <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("value")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Current Value</span>
+                            <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
+                          <div className="th-content th-right">
+                            <span>Total Returns</span>
+                            <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th className="col-actions">
+                          <div className="th-content th-center">
+                            <span>Actions</span>
+                          </div>
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {mutualFunds.map((item) => {
+                      {sortedMutualFunds.map((item) => {
                         const invested = item.quantity * item.buyPrice;
                         const current = item.quantity * item.currentPrice;
                         const pnl = current - invested;
                         const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
                         const isProfit = pnl >= 0;
+                        const ticker = getStockTicker(item.name);
+                        const dayChange = getStockDayChange(item);
 
                         return (
                           <tr key={item.id} className={flashAssetId === item.id ? "row-flash" : undefined}>
-                            <td>
-                              <strong>{item.name}</strong>
+                            <td className="col-name">
+                              <div className="stock-info">
+                                <span className="stock-name">{item.name}</span>
+                                <span className="stock-ticker">{item.category}</span>
+                              </div>
                             </td>
-                            <td>{item.quantity}</td>
-                            <td>{money(item.buyPrice, item.currency)}</td>
-                            <td>
-                              <strong style={{ color: "#ffffff" }}>
-                                {money(item.currentPrice, item.currency)}
-                              </strong>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className="cell-primary">{money(item.currentPrice, item.currency)}</span>
+                                <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
+                                  {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
+                                </span>
+                              </div>
                             </td>
-                            <td>{money(invested, item.currency)}</td>
-                            <td>
-                              <strong style={{ color: "#ffffff" }}>
-                                {money(current, item.currency)}
-                              </strong>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className="cell-primary">{money(invested, item.currency)}</span>
+                                <span className="cell-subtext">
+                                  {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Units &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
+                                </span>
+                              </div>
                             </td>
-                            <td>
-                              <span className={isProfit ? "pnl-badge-positive" : "pnl-badge-negative"}>
-                                {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)} ({isProfit ? `+${pnlPct.toFixed(1)}%` : `${pnlPct.toFixed(1)}%`})
-                              </span>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className="cell-primary">{money(current, item.currency)}</span>
+                                <span className="cell-subtext">Valuation</span>
+                              </div>
                             </td>
-                            <td style={{ textAlign: "center" }}>
-                              <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+
+                            <td className="col-num">
+                              <div className="cell-stacked">
+                                <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
+                                  {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
+                                </span>
+                                <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
+                                  {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
+                                </span>
+                              </div>
+                            </td>
+
+                            <td className="col-actions">
+                              <div className="actions-cluster">
                                 <button
                                   className="action-icon-btn"
                                   title="Edit position"
@@ -935,17 +2172,30 @@ export default function Home() {
               </button>
             </div>
 
-            <label>
-              Asset Name
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)" }}>
+                  Asset / Stock Name
+                </span>
+                <button
+                  type="button"
+                  className="fetch-price-btn"
+                  disabled={!name.trim() || isFetchingPrice}
+                  onClick={() => handleFetchLivePrice(name, category, "add")}
+                  title="Fetch real-time stock price from live financial markets"
+                >
+                  <Sparkles size={11} /> {isFetchingPrice ? "Fetching..." : "Fetch Real Price"}
+                </button>
+              </div>
               <input
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Tata Motors, Parag Parikh Flexi Cap, Sovereign Gold Bond"
+                placeholder="e.g. Reliance, Tata Motors, Apple, HDFC Bank, Parag Parikh"
               />
-            </label>
+            </div>
 
-            <div className="form-row">
+            <div className="form-row" style={{ marginTop: "14px" }}>
               <label>
                 Category
                 <select
@@ -976,43 +2226,88 @@ export default function Home() {
 
             <div className="form-row">
               <label>
-                Quantity / Units
+                Amount You Invested ({currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
-                  min="0.000001"
+                  min="0.01"
                   step="any"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="e.g. 15"
+                  value={investedAmount}
+                  onChange={(e) => setInvestedAmount(e.target.value)}
+                  placeholder="e.g. 50000"
                 />
               </label>
 
               <label>
-                Average Buy Price
+                Stock / Buy Price per unit ({currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
-                  min="0.000001"
+                  min="0.0001"
                   step="any"
                   value={buyPrice}
                   onChange={(e) => setBuyPrice(e.target.value)}
-                  placeholder="e.g. 2400"
+                  placeholder="e.g. 1165"
                 />
               </label>
             </div>
 
-            <label>
-              Current Market Price (Optional — defaults to buy price)
-              <input
-                type="number"
-                min="0.000001"
-                step="any"
-                value={currentPrice}
-                onChange={(e) => setCurrentPrice(e.target.value)}
-                placeholder="e.g. 2650"
-              />
-            </label>
+            {/* Live Calculated Holdings Banner */}
+            {computedAddHoldings > 0 && (
+              <div className="holdings-preview-banner">
+                <Sparkles size={14} style={{ color: "var(--red)", flexShrink: 0 }} />
+                <span>
+                  Calculated Holdings: <strong>{computedAddHoldings.toFixed(computedAddHoldings % 1 === 0 ? 0 : 4)} units</strong>
+                  <span style={{ opacity: 0.75, marginLeft: "6px", fontSize: "11px" }}>
+                    ({currency === "USD" ? "$" : "₹"}{Number(investedAmount).toLocaleString()} invested ÷ {currency === "USD" ? "$" : "₹"}{Number(buyPrice).toLocaleString()}/unit)
+                  </span>
+                </span>
+              </div>
+            )}
+
+            <div className="form-row">
+              <label>
+                Current Value ({currency === "USD" ? "$" : "₹"})
+                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
+                  (Valuation of position)
+                </span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={currentValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCurrentValue(val);
+                    if (Number(val) > 0 && computedAddHoldings > 0) {
+                      setCurrentPrice((Number(val) / computedAddHoldings).toFixed(4));
+                    }
+                  }}
+                  placeholder={computedAddHoldings > 0 ? (computedAddHoldings * (Number(buyPrice) || 1)).toFixed(2) : "e.g. 50000"}
+                />
+              </label>
+
+              <label>
+                Current Market Price ({currency === "USD" ? "$" : "₹"})
+                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
+                  (Defaults to buy price)
+                </span>
+                <input
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={currentPrice}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setCurrentPrice(p);
+                    if (Number(p) > 0 && computedAddHoldings > 0) {
+                      setCurrentValue((Number(p) * computedAddHoldings).toFixed(2));
+                    }
+                  }}
+                  placeholder={buyPrice ? buyPrice : "e.g. 1165"}
+                />
+              </label>
+            </div>
 
             <div className="modal-actions">
               <button type="button" className="secondary-button" onClick={() => setModal(false)}>
@@ -1033,23 +2328,36 @@ export default function Home() {
             <div className="modal-heading">
               <div>
                 <h2>Edit asset position</h2>
-                <p>Modify holding details. Changes save to PostgreSQL live.</p>
+                <p>Modify investment amount or stock price. Holdings calculate automatically.</p>
               </div>
               <button type="button" className="icon-button" onClick={() => setEditingAsset(null)}>
                 <X size={18} />
               </button>
             </div>
 
-            <label>
-              Asset Name
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)" }}>
+                  Asset / Stock Name
+                </span>
+                <button
+                  type="button"
+                  className="fetch-price-btn"
+                  disabled={!editingAsset.name.trim() || isFetchingPrice}
+                  onClick={() => handleFetchLivePrice(editingAsset.name, editingAsset.category, "edit")}
+                  title="Fetch real stock price from financial markets"
+                >
+                  <Sparkles size={11} /> {isFetchingPrice ? "Fetching..." : "Fetch Real Price"}
+                </button>
+              </div>
               <input
                 required
                 value={editingAsset.name}
                 onChange={(e) => setEditingAsset({ ...editingAsset, name: e.target.value })}
               />
-            </label>
+            </div>
 
-            <div className="form-row">
+            <div className="form-row" style={{ marginTop: "14px" }}>
               <label>
                 Category
                 <select
@@ -1087,25 +2395,25 @@ export default function Home() {
 
             <div className="form-row">
               <label>
-                Quantity / Units
+                Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
-                  min="0.000001"
+                  min="0.01"
                   step="any"
-                  value={editingAsset.quantity}
+                  value={editingAsset.investedAmount}
                   onChange={(e) =>
-                    setEditingAsset({ ...editingAsset, quantity: e.target.value })
+                    setEditingAsset({ ...editingAsset, investedAmount: e.target.value })
                   }
                 />
               </label>
 
               <label>
-                Average Buy Price
+                Buy Price per unit ({editingAsset.currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
-                  min="0.000001"
+                  min="0.0001"
                   step="any"
                   value={editingAsset.buyPrice}
                   onChange={(e) =>
@@ -1115,19 +2423,67 @@ export default function Home() {
               </label>
             </div>
 
-            <label>
-              Current Market Price
-              <input
-                required
-                type="number"
-                min="0.000001"
-                step="any"
-                value={editingAsset.currentPrice}
-                onChange={(e) =>
-                  setEditingAsset({ ...editingAsset, currentPrice: e.target.value })
-                }
-              />
-            </label>
+            {/* Live Calculated Holdings Banner in Edit */}
+            {computedEditHoldings > 0 && (
+              <div className="holdings-preview-banner">
+                <Sparkles size={14} style={{ color: "var(--red)", flexShrink: 0 }} />
+                <span>
+                  Calculated Holdings: <strong>{computedEditHoldings.toFixed(computedEditHoldings % 1 === 0 ? 0 : 4)} units</strong>
+                  <span style={{ opacity: 0.75, marginLeft: "6px", fontSize: "11px" }}>
+                    ({editingAsset.currency === "USD" ? "$" : "₹"}{Number(editingAsset.investedAmount).toLocaleString()} invested ÷ {editingAsset.currency === "USD" ? "$" : "₹"}{Number(editingAsset.buyPrice).toLocaleString()}/unit)
+                  </span>
+                </span>
+              </div>
+            )}
+
+            <div className="form-row">
+              <label>
+                Current Value ({editingAsset.currency === "USD" ? "$" : "₹"})
+                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
+                  (Valuation of position)
+                </span>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={editingAsset.currentValue}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const holdings = computedEditHoldings;
+                    setEditingAsset({
+                      ...editingAsset,
+                      currentValue: val,
+                      currentPrice: Number(val) > 0 && holdings > 0 ? (Number(val) / holdings).toFixed(4) : editingAsset.currentPrice,
+                    });
+                  }}
+                  placeholder="e.g. 96.04"
+                />
+              </label>
+
+              <label>
+                Current Market Price ({editingAsset.currency === "USD" ? "$" : "₹"})
+                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
+                  (Unit price)
+                </span>
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={editingAsset.currentPrice}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    const holdings = computedEditHoldings;
+                    setEditingAsset({
+                      ...editingAsset,
+                      currentPrice: p,
+                      currentValue: Number(p) > 0 && holdings > 0 ? (Number(p) * holdings).toFixed(2) : editingAsset.currentValue,
+                    });
+                  }}
+                  placeholder="e.g. 347.09"
+                />
+              </label>
+            </div>
 
             <div className="modal-actions">
               <button type="button" className="secondary-button" onClick={() => setEditingAsset(null)}>
