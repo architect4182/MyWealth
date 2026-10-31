@@ -20,6 +20,8 @@ import {
   Layers,
   TableProperties,
   ArrowUpDown,
+  Clock,
+  PanelLeft,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -58,10 +60,316 @@ export interface EditAssetForm {
   currency: "INR" | "USD";
 }
 
+export interface MarketTimingStatus {
+  isOpen: boolean;
+  status: "LIVE" | "PRE-MARKET" | "AFTER-HOURS" | "CLOSED";
+  label: string;
+  marketName: string;
+  exchange: string;
+  timeZone: string;
+  currentTimeStr: string;
+  tradingHoursStr: string;
+  detail: string;
+}
+
+export function getIndianMarketStatus(now: Date | null): MarketTimingStatus {
+  if (!now) {
+    return {
+      isOpen: false,
+      status: "CLOSED",
+      label: "Market Closed",
+      marketName: "NSE / BSE India",
+      exchange: "NSE",
+      timeZone: "IST (UTC+5:30)",
+      currentTimeStr: "--:--",
+      tradingHoursStr: "9:15 AM – 3:30 PM IST (Mon–Fri)",
+      detail: "Loading market session...",
+    };
+  }
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
+  const timeStr = formatter.format(now);
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const partMap: Record<string, string> = {};
+  parts.forEach((p) => { partMap[p.type] = p.value; });
+  const weekday = partMap.weekday;
+  const hour = parseInt(partMap.hour, 10);
+  const minute = parseInt(partMap.minute, 10);
+  const minutes = hour * 60 + minute;
+
+  const isWeekend = weekday === "Sat" || weekday === "Sun";
+  if (isWeekend) {
+    return {
+      isOpen: false,
+      status: "CLOSED",
+      label: "Closed (Weekend)",
+      marketName: "NSE / BSE India",
+      exchange: "NSE",
+      timeZone: "IST (UTC+5:30)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:15 AM – 3:30 PM IST (Mon–Fri)",
+      detail: "Opens Monday at 9:15 AM IST",
+    };
+  }
+
+  // Pre-market: 9:00 AM - 9:15 AM IST (540 to 555)
+  if (minutes >= 540 && minutes < 555) {
+    return {
+      isOpen: true,
+      status: "PRE-MARKET",
+      label: "Pre-Market",
+      marketName: "NSE / BSE India",
+      exchange: "NSE",
+      timeZone: "IST (UTC+5:30)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:15 AM – 3:30 PM IST (Mon–Fri)",
+      detail: "Regular session opens 9:15 AM IST",
+    };
+  }
+
+  // Regular market: 9:15 AM - 3:30 PM IST (555 to 930)
+  if (minutes >= 555 && minutes < 930) {
+    const hoursLeft = Math.floor((930 - minutes) / 60);
+    const minsLeft = (930 - minutes) % 60;
+    return {
+      isOpen: true,
+      status: "LIVE",
+      label: "Live Trading",
+      marketName: "NSE / BSE India",
+      exchange: "NSE",
+      timeZone: "IST (UTC+5:30)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:15 AM – 3:30 PM IST (Mon–Fri)",
+      detail: `Closes in ${hoursLeft > 0 ? `${hoursLeft}h ` : ""}${minsLeft}m`,
+    };
+  }
+
+  // Post-market: 3:30 PM - 4:00 PM IST (930 to 960)
+  if (minutes >= 930 && minutes < 960) {
+    return {
+      isOpen: false,
+      status: "CLOSED",
+      label: "Post-Market",
+      marketName: "NSE / BSE India",
+      exchange: "NSE",
+      timeZone: "IST (UTC+5:30)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:15 AM – 3:30 PM IST (Mon–Fri)",
+      detail: "Trading closed for today",
+    };
+  }
+
+  return {
+    isOpen: false,
+    status: "CLOSED",
+    label: "Market Closed",
+    marketName: "NSE / BSE India",
+    exchange: "NSE",
+    timeZone: "IST (UTC+5:30)",
+    currentTimeStr: timeStr,
+    tradingHoursStr: "9:15 AM – 3:30 PM IST (Mon–Fri)",
+    detail: minutes < 540 ? "Opens today at 9:15 AM IST" : "Opens tomorrow at 9:15 AM IST",
+  };
+}
+
+export function getUsMarketStatus(now: Date | null): MarketTimingStatus {
+  if (!now) {
+    return {
+      isOpen: false,
+      status: "CLOSED",
+      label: "Market Closed",
+      marketName: "NYSE / NASDAQ",
+      exchange: "NYSE",
+      timeZone: "ET (UTC-4/5)",
+      currentTimeStr: "--:--",
+      tradingHoursStr: "9:30 AM – 4:00 PM ET (Mon–Fri)",
+      detail: "Loading market session...",
+    };
+  }
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
+  const timeStr = formatter.format(now);
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const partMap: Record<string, string> = {};
+  parts.forEach((p) => { partMap[p.type] = p.value; });
+  const weekday = partMap.weekday;
+  const hour = parseInt(partMap.hour, 10);
+  const minute = parseInt(partMap.minute, 10);
+  const minutes = hour * 60 + minute;
+
+  const isWeekend = weekday === "Sat" || weekday === "Sun";
+  if (isWeekend) {
+    return {
+      isOpen: false,
+      status: "CLOSED",
+      label: "Closed (Weekend)",
+      marketName: "NYSE / NASDAQ",
+      exchange: "NYSE",
+      timeZone: "ET (UTC-4/5)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:30 AM – 4:00 PM ET (Mon–Fri)",
+      detail: "Opens Monday at 9:30 AM ET",
+    };
+  }
+
+  // Pre-market: 4:00 AM - 9:30 AM ET (240 to 570)
+  if (minutes >= 240 && minutes < 570) {
+    return {
+      isOpen: true,
+      status: "PRE-MARKET",
+      label: "Pre-Market",
+      marketName: "NYSE / NASDAQ",
+      exchange: "NYSE",
+      timeZone: "ET (UTC-4/5)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:30 AM – 4:00 PM ET (Mon–Fri)",
+      detail: "Regular session opens 9:30 AM ET",
+    };
+  }
+
+  // Regular market: 9:30 AM - 4:00 PM ET (570 to 960)
+  if (minutes >= 570 && minutes < 960) {
+    const hoursLeft = Math.floor((960 - minutes) / 60);
+    const minsLeft = (960 - minutes) % 60;
+    return {
+      isOpen: true,
+      status: "LIVE",
+      label: "Live Trading",
+      marketName: "NYSE / NASDAQ",
+      exchange: "NYSE",
+      timeZone: "ET (UTC-4/5)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:30 AM – 4:00 PM ET (Mon–Fri)",
+      detail: `Closes in ${hoursLeft > 0 ? `${hoursLeft}h ` : ""}${minsLeft}m`,
+    };
+  }
+
+  // After-hours: 4:00 PM - 8:00 PM ET (960 to 1200)
+  if (minutes >= 960 && minutes < 1200) {
+    return {
+      isOpen: true,
+      status: "AFTER-HOURS",
+      label: "After-Hours",
+      marketName: "NYSE / NASDAQ",
+      exchange: "NYSE",
+      timeZone: "ET (UTC-4/5)",
+      currentTimeStr: timeStr,
+      tradingHoursStr: "9:30 AM – 4:00 PM ET (Mon–Fri)",
+      detail: "After-hours closes 8:00 PM ET",
+    };
+  }
+
+  return {
+    isOpen: false,
+    status: "CLOSED",
+    label: "Market Closed",
+    marketName: "NYSE / NASDAQ",
+    exchange: "NYSE",
+    timeZone: "ET (UTC-4/5)",
+    currentTimeStr: timeStr,
+    tradingHoursStr: "9:30 AM – 4:00 PM ET (Mon–Fri)",
+    detail: minutes < 240 ? "Pre-market opens 4:00 AM ET" : "Pre-market opens tomorrow 4:00 AM ET",
+  };
+}
+
+export function getAssetMarketStatus(category: AssetCategory, now: Date | null): MarketTimingStatus {
+  if (category === "US Stocks") {
+    return getUsMarketStatus(now);
+  }
+  return getIndianMarketStatus(now);
+}
+
+function MarketTimingBadge({
+  status,
+  compact = false,
+}: {
+  status: MarketTimingStatus;
+  compact?: boolean;
+}) {
+  if (status.status === "LIVE") {
+    return (
+      <span
+        className="apple-live-market-badge live"
+        title={`${status.marketName}: ${status.label} • ${status.detail}`}
+      >
+        <span className="apple-live-radar-wrap">
+          <span className="apple-live-radar-ping" />
+          <span className="apple-live-radar-core" />
+        </span>
+        <span>LIVE</span>
+        {!compact && <span style={{ opacity: 0.85 }}>{status.exchange}</span>}
+      </span>
+    );
+  }
+
+  if (status.status === "PRE-MARKET") {
+    return (
+      <span
+        className="apple-live-market-badge pre-mkt"
+        title={`${status.marketName}: ${status.label} • ${status.detail}`}
+      >
+        <span className="apple-live-dot pre-mkt" />
+        <span>PRE-MKT</span>
+        {!compact && <span style={{ opacity: 0.85 }}>{status.exchange}</span>}
+      </span>
+    );
+  }
+
+  if (status.status === "AFTER-HOURS") {
+    return (
+      <span
+        className="apple-live-market-badge after-hrs"
+        title={`${status.marketName}: ${status.label} • ${status.detail}`}
+      >
+        <span className="apple-live-dot after-hrs" />
+        <span>AFTER-HRS</span>
+        {!compact && <span style={{ opacity: 0.85 }}>{status.exchange}</span>}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="apple-live-market-badge closed"
+      title={`${status.marketName}: ${status.label} • ${status.detail}`}
+    >
+      <span className="apple-live-dot closed" />
+      <span>CLOSED</span>
+      {!compact && <span style={{ opacity: 0.7 }}>{status.exchange}</span>}
+    </span>
+  );
+}
+
 // Authentic iOS 12-blade Activity Indicator & Frosted Glass Loading Experience
 function IosLoadingView({
-  title = "Connecting to PostgreSQL",
-  subtitle = "Syncing live positions in real time...",
+  title = "Loading Positions",
+  subtitle = 'Please Wait...',
 }: {
   title?: string;
   subtitle?: string;
@@ -74,7 +382,7 @@ function IosLoadingView({
           <div /><div /><div /><div /><div /><div />
         </div>
         <span className="ios-loading-title">{title}</span>
-        <span className="ios-loading-subtitle">{subtitle}</span>
+        {subtitle && <span className="ios-loading-subtitle">{subtitle}</span>}
       </div>
       <div className="ios-skeleton-wrap">
         <div className="ios-skeleton-row" style={{ width: "100%" }} />
@@ -439,33 +747,19 @@ function IosCurrencyToggle({
     <div
       className="ios-toggle-pill"
       onClick={onToggle}
+      role="button"
+      tabIndex={0}
       title={
         checked
-          ? `Displaying US Dollar holdings in Rupee (₹) at live $1 = ₹${rate.toFixed(2)}. Click to display in USD ($).`
-          : `Displaying US Dollar holdings in USD ($). Click to display in Rupee (₹) at live $1 = ₹${rate.toFixed(2)}.`
+          ? `Displaying US Dollar holdings in Rupee (₹) at live $1 = ₹${rate.toFixed(2)}. Click to switch to USD ($).`
+          : `Displaying US Dollar holdings in USD ($). Click to switch to Rupee (₹) at live $1 = ₹${rate.toFixed(2)}.`
       }
     >
-      <div className="ios-toggle-label">
-        <span className="ios-toggle-symbols">
-          <span className={!checked ? "symbol-active" : ""}>$</span>
-          <span style={{ opacity: 0.4 }}>→</span>
-          <span className={checked ? "symbol-active" : ""}>₹</span>
-        </span>
-        <span style={{ fontSize: "11px", fontWeight: 600 }}>USD in ₹</span>
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        className={`ios-switch ${checked ? "active" : ""}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-      >
+      <span className="ios-toggle-symbol">{checked ? "₹" : "$"}</span>
+      <span className="ios-toggle-label">{checked ? "USD in ₹" : "USD ($)"}</span>
+      <span className={`ios-switch ${checked ? "active" : ""}`}>
         <span className="ios-switch-knob" />
-      </button>
-      <span className="ios-rate-badge">$1 = ₹{rate.toFixed(1)}</span>
+      </span>
     </div>
   );
 }
@@ -481,7 +775,23 @@ export default function Home() {
   const [deletingAsset, setDeletingAsset] = useState<AssetPosition | null>(null);
   const [flashAssetId, setFlashAssetId] = useState<string | null>(null);
   const [dbModal, setDbModal] = useState(false);
+  const [marketModal, setMarketModal] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+
+  const [showSidePanel, setShowSidePanel] = useState(true);
+
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const indianMarket = useMemo(() => getIndianMarketStatus(currentTime), [currentTime]);
+  const usMarket = useMemo(() => getUsMarketStatus(currentTime), [currentTime]);
 
   const [assets, setAssets] = useState<AssetPosition[]>([]);
   const [unsavedAssetIds, setUnsavedAssetIds] = useState<Set<string>>(new Set());
@@ -791,15 +1101,15 @@ export default function Home() {
     Number(currentValue) > 0 && Number(currentPrice) > 0
       ? Number(currentValue) / Number(currentPrice)
       : Number(investedAmount) > 0 && Number(buyPrice) > 0
-      ? Number(investedAmount) / Number(buyPrice)
-      : 0;
+        ? Number(investedAmount) / Number(buyPrice)
+        : 0;
 
   const computedEditHoldings =
     editingAsset && Number(editingAsset.currentValue) > 0 && Number(editingAsset.currentPrice) > 0
       ? Number(editingAsset.currentValue) / Number(editingAsset.currentPrice)
       : editingAsset && Number(editingAsset.investedAmount) > 0 && Number(editingAsset.buyPrice) > 0
-      ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
-      : 0;
+        ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
+        : 0;
 
   // Real-time Stock Market Price Lookup via /api/stock-price
   async function handleFetchLivePrice(
@@ -1034,12 +1344,12 @@ export default function Home() {
         prev.map((a) =>
           a.id === existing.id
             ? {
-                ...a,
-                quantity: totalMergedQty,
-                buyPrice: newAvgBuyPrice,
-                currentPrice: newCurrentPrice,
-                currency,
-              }
+              ...a,
+              quantity: totalMergedQty,
+              buyPrice: newAvgBuyPrice,
+              currentPrice: newCurrentPrice,
+              currency,
+            }
             : a
         )
       );
@@ -1278,16 +1588,71 @@ export default function Home() {
     <main className="apple-canvas">
       {/* 1. Apple Floating Glass Island Header */}
       <header className="apple-island-header">
-        {/* Brand & Status */}
-        <div className="apple-brand-wrap" onClick={() => setActive("Overview")}>
-          <div className="apple-brand-icon">↗</div>
-          <span className="apple-brand-title">
-            My<span>Wealth</span>
-          </span>
-          <span className={`apple-header-status-pill ${syncStatus}`}>
-            <span className="apple-pulse-dot" />
-            {syncStatus === "live" ? "Synced" : syncStatus === "connecting" ? "Connecting" : "Local"}
-          </span>
+        {/* Left: Brand + Market Status Capsule */}
+        <div className="apple-header-left">
+          <button
+            type="button"
+            className={`apple-circle-icon-btn apple-sidebar-toggle-btn ${showSidePanel ? "active" : ""}`}
+            onClick={() => setShowSidePanel((prev) => !prev)}
+            title={showSidePanel ? "Collapse inspiration panel" : "Show inspiration panel"}
+          >
+            <PanelLeft size={14} />
+          </button>
+          <div className="apple-brand-wrap" onClick={() => setActive("Overview")}>
+            <div className="apple-brand-icon">↗</div>
+            <span className="apple-brand-title">
+              My<span>Wealth</span>
+            </span>
+          </div>
+
+          {/* Dual Live Stock Market Timings Capsule */}
+          <div
+            className="apple-market-header-capsule"
+            onClick={() => setMarketModal(true)}
+            title="Stock Market Trading Sessions • Click for live hours & schedule"
+          >
+            <div className="apple-market-capsule-item">
+              {indianMarket.status === "LIVE" ? (
+                <>
+                  <span className="apple-live-radar-wrap">
+                    <span className="apple-live-radar-ping" />
+                    <span className="apple-live-radar-core" />
+                  </span>
+                  <span className="apple-market-code">NSE</span>
+                  <span className="apple-market-state live">LIVE</span>
+                </>
+              ) : (
+                <>
+                  <span className={`apple-live-dot ${indianMarket.isOpen ? "pre-mkt" : "closed"}`} />
+                  <span className="apple-market-code">NSE</span>
+                  <span className={`apple-market-state ${indianMarket.isOpen ? "live" : "closed"}`}>
+                    {indianMarket.status === "PRE-MARKET" ? "PRE" : "CLOSED"}
+                  </span>
+                </>
+              )}
+            </div>
+            <span className="apple-capsule-divider">|</span>
+            <div className="apple-market-capsule-item">
+              {usMarket.status === "LIVE" ? (
+                <>
+                  <span className="apple-live-radar-wrap">
+                    <span className="apple-live-radar-ping" />
+                    <span className="apple-live-radar-core" />
+                  </span>
+                  <span className="apple-market-code">NYSE</span>
+                  <span className="apple-market-state live">LIVE</span>
+                </>
+              ) : (
+                <>
+                  <span className={`apple-live-dot ${usMarket.isOpen ? "pre-mkt" : "closed"}`} />
+                  <span className="apple-market-code">NYSE</span>
+                  <span className={`apple-market-state ${usMarket.isOpen ? "live" : "closed"}`}>
+                    {usMarket.status === "PRE-MARKET" ? "PRE" : usMarket.status === "AFTER-HOURS" ? "AFTER" : "CLOSED"}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Center: Apple Segmented Pill Switcher */}
@@ -1307,7 +1672,7 @@ export default function Home() {
                 className={`apple-nav-pill ${isTabActive ? "active" : ""}`}
               >
                 <Icon size={14} strokeWidth={isTabActive ? 2.4 : 1.8} />
-                <span>{name}</span>
+                <span className="apple-nav-pill-text">{name}</span>
               </button>
             );
           })}
@@ -1374,642 +1739,654 @@ export default function Home() {
         </div>
       )}
 
-      {/* 3. Main Stage */}
-      <section className="apple-content-stage">
-        {/* OVERVIEW BENTO HERO STAGE */}
-        {active === "Overview" && (
-          <div className="apple-bento-hero">
-            {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
-            <div className="apple-wallet-hero">
-              <div className="apple-wallet-header">
-                <div className="apple-eyebrow-row">
-                  <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
-                  <span className="apple-header-status-pill" style={{ padding: "2px 8px" }}>
-                    <span className="apple-pulse-dot" />
-                    Real-time
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="apple-hero-refresh-btn"
-                  onClick={handleRefreshPrices}
-                  disabled={isRefreshingPrices || assets.length === 0}
-                  title="Fetch live market quotes for all holdings"
-                >
-                  <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
-                  <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
-                </button>
-              </div>
-
-              <div className="apple-hero-main-val">
-                <span className="apple-hero-val-text">{money(totalCurrentINR)}</span>
-              </div>
-
-              <div className="apple-hero-return-row">
-                <div className={`apple-hero-return-badge ${totalPnlINR >= 0 ? "positive" : "negative"}`}>
-                  {totalPnlINR >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
-                  <span>
-                    {totalPnlINR >= 0 ? `+${money(totalPnlINR)}` : money(totalPnlINR)}
-                    {" "}
-                    ({totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(2)}%` : `${totalReturnPct.toFixed(2)}%`}) All-Time Gain
-                  </span>
-                </div>
-                <span className="apple-hero-caption">
-                  {priceRefreshMessage || "Live valuations synced with market"}
-                </span>
-              </div>
-
-              <div className="apple-hero-stat-chips">
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Total Invested</span>
-                  <span className="apple-stat-chip-val">{money(totalInvestedINR)}</span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Active Holdings</span>
-                  <span className="apple-stat-chip-val">{assets.length} Assets</span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">US Exposure</span>
-                  <span className="apple-stat-chip-val">${(usVal / usdInrRate).toFixed(2)} USD</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Bento Card 2: Apple Spectrum Allocation Visualizer */}
-            <div className="apple-allocation-card">
-              <div className="apple-alloc-header">
-                <div>
-                  <h3 className="apple-alloc-title">Asset Allocation</h3>
-                  <p className="apple-alloc-sub">Multi-class portfolio distribution</p>
-                </div>
-                <span className="apple-alloc-badge">{assets.length} Positions</span>
-              </div>
-
-              {/* Multi-segment Spectrum Bar */}
-              <div className="apple-spectrum-bar-wrap">
-                <div className="apple-spectrum-bar">
-                  {pctIndian > 0 && (
-                    <div
-                      className="apple-spectrum-segment seg-indian"
-                      style={{ width: `${pctIndian}%` }}
-                      title={`Indian Equities: ${pctIndian}%`}
-                    />
-                  )}
-                  {pctMF > 0 && (
-                    <div
-                      className="apple-spectrum-segment seg-mf"
-                      style={{ width: `${pctMF}%` }}
-                      title={`Mutual Funds: ${pctMF}%`}
-                    />
-                  )}
-                  {pctUS > 0 && (
-                    <div
-                      className="apple-spectrum-segment seg-us"
-                      style={{ width: `${pctUS}%` }}
-                      title={`US Stocks: ${pctUS}%`}
-                    />
-                  )}
-                  {pctGold > 0 && (
-                    <div
-                      className="apple-spectrum-segment seg-gold"
-                      style={{ width: `${pctGold}%` }}
-                      title={`Gold & Fixed: ${pctGold}%`}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Allocation List Items */}
-              <div className="apple-alloc-rows">
-                <div className="apple-alloc-item" onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}>
-                  <div className="apple-alloc-item-left">
-                    <span className="apple-alloc-dot dot-indian" />
-                    <div>
-                      <span className="apple-alloc-name">Indian Equities</span>
-                      <span className="apple-alloc-pct">{pctIndian}% of total</span>
-                    </div>
-                  </div>
-                  <span className="apple-alloc-val">{money(indianVal)}</span>
-                </div>
-
-                <div className="apple-alloc-item" onClick={() => { setActive("Mutual Funds"); setOverviewSubTab("mf"); }}>
-                  <div className="apple-alloc-item-left">
-                    <span className="apple-alloc-dot dot-mf" />
-                    <div>
-                      <span className="apple-alloc-name">Mutual Funds</span>
-                      <span className="apple-alloc-pct">{pctMF}% of total</span>
-                    </div>
-                  </div>
-                  <span className="apple-alloc-val">{money(mfVal)}</span>
-                </div>
-
-                <div className="apple-alloc-item" onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}>
-                  <div className="apple-alloc-item-left">
-                    <span className="apple-alloc-dot dot-us" />
-                    <div>
-                      <span className="apple-alloc-name">US Equities</span>
-                      <span className="apple-alloc-pct">{pctUS}% of total</span>
-                    </div>
-                  </div>
-                  <span className="apple-alloc-val">{money(usVal)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* 3. Main Stage Layout */}
+      <div className={`apple-stage-layout ${showSidePanel ? "with-sidebar" : "full-width"}`}>
+        {/* Left Side Inspiration Panel */}
+        {showSidePanel && (
+          <aside className="apple-side-panel">
+            <img
+              src="/side-panel-image.png"
+              alt="MyWealth Portfolio Vision"
+              className="apple-panel-img"
+            />
+          </aside>
         )}
 
-        {/* EQUITIES TAB HERO */}
-        {active === "Equities" && (
-          <div className="apple-bento-hero">
-            <div className="apple-wallet-hero">
-              <div className="apple-wallet-header">
-                <span className="apple-hero-eyebrow">EQUITIES & STOCKS PORTFOLIO</span>
-                <button
-                  type="button"
-                  className="apple-hero-refresh-btn"
-                  onClick={handleRefreshPrices}
-                  disabled={isRefreshingPrices || equities.length === 0}
-                >
-                  <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
-                  <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
-                </button>
-              </div>
+        <section className="apple-content-stage">
+          {/* OVERVIEW BENTO HERO STAGE */}
+          {active === "Overview" && (
+            <div className="apple-bento-hero">
+              {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
+              <div className="apple-wallet-hero">
+                <div className="apple-wallet-header">
+                  <div className="apple-eyebrow-row">
+                    <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
+                    <MarketTimingBadge status={indianMarket.isOpen ? indianMarket : usMarket.isOpen ? usMarket : indianMarket} />
+                  </div>
+                  <button
+                    type="button"
+                    className="apple-hero-refresh-btn"
+                    onClick={handleRefreshPrices}
+                    disabled={isRefreshingPrices || assets.length === 0}
+                    title="Fetch live market quotes for all holdings"
+                  >
+                    <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
+                    <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
+                  </button>
+                </div>
 
-              <div className="apple-hero-main-val">
-                <span className="apple-hero-val-text">{money(stocksCurrent)}</span>
-              </div>
+                <div className="apple-hero-main-val">
+                  <span className="apple-hero-val-text">{money(totalCurrentINR)}</span>
+                </div>
 
-              <div className="apple-hero-return-row">
-                <div className={`apple-hero-return-badge ${stocksPnl >= 0 ? "positive" : "negative"}`}>
-                  {stocksPnl >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
-                  <span>
-                    {stocksPnl >= 0 ? `+${money(stocksPnl)}` : money(stocksPnl)}
-                    {" "}
-                    ({stocksPnlPct >= 0 ? `+${stocksPnlPct.toFixed(2)}%` : `${stocksPnlPct.toFixed(2)}%`}) Gain
+                <div className="apple-hero-return-row">
+                  <div className={`apple-hero-return-badge ${totalPnlINR >= 0 ? "positive" : "negative"}`}>
+                    {totalPnlINR >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                    <span>
+                      {totalPnlINR >= 0 ? `+${money(totalPnlINR)}` : money(totalPnlINR)}
+                      {" "}
+                      ({totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(2)}%` : `${totalReturnPct.toFixed(2)}%`}) All-Time Gain
+                    </span>
+                  </div>
+                  <span className="apple-hero-caption">
+                    {priceRefreshMessage || "Live valuations synced with market"}
                   </span>
                 </div>
-                <span className="apple-hero-caption">
-                  Invested: {money(stocksInvested)}
-                </span>
-              </div>
 
-              <div className="apple-hero-stat-chips">
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Stock Holdings</span>
-                  <span className="apple-stat-chip-val">{equities.length} Companies</span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Indian Stocks</span>
-                  <span className="apple-stat-chip-val">{assets.filter((a) => a.category === "Indian Equities").length}</span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">US Stocks</span>
-                  <span className="apple-stat-chip-val">{assets.filter((a) => a.category === "US Stocks").length} (${(usVal / usdInrRate).toFixed(2)})</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="apple-allocation-card">
-              <div className="apple-alloc-header">
-                <div>
-                  <h3 className="apple-alloc-title">Equities Diversification</h3>
-                  <p className="apple-alloc-sub">Market exposure</p>
-                </div>
-              </div>
-              <div className="apple-alloc-rows" style={{ marginTop: "12px" }}>
-                <div className="apple-alloc-item">
-                  <div className="apple-alloc-item-left">
-                    <span className="apple-alloc-dot dot-indian" />
-                    <div>
-                      <span className="apple-alloc-name">NSE / BSE Equities</span>
-                      <span className="apple-alloc-pct">{stocksCurrent > 0 ? ((indianVal / stocksCurrent) * 100).toFixed(1) : 0}% of equity</span>
-                    </div>
+                <div className="apple-hero-stat-chips">
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Total Invested</span>
+                    <span className="apple-stat-chip-val">{money(totalInvestedINR)}</span>
                   </div>
-                  <span className="apple-alloc-val">{money(indianVal)}</span>
-                </div>
-                <div className="apple-alloc-item">
-                  <div className="apple-alloc-item-left">
-                    <span className="apple-alloc-dot dot-us" />
-                    <div>
-                      <span className="apple-alloc-name">NASDAQ / NYSE Equities</span>
-                      <span className="apple-alloc-pct">{stocksCurrent > 0 ? ((usVal / stocksCurrent) * 100).toFixed(1) : 0}% of equity</span>
-                    </div>
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Active Holdings</span>
+                    <span className="apple-stat-chip-val">{assets.length} Assets</span>
                   </div>
-                  <span className="apple-alloc-val">{money(usVal)}</span>
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">US Exposure</span>
+                    <span className="apple-stat-chip-val">${(usVal / usdInrRate).toFixed(2)} USD</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* MUTUAL FUNDS TAB HERO */}
-        {active === "Mutual Funds" && (
-          <div className="apple-bento-hero">
-            <div className="apple-wallet-hero">
-              <div className="apple-wallet-header">
-                <span className="apple-hero-eyebrow">MUTUAL FUNDS & SIPS</span>
-                <button
-                  type="button"
-                  className="apple-hero-refresh-btn"
-                  onClick={handleRefreshPrices}
-                  disabled={isRefreshingPrices || mutualFunds.length === 0}
-                >
-                  <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
-                  <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
-                </button>
               </div>
 
-              <div className="apple-hero-main-val">
-                <span className="apple-hero-val-text">{money(mfCurrent)}</span>
-              </div>
+              {/* Bento Card 2: Apple Spectrum Allocation Visualizer */}
+              <div className="apple-allocation-card">
+                <div className="apple-alloc-header">
+                  <div>
+                    <h3 className="apple-alloc-title">Asset Allocation</h3>
+                    <p className="apple-alloc-sub">Multi-class portfolio distribution</p>
+                  </div>
+                  <span className="apple-alloc-badge">{assets.length} Positions</span>
+                </div>
 
-              <div className="apple-hero-return-row">
-                <div className={`apple-hero-return-badge ${mfPnl >= 0 ? "positive" : "negative"}`}>
-                  {mfPnl >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
-                  <span>
-                    {mfPnl >= 0 ? `+${money(mfPnl)}` : money(mfPnl)}
-                    {" "}
-                    ({mfPnlPct >= 0 ? `+${mfPnlPct.toFixed(2)}%` : `${mfPnlPct.toFixed(2)}%`}) NAV Gain
-                  </span>
+                {/* Multi-segment Spectrum Bar */}
+                <div className="apple-spectrum-bar-wrap">
+                  <div className="apple-spectrum-bar">
+                    {pctIndian > 0 && (
+                      <div
+                        className="apple-spectrum-segment seg-indian"
+                        style={{ width: `${pctIndian}%` }}
+                        title={`Indian Equities: ${pctIndian}%`}
+                      />
+                    )}
+                    {pctMF > 0 && (
+                      <div
+                        className="apple-spectrum-segment seg-mf"
+                        style={{ width: `${pctMF}%` }}
+                        title={`Mutual Funds: ${pctMF}%`}
+                      />
+                    )}
+                    {pctUS > 0 && (
+                      <div
+                        className="apple-spectrum-segment seg-us"
+                        style={{ width: `${pctUS}%` }}
+                        title={`US Stocks: ${pctUS}%`}
+                      />
+                    )}
+                    {pctGold > 0 && (
+                      <div
+                        className="apple-spectrum-segment seg-gold"
+                        style={{ width: `${pctGold}%` }}
+                        title={`Gold & Fixed: ${pctGold}%`}
+                      />
+                    )}
+                  </div>
                 </div>
-                <span className="apple-hero-caption">
-                  Invested: {money(mfInvested)}
-                </span>
-              </div>
 
-              <div className="apple-hero-stat-chips">
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Schemes Tracked</span>
-                  <span className="apple-stat-chip-val">{mutualFunds.length} Funds</span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Portfolio Share</span>
-                  <span className="apple-stat-chip-val">{pctMF}% of Net Worth</span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Total Units</span>
-                  <span className="apple-stat-chip-val">{mutualFunds.reduce((s, a) => s + a.quantity, 0).toFixed(2)} units</span>
-                </div>
-              </div>
-            </div>
+                {/* Allocation List Items */}
+                <div className="apple-alloc-rows">
+                  <div className="apple-alloc-item" onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}>
+                    <div className="apple-alloc-item-left">
+                      <span className="apple-alloc-dot dot-indian" />
+                      <div>
+                        <span className="apple-alloc-name">Indian Equities</span>
+                        <span className="apple-alloc-pct">{pctIndian}% of total</span>
+                      </div>
+                    </div>
+                    <span className="apple-alloc-val">{money(indianVal)}</span>
+                  </div>
 
-            <div className="apple-allocation-card">
-              <div className="apple-alloc-header">
-                <div>
-                  <h3 className="apple-alloc-title">Fund Schemes</h3>
-                  <p className="apple-alloc-sub">Active mutual fund holdings</p>
-                </div>
-              </div>
-              <div className="apple-alloc-rows" style={{ marginTop: "12px" }}>
-                {mutualFunds.map((mf) => (
-                  <div key={mf.id} className="apple-alloc-item">
+                  <div className="apple-alloc-item" onClick={() => { setActive("Mutual Funds"); setOverviewSubTab("mf"); }}>
                     <div className="apple-alloc-item-left">
                       <span className="apple-alloc-dot dot-mf" />
                       <div>
-                        <span className="apple-alloc-name">{mf.name}</span>
-                        <span className="apple-alloc-pct">{mf.quantity.toFixed(2)} units @ NAV ₹{mf.currentPrice.toFixed(2)}</span>
+                        <span className="apple-alloc-name">Mutual Funds</span>
+                        <span className="apple-alloc-pct">{pctMF}% of total</span>
                       </div>
                     </div>
-                    <span className="apple-alloc-val">{money(mf.quantity * mf.currentPrice)}</span>
+                    <span className="apple-alloc-val">{money(mfVal)}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* 4. APPLE HOLDINGS SECTION */}
-        <section className="apple-holdings-section">
-          {/* Section Toolbar */}
-          <div className="apple-holdings-toolbar">
-            <div className="apple-filter-group">
-              <button
-                type="button"
-                className={`apple-filter-pill ${overviewSubTab === "all" && active === "Overview" ? "active" : ""}`}
-                onClick={() => { setActive("Overview"); setOverviewSubTab("all"); }}
-              >
-                <LayoutDashboard size={13} />
-                <span>All Assets ({assets.length})</span>
-              </button>
-              <button
-                type="button"
-                className={`apple-filter-pill ${(overviewSubTab === "stocks" || active === "Equities") ? "active" : ""}`}
-                onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}
-              >
-                <ChartNoAxesCombined size={13} />
-                <span>Stocks ({equities.length})</span>
-              </button>
-              <button
-                type="button"
-                className={`apple-filter-pill ${(overviewSubTab === "mf" || active === "Mutual Funds") ? "active" : ""}`}
-                onClick={() => { setActive("Mutual Funds"); setOverviewSubTab("mf"); }}
-              >
-                <Wallet size={13} />
-                <span>Mutual Funds ({mutualFunds.length})</span>
-              </button>
-            </div>
-
-            <div className="apple-toolbar-right">
-              {/* Instant Search Bar */}
-              <div className="apple-search-wrap">
-                <Search size={14} className="apple-search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search assets or tickers…"
-                  className="apple-search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* View Switcher: Apple Cards vs Apple Table */}
-              <div className="apple-view-toggle">
-                <button
-                  type="button"
-                  className={`apple-view-btn ${viewMode === "cards" ? "active" : ""}`}
-                  onClick={() => setViewMode("cards")}
-                  title="Apple Stocks Cards View"
-                >
-                  <Layers size={13} />
-                  <span>Cards</span>
-                </button>
-                <button
-                  type="button"
-                  className={`apple-view-btn ${viewMode === "table" ? "active" : ""}`}
-                  onClick={() => setViewMode("table")}
-                  title="Spreadsheet Table View"
-                >
-                  <TableProperties size={13} />
-                  <span>Table</span>
-                </button>
-              </div>
-
-              {/* Quick Sort Selector */}
-              <button
-                type="button"
-                className="apple-filter-pill"
-                onClick={() => handleSort("pnl")}
-                title="Toggle Sort by Return"
-              >
-                <ArrowUpDown size={12} />
-                <span>Sort: {sortField.toUpperCase()} ({sortOrder})</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Loading State */}
-          {isLoading ? (
-            <IosLoadingView title="Loading Positions" subtitle="Syncing with PostgreSQL..." />
-          ) : displayedAssets.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon"><ChartNoAxesCombined size={24} /></div>
-              <strong>No assets match your search</strong>
-              <p>Add a position or try clearing your search query.</p>
-              <button className="primary-button" onClick={() => setModal(true)}>
-                <Plus size={15} /> Add investment
-              </button>
-            </div>
-          ) : viewMode === "cards" ? (
-            /* APPLE STOCKS GLASS CARDS STACK */
-            <div className="apple-card-stack">
-              {displayedAssets.map((item) => {
-                const ticker = getStockTicker(item.name);
-                const isUnsaved = unsavedAssetIds.has(item.id);
-                const isFlashed = flashAssetId === item.id;
-                const investedVal = item.quantity * item.buyPrice;
-                const currentVal = item.quantity * item.currentPrice;
-                const pnl = currentVal - investedVal;
-                const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`apple-asset-card ${isUnsaved ? "unsaved-glow" : ""} ${isFlashed ? "flash-pulse" : ""}`}
-                  >
-                    {/* Col 1: Brand Avatar + Asset Identity */}
-                    <div className="apple-card-identity">
-                      <div className="apple-avatar-squircle">
-                        <StockAvatar name={item.name} ticker={ticker} category={item.category} />
-                      </div>
-                      <div className="apple-identity-text">
-                        <div className="apple-asset-name-row">
-                          <h4 className="apple-asset-name" title={item.name}>{item.name}</h4>
-                          {isUnsaved && (
-                            <span className="apple-live-badge" title="Market price updated in live preview mode">
-                              <Sparkles size={9} /> Live
-                            </span>
-                          )}
-                        </div>
-                        <div className="apple-asset-tags">
-                          <span className="apple-ticker-pill">{ticker}</span>
-                          <span className="apple-category-pill">{item.category}</span>
-                          {item.currency === "USD" && <span className="apple-curr-pill">USD</span>}
-                        </div>
+                  <div className="apple-alloc-item" onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}>
+                    <div className="apple-alloc-item-left">
+                      <span className="apple-alloc-dot dot-us" />
+                      <div>
+                        <span className="apple-alloc-name">US Equities</span>
+                        <span className="apple-alloc-pct">{pctUS}% of total</span>
                       </div>
                     </div>
-
-                    {/* Col 2: Holdings & Invested */}
-                    <div className="apple-card-col">
-                      <span className="apple-col-label">HOLDINGS & COST</span>
-                      <span className="apple-holdings-val">
-                        {item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)} {item.category === "Mutual Funds" ? "units" : "shares"}
-                      </span>
-                      <span className="apple-col-sub">
-                        Avg {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
-                        {" · "}
-                        Inv {money(investedVal, item.currency)}
-                      </span>
-                    </div>
-
-                    {/* Col 3: Live Market Price */}
-                    <div className="apple-card-col">
-                      <span className="apple-col-label">MARKET PRICE</span>
-                      <span className="apple-price-val">
-                        {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
-                      </span>
-                      {item.currency === "USD" && (
-                        <span className="apple-col-sub">
-                          ₹{(item.currentPrice * usdInrRate).toFixed(1)} / share
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Col 4: Current Valuation & Returns */}
-                    <div className="apple-card-col apple-card-val">
-                      <span className="apple-col-label">CURRENT VALUATION</span>
-                      <span className="apple-val-primary">{money(currentVal, item.currency)}</span>
-                      {item.currency === "USD" && showUsdInRupees && (
-                        <span className="apple-val-usd-pill">
-                          ${currentVal.toFixed(2)} USD
-                        </span>
-                      )}
-                      <div className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"}`}>
-                        {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                        <span>
-                          {pnl >= 0 ? "+" : ""}{money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Col 5: Actions */}
-                    <div className="apple-card-actions">
-                      <button
-                        type="button"
-                        className="apple-action-pill-btn"
-                        onClick={() => startEditing(item)}
-                        title="Edit position"
-                      >
-                        <Pencil size={13} />
-                        <span>Edit</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="apple-action-pill-btn delete"
-                        onClick={() => setDeletingAsset(item)}
-                        title="Delete position"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
+                    <span className="apple-alloc-val">{money(usVal)}</span>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* APPLE FROSTED SPREADSHEET TABLE */
-            <div className="apple-table-panel">
-              <div className="table-scroll">
-                <table>
-                  <thead>
-                    <tr>
-                      <th onClick={() => handleSort("name")} className="sortable-th">
-                        <div className="th-content">
-                          <span>Asset / Company</span>
-                          <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                        </div>
-                      </th>
-                      <th onClick={() => handleSort("price")} className="sortable-th">
-                        <div className="th-content th-right">
-                          <span>Market Price</span>
-                          <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                        </div>
-                      </th>
-                      <th onClick={() => handleSort("invested")} className="sortable-th">
-                        <div className="th-content th-right">
-                          <span>Total Invested</span>
-                          <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                        </div>
-                      </th>
-                      <th onClick={() => handleSort("value")} className="sortable-th">
-                        <div className="th-content th-right">
-                          <span>Current Valuation</span>
-                          <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                        </div>
-                      </th>
-                      <th onClick={() => handleSort("pnl")} className="sortable-th">
-                        <div className="th-content th-right">
-                          <span>Returns (P&L)</span>
-                          <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content th-center">
-                          <span>Actions</span>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayedAssets.map((item) => {
-                      const ticker = getStockTicker(item.name);
-                      const isUnsaved = unsavedAssetIds.has(item.id);
-                      const isFlashed = flashAssetId === item.id;
-                      const investedVal = item.quantity * item.buyPrice;
-                      const currentVal = item.quantity * item.currentPrice;
-                      const pnl = currentVal - investedVal;
-                      const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
-
-                      return (
-                        <tr key={item.id} className={isFlashed ? "flash-pulse" : ""}>
-                          <td>
-                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                              <div className="apple-avatar-squircle" style={{ width: "36px", height: "36px" }}>
-                                <StockAvatar name={item.name} ticker={ticker} category={item.category} />
-                              </div>
-                              <div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>{item.name}</strong>
-                                  {isUnsaved && <span className="apple-live-badge"><Sparkles size={8} /> Live</span>}
-                                </div>
-                                <div style={{ display: "flex", gap: "6px", marginTop: "2px" }}>
-                                  <span className="apple-ticker-pill">{ticker}</span>
-                                  <span className="apple-category-pill">{item.category}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>
-                              {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
-                            </strong>
-                            <div style={{ fontSize: "11px", color: "var(--muted)" }}>
-                              Avg {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
-                            </div>
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>
-                              {money(investedVal, item.currency)}
-                            </strong>
-                            <div style={{ fontSize: "11px", color: "var(--muted)" }}>
-                              {item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)} units
-                            </div>
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <strong style={{ color: "var(--foreground)", fontSize: "14px" }}>
-                              {money(currentVal, item.currency)}
-                            </strong>
-                            {item.currency === "USD" && showUsdInRupees && (
-                              <div className="apple-val-usd-pill" style={{ display: "inline-block" }}>
-                                ${currentVal.toFixed(2)} USD
-                              </div>
-                            )}
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <div className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"}`} style={{ display: "inline-flex" }}>
-                              {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                              <span>{pnl >= 0 ? "+" : ""}{money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)</span>
-                            </div>
-                          </td>
-                          <td style={{ textAlign: "center" }}>
-                            <div style={{ display: "inline-flex", gap: "6px" }}>
-                              <button
-                                type="button"
-                                className="apple-action-pill-btn"
-                                onClick={() => startEditing(item)}
-                                title="Edit position"
-                              >
-                                <Pencil size={12} />
-                              </button>
-                              <button
-                                type="button"
-                                className="apple-action-pill-btn delete"
-                                onClick={() => setDeletingAsset(item)}
-                                title="Delete position"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                </div>
               </div>
             </div>
           )}
+
+          {/* EQUITIES TAB HERO */}
+          {active === "Equities" && (
+            <div className="apple-bento-hero">
+              <div className="apple-wallet-hero">
+                <div className="apple-wallet-header">
+                  <span className="apple-hero-eyebrow">EQUITIES & STOCKS PORTFOLIO</span>
+                  <button
+                    type="button"
+                    className="apple-hero-refresh-btn"
+                    onClick={handleRefreshPrices}
+                    disabled={isRefreshingPrices || equities.length === 0}
+                  >
+                    <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
+                    <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
+                  </button>
+                </div>
+
+                <div className="apple-hero-main-val">
+                  <span className="apple-hero-val-text">{money(stocksCurrent)}</span>
+                </div>
+
+                <div className="apple-hero-return-row">
+                  <div className={`apple-hero-return-badge ${stocksPnl >= 0 ? "positive" : "negative"}`}>
+                    {stocksPnl >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                    <span>
+                      {stocksPnl >= 0 ? `+${money(stocksPnl)}` : money(stocksPnl)}
+                      {" "}
+                      ({stocksPnlPct >= 0 ? `+${stocksPnlPct.toFixed(2)}%` : `${stocksPnlPct.toFixed(2)}%`}) Gain
+                    </span>
+                  </div>
+                  <span className="apple-hero-caption">
+                    Invested: {money(stocksInvested)}
+                  </span>
+                </div>
+
+                <div className="apple-hero-stat-chips">
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Stock Holdings</span>
+                    <span className="apple-stat-chip-val">{equities.length} Companies</span>
+                  </div>
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Indian Stocks</span>
+                    <span className="apple-stat-chip-val">{assets.filter((a) => a.category === "Indian Equities").length}</span>
+                  </div>
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">US Stocks</span>
+                    <span className="apple-stat-chip-val">{assets.filter((a) => a.category === "US Stocks").length} (${(usVal / usdInrRate).toFixed(2)})</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="apple-allocation-card">
+                <div className="apple-alloc-header">
+                  <div>
+                    <h3 className="apple-alloc-title">Equities Diversification</h3>
+                    <p className="apple-alloc-sub">Market exposure</p>
+                  </div>
+                </div>
+                <div className="apple-alloc-rows" style={{ marginTop: "12px" }}>
+                  <div className="apple-alloc-item">
+                    <div className="apple-alloc-item-left">
+                      <span className="apple-alloc-dot dot-indian" />
+                      <div>
+                        <span className="apple-alloc-name">NSE / BSE Equities</span>
+                        <span className="apple-alloc-pct">{stocksCurrent > 0 ? ((indianVal / stocksCurrent) * 100).toFixed(1) : 0}% of equity</span>
+                      </div>
+                    </div>
+                    <span className="apple-alloc-val">{money(indianVal)}</span>
+                  </div>
+                  <div className="apple-alloc-item">
+                    <div className="apple-alloc-item-left">
+                      <span className="apple-alloc-dot dot-us" />
+                      <div>
+                        <span className="apple-alloc-name">NASDAQ / NYSE Equities</span>
+                        <span className="apple-alloc-pct">{stocksCurrent > 0 ? ((usVal / stocksCurrent) * 100).toFixed(1) : 0}% of equity</span>
+                      </div>
+                    </div>
+                    <span className="apple-alloc-val">{money(usVal)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MUTUAL FUNDS TAB HERO */}
+          {active === "Mutual Funds" && (
+            <div className="apple-bento-hero">
+              <div className="apple-wallet-hero">
+                <div className="apple-wallet-header">
+                  <span className="apple-hero-eyebrow">MUTUAL FUNDS & SIPS</span>
+                  <button
+                    type="button"
+                    className="apple-hero-refresh-btn"
+                    onClick={handleRefreshPrices}
+                    disabled={isRefreshingPrices || mutualFunds.length === 0}
+                  >
+                    <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
+                    <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
+                  </button>
+                </div>
+
+                <div className="apple-hero-main-val">
+                  <span className="apple-hero-val-text">{money(mfCurrent)}</span>
+                </div>
+
+                <div className="apple-hero-return-row">
+                  <div className={`apple-hero-return-badge ${mfPnl >= 0 ? "positive" : "negative"}`}>
+                    {mfPnl >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                    <span>
+                      {mfPnl >= 0 ? `+${money(mfPnl)}` : money(mfPnl)}
+                      {" "}
+                      ({mfPnlPct >= 0 ? `+${mfPnlPct.toFixed(2)}%` : `${mfPnlPct.toFixed(2)}%`}) NAV Gain
+                    </span>
+                  </div>
+                  <span className="apple-hero-caption">
+                    Invested: {money(mfInvested)}
+                  </span>
+                </div>
+
+                <div className="apple-hero-stat-chips">
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Schemes Tracked</span>
+                    <span className="apple-stat-chip-val">{mutualFunds.length} Funds</span>
+                  </div>
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Portfolio Share</span>
+                    <span className="apple-stat-chip-val">{pctMF}% of Net Worth</span>
+                  </div>
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Total Units</span>
+                    <span className="apple-stat-chip-val">{mutualFunds.reduce((s, a) => s + a.quantity, 0).toFixed(2)} units</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="apple-allocation-card">
+                <div className="apple-alloc-header">
+                  <div>
+                    <h3 className="apple-alloc-title">Fund Schemes</h3>
+                    <p className="apple-alloc-sub">Active mutual fund holdings</p>
+                  </div>
+                </div>
+                <div className="apple-alloc-rows" style={{ marginTop: "12px" }}>
+                  {mutualFunds.map((mf) => (
+                    <div key={mf.id} className="apple-alloc-item">
+                      <div className="apple-alloc-item-left">
+                        <span className="apple-alloc-dot dot-mf" />
+                        <div>
+                          <span className="apple-alloc-name">{mf.name}</span>
+                          <span className="apple-alloc-pct">{mf.quantity.toFixed(2)} units @ NAV ₹{mf.currentPrice.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      <span className="apple-alloc-val">{money(mf.quantity * mf.currentPrice)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 4. APPLE HOLDINGS SECTION */}
+          <section className="apple-holdings-section">
+            {/* Section Toolbar */}
+            <div className="apple-holdings-toolbar">
+              <div className="apple-filter-group">
+                <button
+                  type="button"
+                  className={`apple-filter-pill ${overviewSubTab === "all" && active === "Overview" ? "active" : ""}`}
+                  onClick={() => { setActive("Overview"); setOverviewSubTab("all"); }}
+                >
+                  <LayoutDashboard size={13} />
+                  <span>All Assets ({assets.length})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`apple-filter-pill ${(overviewSubTab === "stocks" || active === "Equities") ? "active" : ""}`}
+                  onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}
+                >
+                  <ChartNoAxesCombined size={13} />
+                  <span>Stocks ({equities.length})</span>
+                </button>
+                <button
+                  type="button"
+                  className={`apple-filter-pill ${(overviewSubTab === "mf" || active === "Mutual Funds") ? "active" : ""}`}
+                  onClick={() => { setActive("Mutual Funds"); setOverviewSubTab("mf"); }}
+                >
+                  <Wallet size={13} />
+                  <span>Mutual Funds ({mutualFunds.length})</span>
+                </button>
+              </div>
+
+              <div className="apple-toolbar-right">
+                {/* Instant Search Bar */}
+                <div className="apple-search-wrap">
+                  <Search size={14} className="apple-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search assets or tickers…"
+                    className="apple-search-input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                {/* View Switcher: Apple Cards vs Apple Table */}
+                <div className="apple-view-toggle">
+                  <button
+                    type="button"
+                    className={`apple-view-btn ${viewMode === "cards" ? "active" : ""}`}
+                    onClick={() => setViewMode("cards")}
+                    title="Apple Stocks Cards View"
+                  >
+                    <Layers size={13} />
+                    <span>Cards</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`apple-view-btn ${viewMode === "table" ? "active" : ""}`}
+                    onClick={() => setViewMode("table")}
+                    title="Spreadsheet Table View"
+                  >
+                    <TableProperties size={13} />
+                    <span>Table</span>
+                  </button>
+                </div>
+
+                {/* Quick Sort Selector */}
+                <button
+                  type="button"
+                  className="apple-filter-pill"
+                  onClick={() => handleSort("pnl")}
+                  title="Toggle Sort by Return"
+                >
+                  <ArrowUpDown size={12} />
+                  <span>Sort: {sortField.toUpperCase()} ({sortOrder})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {isLoading ? (
+              <IosLoadingView title="Loading Positions" />
+            ) : displayedAssets.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon"><ChartNoAxesCombined size={24} /></div>
+                <strong>No assets match your search</strong>
+                <p>Add a position or try clearing your search query.</p>
+                <button className="primary-button" onClick={() => setModal(true)}>
+                  <Plus size={15} /> Add investment
+                </button>
+              </div>
+            ) : viewMode === "cards" ? (
+              /* APPLE STOCKS GLASS CARDS STACK */
+              <div className="apple-card-stack">
+                {displayedAssets.map((item) => {
+                  const ticker = getStockTicker(item.name);
+                  const isUnsaved = unsavedAssetIds.has(item.id);
+                  const isFlashed = flashAssetId === item.id;
+                  const investedVal = item.quantity * item.buyPrice;
+                  const currentVal = item.quantity * item.currentPrice;
+                  const pnl = currentVal - investedVal;
+                  const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`apple-asset-card ${isUnsaved ? "unsaved-glow" : ""} ${isFlashed ? "flash-pulse" : ""}`}
+                    >
+                      {/* Col 1: Brand Avatar + Asset Identity */}
+                      <div className="apple-card-identity">
+                        <div className="apple-avatar-squircle">
+                          <StockAvatar name={item.name} ticker={ticker} category={item.category} />
+                        </div>
+                        <div className="apple-identity-text">
+                          <div className="apple-asset-name-row">
+                            <h4 className="apple-asset-name" title={item.name}>{item.name}</h4>
+                            {isUnsaved && (
+                              <span className="apple-live-badge" title="Market price updated in live preview mode">
+                                <Sparkles size={9} /> Live
+                              </span>
+                            )}
+                          </div>
+                          <div className="apple-asset-tags">
+                            <span className="apple-ticker-pill">{ticker}</span>
+                            <span className="apple-category-pill">{item.category}</span>
+                            {item.currency === "USD" && <span className="apple-curr-pill">USD</span>}
+                            <MarketTimingBadge status={getAssetMarketStatus(item.category, currentTime)} />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Col 2: Holdings & Invested */}
+                      <div className="apple-card-col">
+                        <span className="apple-col-label">HOLDINGS & COST</span>
+                        <span className="apple-holdings-val">
+                          {item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)} {item.category === "Mutual Funds" ? "units" : "shares"}
+                        </span>
+                        <span className="apple-col-sub">
+                          Avg {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
+                          {" · "}
+                          Inv {money(investedVal, item.currency)}
+                        </span>
+                      </div>
+
+                      {/* Col 3: Live Market Price */}
+                      <div className="apple-card-col">
+                        <span className="apple-col-label">MARKET PRICE</span>
+                        <span className="apple-price-val">
+                          {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
+                        </span>
+                        {item.currency === "USD" && (
+                          <span className="apple-col-sub">
+                            ₹{(item.currentPrice * usdInrRate).toFixed(1)} / share
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Col 4: Current Valuation & Returns */}
+                      <div className="apple-card-col apple-card-val">
+                        <span className="apple-col-label">CURRENT VALUATION</span>
+                        <span className="apple-val-primary">{money(currentVal, item.currency)}</span>
+                        {item.currency === "USD" && showUsdInRupees && (
+                          <span className="apple-val-usd-pill">
+                            ${currentVal.toFixed(2)} USD
+                          </span>
+                        )}
+                        <div className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"}`}>
+                          {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                          <span>
+                            {pnl >= 0 ? "+" : ""}{money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Col 5: Actions */}
+                      <div className="apple-card-actions">
+                        <button
+                          type="button"
+                          className="apple-action-pill-btn"
+                          onClick={() => startEditing(item)}
+                          title="Edit position"
+                        >
+                          <Pencil size={13} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="apple-action-pill-btn delete"
+                          onClick={() => setDeletingAsset(item)}
+                          title="Delete position"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* APPLE FROSTED SPREADSHEET TABLE */
+              <div className="apple-table-panel">
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th onClick={() => handleSort("name")} className="sortable-th">
+                          <div className="th-content">
+                            <span>Asset / Company</span>
+                            <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("price")} className="sortable-th">
+                          <div className="th-content th-right">
+                            <span>Market Price</span>
+                            <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("invested")} className="sortable-th">
+                          <div className="th-content th-right">
+                            <span>Total Invested</span>
+                            <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("value")} className="sortable-th">
+                          <div className="th-content th-right">
+                            <span>Current Valuation</span>
+                            <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th onClick={() => handleSort("pnl")} className="sortable-th">
+                          <div className="th-content th-right">
+                            <span>Returns (P&L)</span>
+                            <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                          </div>
+                        </th>
+                        <th>
+                          <div className="th-content th-center">
+                            <span>Actions</span>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayedAssets.map((item) => {
+                        const ticker = getStockTicker(item.name);
+                        const isUnsaved = unsavedAssetIds.has(item.id);
+                        const isFlashed = flashAssetId === item.id;
+                        const investedVal = item.quantity * item.buyPrice;
+                        const currentVal = item.quantity * item.currentPrice;
+                        const pnl = currentVal - investedVal;
+                        const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
+
+                        return (
+                          <tr key={item.id} className={isFlashed ? "flash-pulse" : ""}>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <div className="apple-avatar-squircle" style={{ width: "36px", height: "36px" }}>
+                                  <StockAvatar name={item.name} ticker={ticker} category={item.category} />
+                                </div>
+                                <div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                    <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>{item.name}</strong>
+                                    {isUnsaved && <span className="apple-live-badge"><Sparkles size={8} /> Live</span>}
+                                  </div>
+                                  <div style={{ display: "flex", gap: "6px", marginTop: "2px", alignItems: "center" }}>
+                                    <span className="apple-ticker-pill">{ticker}</span>
+                                    <span className="apple-category-pill">{item.category}</span>
+                                    <MarketTimingBadge status={getAssetMarketStatus(item.category, currentTime)} compact />
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>
+                                {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
+                              </strong>
+                              <div style={{ fontSize: "11px", color: "var(--muted)" }}>
+                                Avg {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
+                              </div>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>
+                                {money(investedVal, item.currency)}
+                              </strong>
+                              <div style={{ fontSize: "11px", color: "var(--muted)" }}>
+                                {item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)} units
+                              </div>
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <strong style={{ color: "var(--foreground)", fontSize: "14px" }}>
+                                {money(currentVal, item.currency)}
+                              </strong>
+                              {item.currency === "USD" && showUsdInRupees && (
+                                <div className="apple-val-usd-pill" style={{ display: "inline-block" }}>
+                                  ${currentVal.toFixed(2)} USD
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <div className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"}`} style={{ display: "inline-flex" }}>
+                                {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                                <span>{pnl >= 0 ? "+" : ""}{money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)</span>
+                              </div>
+                            </td>
+                            <td style={{ textAlign: "center" }}>
+                              <div style={{ display: "inline-flex", gap: "6px" }}>
+                                <button
+                                  type="button"
+                                  className="apple-action-pill-btn"
+                                  onClick={() => startEditing(item)}
+                                  title="Edit position"
+                                >
+                                  <Pencil size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="apple-action-pill-btn delete"
+                                  onClick={() => setDeletingAsset(item)}
+                                  title="Delete position"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </section>
         </section>
-      </section>
+      </div>
 
       {/* 5. ADD ASSET MODAL */}
       {modal && (
@@ -2357,6 +2734,82 @@ export default function Home() {
 
             <div className="modal-actions">
               <button type="button" className="primary-button" onClick={() => setDbModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 9. MARKET TIMINGS MODAL */}
+      {marketModal && (
+        <div className="modal-overlay" onClick={() => setMarketModal(false)}>
+          <div className="investment-modal" style={{ width: "min(100%, 560px)" }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-heading">
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div className="apple-brand-icon" style={{ width: "34px", height: "34px", fontSize: "15px" }}>
+                  <Clock size={17} />
+                </div>
+                <div>
+                  <h2>Stock Market Trading Sessions</h2>
+                  <p>Real-time exchange clocks & active trading hours</p>
+                </div>
+              </div>
+              <button type="button" className="icon-button" onClick={() => setMarketModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginTop: "8px" }}>
+              {/* Indian Markets */}
+              <div className="apple-market-timing-card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <strong style={{ fontSize: "14px", color: "var(--foreground)" }}>🇮🇳 National Stock Exchange (NSE / BSE)</strong>
+                    <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>Mumbai, India • {indianMarket.timeZone}</div>
+                  </div>
+                  <MarketTimingBadge status={indianMarket} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: "8px", marginTop: "4px" }}>
+                  <span style={{ color: "var(--foreground-muted)" }}>Current Time:</span>
+                  <strong style={{ color: "var(--foreground)" }}>{indianMarket.currentTimeStr}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                  <span style={{ color: "var(--foreground-muted)" }}>Trading Hours:</span>
+                  <span>{indianMarket.tradingHoursStr}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                  <span style={{ color: "var(--foreground-muted)" }}>Next Session:</span>
+                  <span style={{ color: "var(--apple-blue)", fontWeight: 600 }}>{indianMarket.detail}</span>
+                </div>
+              </div>
+
+              {/* US Markets */}
+              <div className="apple-market-timing-card">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <strong style={{ fontSize: "14px", color: "var(--foreground)" }}>🇺🇸 New York Stock Exchange & NASDAQ</strong>
+                    <div style={{ fontSize: "11px", color: "var(--muted)", marginTop: "2px" }}>New York, United States • {usMarket.timeZone}</div>
+                  </div>
+                  <MarketTimingBadge status={usMarket} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: "8px", marginTop: "4px" }}>
+                  <span style={{ color: "var(--foreground-muted)" }}>Current Time:</span>
+                  <strong style={{ color: "var(--foreground)" }}>{usMarket.currentTimeStr}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                  <span style={{ color: "var(--foreground-muted)" }}>Trading Hours:</span>
+                  <span>{usMarket.tradingHoursStr}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}>
+                  <span style={{ color: "var(--foreground-muted)" }}>Next Session:</span>
+                  <span style={{ color: "var(--apple-blue)", fontWeight: 600 }}>{usMarket.detail}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: "16px" }}>
+              <button type="button" className="primary-button" onClick={() => setMarketModal(false)}>
                 Close
               </button>
             </div>
