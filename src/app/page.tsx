@@ -119,7 +119,7 @@ function getStockTicker(name: string): string {
 // Authentic Vector SVG Logos for Top Global & Indian Brands
 function AppleLogoSvg() {
   return (
-    <svg viewBox="0 0 170 170" width="18" height="18" fill="#ffffff">
+    <svg viewBox="0 0 170 170" width="18" height="18" fill="currentColor">
       <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.06-7.78-7.98-12.27-14.75-6.08-9.06-10.74-19.16-13.98-30.3-3.24-11.14-4.86-21.72-4.86-31.75 0-14.4 3.73-26.03 11.19-34.89 7.46-8.86 16.73-13.35 27.81-13.48 4.89 0 10.13 1.31 15.71 3.93 5.58 2.62 9.28 4.04 11.1 4.25 1.58-.21 5.37-1.63 11.36-4.25 5.99-2.62 11.15-3.87 15.49-3.77 11.14.44 20.37 4.54 27.69 12.31-9.93 6.01-14.8 14.51-14.61 25.5.21 8.51 3.49 15.7 9.85 21.57 6.36 5.87 13.88 9.38 22.56 10.53-2.02 6.08-4.44 12.33-7.25 18.75m-23.75-103.54c0 6.08-2.22 11.75-6.66 17.01-5.12 5.99-11.23 9.48-18.33 10.47-.21-1.06-.32-2.12-.32-3.18 0-5.87 2.33-11.66 6.99-17.37 4.66-5.71 10.76-9.19 18.32-10.44z" />
     </svg>
   );
@@ -414,9 +414,10 @@ function StockAvatar({
       <div
         className="stock-logo-circle"
         style={{
-          background: "#08080a",
-          border: "1px solid rgba(255, 255, 255, 0.18)",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.6)",
+          background: "#ffffff",
+          color: "#1d1d1f",
+          border: "1px solid rgba(0, 0, 0, 0.08)",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
         }}
         title="Apple Inc."
       >
@@ -1470,7 +1471,7 @@ export default function Home() {
           <div className="brand" onClick={() => setActive("Overview")}>
             <div className="brand-icon">↗</div>
             <span>
-              My<span style={{ color: "var(--red)" }}>Wealth</span>
+              My<span style={{ color: "var(--apple-blue)" }}>Wealth</span>
             </span>
           </div>
 
@@ -1647,10 +1648,10 @@ export default function Home() {
                     <span>Total returns (P&L)</span>
                     {totalPnlINR >= 0 ? <TrendingUp size={17} /> : <TrendingDown size={17} />}
                   </div>
-                  <div className={`metric-value ${totalPnlINR >= 0 ? "positive" : ""}`} style={{ color: totalPnlINR < 0 ? "var(--red)" : undefined }}>
+                  <div className={`metric-value ${totalPnlINR >= 0 ? "positive" : ""}`} style={{ color: totalPnlINR < 0 ? "var(--rose)" : undefined }}>
                     {totalPnlINR >= 0 ? `+${money(totalPnlINR)}` : money(totalPnlINR)}
                   </div>
-                  <div className={`metric-note ${totalPnlINR >= 0 ? "positive" : ""}`} style={{ color: totalPnlINR < 0 ? "var(--red)" : undefined }}>
+                  <div className={`metric-note ${totalPnlINR >= 0 ? "positive" : ""}`} style={{ color: totalPnlINR < 0 ? "var(--rose)" : undefined }}>
                     {totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(2)}%` : `${totalReturnPct.toFixed(2)}%`} overall return
                   </div>
                 </div>
@@ -1707,7 +1708,7 @@ export default function Home() {
                   <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px" }}>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <ChartNoAxesCombined size={16} style={{ color: "var(--red)" }} />
+                        <ChartNoAxesCombined size={16} style={{ color: "var(--apple-blue)" }} />
                         <h3 style={{ margin: 0 }}>Stocks & Direct Equities</h3>
                       </div>
                       <p>Shares held across Indian and US stock exchanges</p>
@@ -2083,13 +2084,14 @@ export default function Home() {
                       role="img"
                       aria-label={`Asset allocation: ${pctIndian}% Indian Equities, ${pctUS}% US Stocks, ${pctMF}% Mutual Funds, ${pctGold}% Gold and Fixed Income`}
                       style={{
-                        background: `conic-gradient(#ef4444 0% ${pctIndian}%, #b91c1c ${pctIndian}% ${pctIndian + pctUS}%, #10b981 ${pctIndian + pctUS}% ${pctIndian + pctUS + pctMF}%, #f59e0b ${pctIndian + pctUS + pctMF}% ${pctIndian + pctUS + pctMF + pctGold}%, #292a32 ${pctIndian + pctUS + pctMF + pctGold}% 100%)`,
+                        background: `conic-gradient(#0071e3 0% ${pctIndian}%, #6366f1 ${pctIndian}% ${pctIndian + pctUS}%, #10b981 ${pctIndian + pctUS}% ${pctIndian + pctUS + pctMF}%, #f59e0b ${pctIndian + pctUS + pctMF}% ${pctIndian + pctUS + pctMF + pctGold}%, #e2e8f0 ${pctIndian + pctUS + pctMF + pctGold}% 100%)`,
                         width: "180px",
                         height: "180px",
                         borderRadius: "50%",
                         display: "grid",
                         placeItems: "center",
                         justifySelf: "center",
+                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
                       }}
                     >
                       <div
@@ -2103,31 +2105,32 @@ export default function Home() {
                           alignItems: "center",
                           justifyContent: "center",
                           gap: "5px",
-                          background: "#17181d",
+                          background: "rgba(255, 255, 255, 0.95)",
+                          boxShadow: "inset 0 1px 3px rgba(0, 0, 0, 0.05)",
                         }}
                       >
-                        <strong style={{ maxWidth: "90%", overflow: "hidden", whiteSpace: "nowrap" }}>{money(totalCurrentINR)}</strong>
-                        <span style={{ fontSize: "9px" }}>Portfolio value</span>
+                        <strong style={{ maxWidth: "90%", overflow: "hidden", whiteSpace: "nowrap", color: "var(--foreground)" }}>{money(totalCurrentINR)}</strong>
+                        <span style={{ fontSize: "9px", color: "var(--muted)" }}>Portfolio value</span>
                       </div>
                     </div>
                     <div className="allocation-legend" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)" }}>
-                        <span className="allocation-swatch allocation-indian" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#ef4444" }} />
+                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
+                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#0071e3" }} />
                         <span className="allocation-category-detail"><span>Indian Equities</span><small>{money(indianVal)}</small></span>
                         <strong>{pctIndian}%</strong>
                       </div>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)" }}>
-                        <span className="allocation-swatch allocation-us" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#b91c1c" }} />
+                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
+                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#6366f1" }} />
                         <span className="allocation-category-detail"><span>US Stocks</span><small>{money(usVal)}</small></span>
                         <strong>{pctUS}%</strong>
                       </div>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)" }}>
-                        <span className="allocation-swatch allocation-funds" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#10b981" }} />
+                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
+                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#10b981" }} />
                         <span className="allocation-category-detail"><span>Mutual Funds</span><small>{money(mfVal)}</small></span>
                         <strong>{pctMF}%</strong>
                       </div>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", background: "rgba(255,255,255,0.02)" }}>
-                        <span className="allocation-swatch allocation-gold" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#f59e0b" }} />
+                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
+                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#f59e0b" }} />
                         <span className="allocation-category-detail"><span>Gold &amp; Fixed Income</span><small>{money(goldVal)}</small></span>
                         <strong>{pctGold}%</strong>
                       </div>
@@ -2587,7 +2590,7 @@ export default function Home() {
             {/* Live Calculated Holdings Banner */}
             {computedAddHoldings > 0 && (
               <div className="holdings-preview-banner">
-                <Sparkles size={14} style={{ color: "var(--red)", flexShrink: 0 }} />
+                <Sparkles size={14} style={{ color: "var(--apple-blue)", flexShrink: 0 }} />
                 <span>
                   Calculated Holdings: <strong>{computedAddHoldings.toFixed(computedAddHoldings % 1 === 0 ? 0 : 4)} units</strong>
                   <span style={{ opacity: 0.75, marginLeft: "6px", fontSize: "11px" }}>
@@ -2754,7 +2757,7 @@ export default function Home() {
             {/* Live Calculated Holdings Banner in Edit */}
             {computedEditHoldings > 0 && (
               <div className="holdings-preview-banner">
-                <Sparkles size={14} style={{ color: "var(--red)", flexShrink: 0 }} />
+                <Sparkles size={14} style={{ color: "var(--apple-blue)", flexShrink: 0 }} />
                 <span>
                   Calculated Holdings: <strong>{computedEditHoldings.toFixed(computedEditHoldings % 1 === 0 ? 0 : 4)} units</strong>
                   <span style={{ opacity: 0.75, marginLeft: "6px", fontSize: "11px" }}>
@@ -2834,11 +2837,11 @@ export default function Home() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "10px",
-                    background: "rgba(239, 68, 68, 0.15)",
-                    border: "1px solid rgba(239, 68, 68, 0.35)",
+                    background: "rgba(225, 29, 72, 0.08)",
+                    border: "1px solid rgba(225, 29, 72, 0.22)",
                     display: "grid",
                     placeItems: "center",
-                    color: "var(--red)",
+                    color: "var(--rose)",
                   }}
                 >
                   <Trash2 size={18} />
@@ -2884,11 +2887,11 @@ export default function Home() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "10px",
-                    background: "rgba(239, 68, 68, 0.15)",
-                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    background: "rgba(0, 113, 227, 0.08)",
+                    border: "1px solid rgba(0, 113, 227, 0.2)",
                     display: "grid",
                     placeItems: "center",
-                    color: "var(--red)",
+                    color: "var(--apple-blue)",
                   }}
                 >
                   <Database size={18} />
