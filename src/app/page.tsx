@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   LayoutDashboard,
   ChartNoAxesCombined,
@@ -9,19 +9,17 @@ import {
   Search,
   TrendingUp,
   TrendingDown,
-  CircleDollarSign,
   RefreshCw,
   X,
   Trash2,
   Pencil,
   Database,
-  ExternalLink,
-  Copy,
-  Check,
-  User,
   Sparkles,
   Save,
   RotateCcw,
+  Layers,
+  TableProperties,
+  ArrowUpDown,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -140,20 +138,20 @@ function JioLogoSvg() {
     <svg viewBox="0 0 100 100" width="28" height="28">
       <defs>
         <linearGradient id="jioGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0066ff" />
-          <stop offset="100%" stopColor="#0038b8" />
+          <stop offset="0%" stopColor="#0071e3" />
+          <stop offset="100%" stopColor="#0284c7" />
         </linearGradient>
       </defs>
       <circle cx="50" cy="50" r="48" fill="url(#jioGrad)" />
-      <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+      <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" />
       <text
         x="50"
-        y="62"
-        textAnchor="middle"
+        y="58"
         fill="#ffffff"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        fontWeight="900"
         fontSize="34"
+        fontWeight="800"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        textAnchor="middle"
         letterSpacing="-1"
       >
         Jio
@@ -162,25 +160,11 @@ function JioLogoSvg() {
   );
 }
 
-function RelianceLogoSvg() {
-  return (
-    <svg viewBox="0 0 100 100" width="22" height="22">
-      <rect width="100" height="100" rx="20" fill="#003366" />
-      <circle cx="50" cy="50" r="34" fill="none" stroke="#e1a100" strokeWidth="3" />
-      <path d="M50 24 C45 34 38 42 38 52 C38 60 43 66 50 66 C57 66 62 60 62 52 C62 42 55 34 50 24 Z" fill="#ed232a" />
-      <path d="M50 34 C47 40 43 45 43 51 C43 56 46 60 50 60 C54 60 57 56 57 51 C57 45 53 40 50 34 Z" fill="#ffde00" />
-    </svg>
-  );
-}
-
 function TataLogoSvg() {
   return (
     <svg viewBox="0 0 100 100" width="22" height="22">
-      <rect width="100" height="100" rx="20" fill="#004c97" />
-      <path
-        fill="#ffffff"
-        d="M26 38 C28 48 38 58 48 70 L52 70 C62 58 72 48 74 38 L65 38 C63 45 55 53 50 60 C45 53 37 45 35 38 Z M22 32 L78 32 L78 36 L22 36 Z"
-      />
+      <circle cx="50" cy="50" r="48" fill="#0c4a6e" />
+      <path d="M25 35h50v8H55v32h-10V43H25z" fill="#38bdf8" />
     </svg>
   );
 }
@@ -188,11 +172,11 @@ function TataLogoSvg() {
 function HdfcLogoSvg() {
   return (
     <svg viewBox="0 0 100 100" width="22" height="22">
-      <rect width="100" height="100" rx="16" fill="#004c8f" />
-      <rect x="18" y="18" width="64" height="64" fill="#ed232a" />
-      <rect x="36" y="18" width="28" height="64" fill="#ffffff" />
-      <rect x="18" y="36" width="64" height="28" fill="#ffffff" />
+      <rect width="100" height="100" rx="20" fill="#004c8f" />
+      <rect x="18" y="18" width="64" height="64" fill="#ffffff" rx="8" />
       <rect x="36" y="36" width="28" height="28" fill="#004c8f" />
+      <rect x="45" y="18" width="10" height="64" fill="#ed1c24" />
+      <rect x="18" y="45" width="64" height="10" fill="#ed1c24" />
     </svg>
   );
 }
@@ -200,81 +184,86 @@ function HdfcLogoSvg() {
 function IciciLogoSvg() {
   return (
     <svg viewBox="0 0 100 100" width="22" height="22">
-      <rect width="100" height="100" rx="16" fill="#8b1d24" />
-      <circle cx="50" cy="50" r="32" fill="none" stroke="#f37021" strokeWidth="6" />
-      <circle cx="50" cy="34" r="6" fill="#f37021" />
-      <path d="M47 44 h6 v22 h-6 z" fill="#f37021" />
+      <circle cx="50" cy="50" r="48" fill="#b91c1c" />
+      <path d="M35 25h30v12H52v26h13v12H35z" fill="#f97316" />
+    </svg>
+  );
+}
+
+function InfosysLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <rect width="100" height="100" rx="20" fill="#007cc3" />
+      <text x="50" y="60" fill="#ffffff" fontSize="28" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        Infy
+      </text>
+    </svg>
+  );
+}
+
+function ParagParikhLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <circle cx="50" cy="50" r="48" fill="#14532d" />
+      <circle cx="50" cy="50" r="32" fill="none" stroke="#86efac" strokeWidth="6" />
+      <text x="50" y="58" fill="#ffffff" fontSize="22" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        PP
+      </text>
     </svg>
   );
 }
 
 function GoogleLogoSvg() {
   return (
-    <svg viewBox="0 0 24 24" width="19" height="19">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+    <svg viewBox="0 0 100 100" width="20" height="20">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="rgba(0,0,0,0.08)" strokeWidth="2" />
+      <text x="50" y="62" fill="#4285F4" fontSize="38" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        G
+      </text>
     </svg>
   );
 }
 
 function MicrosoftLogoSvg() {
   return (
-    <svg viewBox="0 0 24 24" width="18" height="18">
-      <rect x="2" y="2" width="9.5" height="9.5" fill="#F25022" />
-      <rect x="12.5" y="2" width="9.5" height="9.5" fill="#7FBA00" />
-      <rect x="2" y="12.5" width="9.5" height="9.5" fill="#00A4EF" />
-      <rect x="12.5" y="12.5" width="9.5" height="9.5" fill="#FFB900" />
+    <svg viewBox="0 0 100 100" width="18" height="18">
+      <rect x="5" y="5" width="42" height="42" fill="#f25022" />
+      <rect x="53" y="5" width="42" height="42" fill="#7fba00" />
+      <rect x="5" y="53" width="42" height="42" fill="#00a4ef" />
+      <rect x="53" y="53" width="42" height="42" fill="#ffb900" />
     </svg>
   );
 }
 
 function NvidiaLogoSvg() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="#76B900">
-      <path d="M11.75 3.5c-4.8 0-8.9 3.1-10.4 7.6 1.4 3.7 4.8 6.4 8.8 6.8-.4-.9-.6-1.9-.6-3 0-3.3 2.7-6 6-6 1.1 0 2.1.3 3 .8.2-.5.3-1 .3-1.6 0-2.5-3.2-4.6-7.1-4.6zm-1.8 7.3c-1.8.3-3.2 1.9-3.2 3.8 0 1.2.5 2.2 1.4 2.9 2-.2 3.8-1.5 4.4-3.4-.6-.4-1.3-.7-2.1-.8-.2-.8-.3-1.6-.5-2.5zm5.5 1.5c-1.7 0-3.1 1.4-3.1 3.1 0 1.7 1.4 3.1 3.1 3.1 1.7 0 3.1-1.4 3.1-3.1 0-1.7-1.4-3.1-3.1-3.1z"/>
-    </svg>
-  );
-}
-
-function TeslaLogoSvg() {
-  return (
-    <svg viewBox="0 0 100 100" width="20" height="20" fill="#E82127">
-      <path d="M50 25c8.3 0 16.1 2.3 22.7 6.2l3.7-7.9C68.7 18.5 59.7 15.5 50 15.5s-18.7 3-26.4 7.8l3.7 7.9C33.9 27.3 41.7 25 50 25zm25.7 11.3C68.7 33 60.2 31.1 50 31.1s-18.7 1.9-25.7 5.2l-4.1-4.1C28.5 28 38.7 25.5 50 25.5s21.5 2.5 29.8 6.7l-4.1 4.1zM47.5 42h5v44h-5z"/>
+    <svg viewBox="0 0 100 100" width="20" height="20">
+      <circle cx="50" cy="50" r="48" fill="#76b900" />
+      <text x="50" y="60" fill="#ffffff" fontSize="30" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        N
+      </text>
     </svg>
   );
 }
 
 function AmazonLogoSvg() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20">
-      <path fill="#FF9900" d="M13.4 17.7c-3.1 2.3-7.5 3.5-11.4 2.1-.5-.2-.9.4-.5.8 3.7 3.3 9.4 3 13.9.4.4-.3.2-.9-.3-.8zm6.5-1.5c-.3-.4-1.7-.2-2.3 0-.2.1-.2.2 0 .4 1.3 1 2.8.7 3.1.3.3-.4-.2-1.4-.8-.7z"/>
-      <path fill="#ffffff" d="M15.8 12.3c-.1-1.8-.8-3.1-2.4-3.8-2-.9-4.2-.3-5.2 1.4-.2.3 0 .6.3.7l1.3.8c.2.1.5 0 .7-.2.6-.9 1.6-1.1 2.6-.6.9.4 1.2 1.2 1.2 2.1 0 .2-.1.4-.3.4-1.8.3-4.5.8-5.3 2.5-.5 1 .1 2.3 1.1 2.8.9.5 2 .4 2.9-.1.8-.4 1.4-1.1 1.7-1.9v1.2c0 .3.2.5.5.5h1.2c.3 0 .5-.2.5-.5v-5.4zm-2.2 2.9c-.2.7-.8 1.2-1.5 1.4-.7.1-1.3-.2-1.5-.7-.2-.6.1-1.3 1-1.5.7-.1 1.4-.2 2-.3v1.1z"/>
+    <svg viewBox="0 0 100 100" width="20" height="20">
+      <circle cx="50" cy="50" r="48" fill="#232f3e" />
+      <text x="50" y="58" fill="#ff9900" fontSize="34" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        a
+      </text>
     </svg>
   );
 }
 
-function PpfasLogoSvg() {
+function TeslaLogoSvg() {
   return (
-    <svg viewBox="0 0 100 100" width="22" height="22">
-      <rect width="100" height="100" rx="20" fill="#0b2341" />
-      <circle cx="50" cy="50" r="32" fill="none" stroke="#2575fc" strokeWidth="4" />
-      <path d="M50 24 L56 44 L50 40 L44 44 Z" fill="#ff4d4d" />
-      <path d="M50 76 L56 56 L50 60 L44 56 Z" fill="#ffffff" />
-      <circle cx="50" cy="50" r="4" fill="#ffffff" />
-    </svg>
-  );
-}
-
-function BitcoinLogoSvg() {
-  return (
-    <svg viewBox="0 0 100 100" width="22" height="22">
-      <circle cx="50" cy="50" r="48" fill="#F7931A" />
-      <path
-        fill="#ffffff"
-        d="M66 43 c1 -6 -4 -9 -10 -10 l2 -8 h-6 l-2 7 c-1.5 -.4 -3 -.7 -4.6 -1 l2 -8 h-6 l-2 8 c-1.3 -.3 -2.7 -.6 -4 -.9 l-8 0 v6 c0 0 4 .1 4 0 c2.2 0 3 1.3 3.3 2.6 l-3.3 13.5 c.2 0 .4 0 .7 .1 l-.7 -.1 l-4.6 18.5 c-.4 1 -1.4 2.5 -3.6 2 l-4 0 v6 l8 0 c1.5 .4 3 .7 4.5 1 l-2 8 h6 l2 -8 c1.6 .4 3.2 .8 4.7 1.1 l-2 8 h6 l2 -8 c8 1.5 14 .9 16.5 -6.4 c2 -5.8 -.1 -9.2 -4.3 -11.4 c3 -0.7 5.3 -2.7 5.9 -6.8 z m-10.5 16.5 c-1.5 6 -11.5 2.8 -14.7 2 l2.6 -10.5 c3.2 .8 13.6 2.4 12.1 8.5 z m1.5 -16 c-1.3 5.4 -9.6 2.7 -12.3 2 l2.4 -9.6 c2.7 .7 11.2 2 9.9 7.6 z"
-      />
+    <svg viewBox="0 0 100 100" width="20" height="20">
+      <circle cx="50" cy="50" r="48" fill="#cc0000" />
+      <text x="50" y="62" fill="#ffffff" fontSize="36" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        T
+      </text>
     </svg>
   );
 }
@@ -282,17 +271,33 @@ function BitcoinLogoSvg() {
 function GoldLogoSvg() {
   return (
     <svg viewBox="0 0 100 100" width="22" height="22">
-      <defs>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ffd700" />
-          <stop offset="50%" stopColor="#ffae00" />
-          <stop offset="100%" stopColor="#b37700" />
-        </linearGradient>
-      </defs>
-      <rect width="100" height="100" rx="20" fill="#1b160a" stroke="rgba(255, 215, 0, 0.3)" strokeWidth="2" />
-      <path d="M26 68 L36 34 L64 34 L74 68 Z" fill="url(#goldGrad)" />
-      <path d="M36 34 L64 34 L60 42 L40 42 Z" fill="#fff3a8" opacity="0.8" />
-      <text x="50" y="58" textAnchor="middle" fill="#5c3800" fontWeight="900" fontSize="13" fontFamily="sans-serif">Au</text>
+      <circle cx="50" cy="50" r="48" fill="#b45309" />
+      <circle cx="50" cy="50" r="36" fill="#f59e0b" />
+      <text x="50" y="58" fill="#ffffff" fontSize="24" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        Au
+      </text>
+    </svg>
+  );
+}
+
+function CryptoLogoSvg() {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <circle cx="50" cy="50" r="48" fill="#f7931a" />
+      <text x="50" y="62" fill="#ffffff" fontSize="36" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        ₿
+      </text>
+    </svg>
+  );
+}
+
+function DefaultStockLogoSvg({ letter }: { letter: string }) {
+  return (
+    <svg viewBox="0 0 100 100" width="22" height="22">
+      <circle cx="50" cy="50" r="48" fill="#0071e3" />
+      <text x="50" y="62" fill="#ffffff" fontSize="38" fontWeight="800" textAnchor="middle" fontFamily="sans-serif">
+        {letter.toUpperCase()}
+      </text>
     </svg>
   );
 }
@@ -302,53 +307,123 @@ function getCompanyDomain(name: string, ticker: string): string | null {
   const lower = name.toLowerCase();
   const t = ticker.toLowerCase();
 
-  // Indian Equities & Conglomerates
   if (lower.includes("jio")) return "jio.com";
   if (lower.includes("reliance")) return "ril.com";
   if (lower.includes("tata motors")) return "tatamotors.com";
   if (lower.includes("tcs") || lower.includes("tata consultancy")) return "tcs.com";
   if (lower.includes("tata")) return "tata.com";
-  if (lower.includes("hdfc bank")) return "hdfcbank.com";
-  if (lower.includes("hdfc")) return "hdfcbank.com";
+  if (lower.includes("hdfc bank") || lower.includes("hdfc")) return "hdfcbank.com";
   if (lower.includes("icici")) return "icicibank.com";
   if (lower.includes("infosys") || t === "infy") return "infosys.com";
   if (lower.includes("wipro")) return "wipro.com";
-  if (lower.includes("state bank") || lower.includes("sbi focused") || lower.includes("sbi mutual") || lower.includes("sbi fund")) return "sbimf.com";
-  if (lower.includes("sbi")) return "sbi.co.in";
+  if (lower.includes("state bank") || lower.includes("sbi")) return "sbimf.com";
   if (lower.includes("parag parikh") || lower.includes("ppfas")) return "amc.ppfas.com";
-  if (lower.includes("mirae")) return "miraeassetmf.co.in";
-  if (lower.includes("nippon")) return "nipponindiamf.com";
-  if (lower.includes("axis")) return "axismf.com";
-  if (lower.includes("uti")) return "utimf.com";
-  if (lower.includes("quant")) return "quantmutual.com";
-  if (lower.includes("kotak")) return "kotakmf.com";
-  if (lower.includes("zomato")) return "zomato.com";
-  if (lower.includes("swiggy")) return "swiggy.com";
-  if (lower.includes("paytm") || lower.includes("one97")) return "paytm.com";
-  if (lower.includes("itc")) return "itcportal.com";
-  if (lower.includes("larsen") || lower.includes("l&t")) return "larsentoubro.com";
-  if (lower.includes("bharti") || lower.includes("airtel")) return "airtel.in";
-  if (lower.includes("bajaj finance") || lower.includes("bajfinance")) return "bajajfinserv.in";
-  if (lower.includes("maruti")) return "marutisuzuki.com";
-
-  // US Equities
   if (lower.includes("apple") || t === "aapl") return "apple.com";
-  if (lower.includes("google") || lower.includes("alphabet") || t === "googl" || t === "goog") return "google.com";
+  if (lower.includes("google") || lower.includes("alphabet") || t === "googl") return "google.com";
   if (lower.includes("microsoft") || t === "msft") return "microsoft.com";
   if (lower.includes("amazon") || t === "amzn") return "amazon.com";
   if (lower.includes("nvidia") || t === "nvda") return "nvidia.com";
   if (lower.includes("tesla") || t === "tsla") return "tesla.com";
-  if (lower.includes("meta") || lower.includes("facebook")) return "meta.com";
-  if (lower.includes("netflix") || t === "nflx") return "netflix.com";
-  if (lower.includes("amd")) return "amd.com";
-  if (lower.includes("intel") || t === "intc") return "intel.com";
 
-  // If ticker looks like a standard US ticker without spaces, e.g. "AAPL", "MSFT"
   if (/^[a-zA-Z]{2,5}$/.test(ticker) && !ticker.includes(" ")) {
     return `${ticker.toLowerCase()}.com`;
   }
 
   return null;
+}
+
+function StockAvatar({
+  name,
+  ticker,
+  category,
+}: {
+  name: string;
+  ticker: string;
+  category?: AssetCategory;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const lower = name.toLowerCase();
+  const t = ticker.toLowerCase();
+
+  if (lower.includes("apple") || t === "aapl") {
+    return (
+      <div style={{ color: "#1d1d1f" }} title="Apple Inc.">
+        <AppleLogoSvg />
+      </div>
+    );
+  }
+
+  if (lower.includes("sbi")) {
+    return <SbiLogoSvg />;
+  }
+
+  if (lower.includes("jio")) {
+    return <JioLogoSvg />;
+  }
+
+  if (lower.includes("tata")) {
+    return <TataLogoSvg />;
+  }
+
+  if (lower.includes("hdfc")) {
+    return <HdfcLogoSvg />;
+  }
+
+  if (lower.includes("icici")) {
+    return <IciciLogoSvg />;
+  }
+
+  if (lower.includes("infosys") || t === "infy") {
+    return <InfosysLogoSvg />;
+  }
+
+  if (lower.includes("parag parikh") || lower.includes("ppfas")) {
+    return <ParagParikhLogoSvg />;
+  }
+
+  if (lower.includes("google") || lower.includes("alphabet") || t === "googl") {
+    return <GoogleLogoSvg />;
+  }
+
+  if (lower.includes("microsoft") || t === "msft") {
+    return <MicrosoftLogoSvg />;
+  }
+
+  if (lower.includes("nvidia") || t === "nvda") {
+    return <NvidiaLogoSvg />;
+  }
+
+  if (lower.includes("amazon") || t === "amzn") {
+    return <AmazonLogoSvg />;
+  }
+
+  if (lower.includes("tesla") || t === "tsla") {
+    return <TeslaLogoSvg />;
+  }
+
+  if (category === "Gold & Fixed Income") {
+    return <GoldLogoSvg />;
+  }
+
+  if (category === "Crypto") {
+    return <CryptoLogoSvg />;
+  }
+
+  const domain = getCompanyDomain(name, ticker);
+  if (domain && !imgError) {
+    return (
+      <img
+        src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+        alt={name}
+        width="22"
+        height="22"
+        style={{ borderRadius: "50%" }}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+
+  return <DefaultStockLogoSvg letter={ticker.slice(0, 1) || name.slice(0, 1) || "A"} />;
 }
 
 function IosCurrencyToggle({
@@ -373,10 +448,10 @@ function IosCurrencyToggle({
       <div className="ios-toggle-label">
         <span className="ios-toggle-symbols">
           <span className={!checked ? "symbol-active" : ""}>$</span>
-          <span className="symbol-arrow">→</span>
+          <span style={{ opacity: 0.4 }}>→</span>
           <span className={checked ? "symbol-active" : ""}>₹</span>
         </span>
-        <span className="ios-toggle-text">USD in ₹</span>
+        <span style={{ fontSize: "11px", fontWeight: 600 }}>USD in ₹</span>
       </div>
       <button
         type="button"
@@ -395,298 +470,24 @@ function IosCurrencyToggle({
   );
 }
 
-function StockAvatar({
-  name,
-  ticker,
-  category,
-}: {
-  name: string;
-  ticker: string;
-  category?: AssetCategory;
-}) {
-  const [imgError, setImgError] = useState(false);
-  const lower = name.toLowerCase();
-  const t = ticker.toLowerCase();
-
-  // 1. Apple (AAPL) - Authentic Vector Silhouette
-  if (lower.includes("apple") || t === "aapl") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{
-          background: "#ffffff",
-          color: "#1d1d1f",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-        }}
-        title="Apple Inc."
-      >
-        <AppleLogoSvg />
-      </div>
-    );
-  }
-
-  // 2. SBI / SBI Mutual Fund - Official SBI Keyhole Emblem
-  if (lower.includes("sbi")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{
-          background: "#0072BC",
-          border: "1px solid rgba(255, 255, 255, 0.25)",
-          boxShadow: "0 0 14px rgba(0, 114, 188, 0.45)",
-        }}
-        title="State Bank of India / SBI Mutual Fund"
-      >
-        <SbiLogoSvg />
-      </div>
-    );
-  }
-
-  // 3. Jio / Jio Platforms - Official Jio Gradient Roundel
-  if (lower.includes("jio")) {
-    return (
-      <div className="stock-logo-circle stock-logo-jio" title="Reliance Jio Platforms">
-        <JioLogoSvg />
-      </div>
-    );
-  }
-
-  // 4. Reliance Industries
-  if (lower.includes("reliance")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#003366", border: "1px solid rgba(255, 255, 255, 0.15)" }}
-        title="Reliance Industries"
-      >
-        <RelianceLogoSvg />
-      </div>
-    );
-  }
-
-  // 5. Tata / TCS / Tata Motors
-  if (lower.includes("tata") || lower.includes("tcs")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#004c97", border: "1px solid rgba(255, 255, 255, 0.18)" }}
-        title="Tata Group"
-      >
-        <TataLogoSvg />
-      </div>
-    );
-  }
-
-  // 6. HDFC Bank
-  if (lower.includes("hdfc")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#004c8f", border: "1px solid rgba(255, 255, 255, 0.2)" }}
-        title="HDFC Bank"
-      >
-        <HdfcLogoSvg />
-      </div>
-    );
-  }
-
-  // 7. ICICI Bank
-  if (lower.includes("icici")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#8b1d24", border: "1px solid rgba(243, 112, 33, 0.3)" }}
-        title="ICICI Bank"
-      >
-        <IciciLogoSvg />
-      </div>
-    );
-  }
-
-  // 8. Google / Alphabet
-  if (lower.includes("google") || lower.includes("alphabet") || t === "googl" || t === "goog") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#1a1b24", border: "1px solid rgba(255, 255, 255, 0.15)" }}
-        title="Alphabet Google"
-      >
-        <GoogleLogoSvg />
-      </div>
-    );
-  }
-
-  // 9. Microsoft
-  if (lower.includes("microsoft") || t === "msft") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#161722", border: "1px solid rgba(255, 255, 255, 0.15)" }}
-        title="Microsoft Corporation"
-      >
-        <MicrosoftLogoSvg />
-      </div>
-    );
-  }
-
-  // 10. Nvidia
-  if (lower.includes("nvidia") || t === "nvda") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{
-          background: "#091209",
-          border: "1px solid rgba(118, 185, 0, 0.35)",
-          boxShadow: "0 0 12px rgba(118, 185, 0, 0.2)",
-        }}
-        title="NVIDIA Corporation"
-      >
-        <NvidiaLogoSvg />
-      </div>
-    );
-  }
-
-  // 11. Tesla
-  if (lower.includes("tesla") || t === "tsla") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{
-          background: "#140a0b",
-          border: "1px solid rgba(232, 33, 39, 0.35)",
-          boxShadow: "0 0 12px rgba(232, 33, 39, 0.2)",
-        }}
-        title="Tesla Inc."
-      >
-        <TeslaLogoSvg />
-      </div>
-    );
-  }
-
-  // 12. Amazon
-  if (lower.includes("amazon") || t === "amzn") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#161722", border: "1px solid rgba(255, 153, 0, 0.3)" }}
-        title="Amazon.com Inc."
-      >
-        <AmazonLogoSvg />
-      </div>
-    );
-  }
-
-  // 13. Parag Parikh (PPFAS)
-  if (lower.includes("parag parikh") || lower.includes("ppfas")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#0b2341", border: "1px solid rgba(37, 117, 252, 0.3)" }}
-        title="PPFAS Mutual Fund"
-      >
-        <PpfasLogoSvg />
-      </div>
-    );
-  }
-
-  // 14. Crypto
-  if (category === "Crypto" || lower.includes("bitcoin") || t === "btc") {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#1d1406", border: "1px solid rgba(247, 147, 26, 0.35)" }}
-        title="Bitcoin / Crypto"
-      >
-        <BitcoinLogoSvg />
-      </div>
-    );
-  }
-
-  // 15. Gold & Fixed Income
-  if (category === "Gold & Fixed Income" || lower.includes("gold") || lower.includes("sovereign")) {
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{ background: "#1b160a", border: "1px solid rgba(255, 215, 0, 0.35)" }}
-        title="Gold Bullion"
-      >
-        <GoldLogoSvg />
-      </div>
-    );
-  }
-
-  // 16. Dynamic real company favicon lookup
-  const domain = getCompanyDomain(name, ticker);
-  if (domain && !imgError) {
-    const logoUrl = `https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${domain}&size=128`;
-    return (
-      <div
-        className="stock-logo-circle"
-        style={{
-          background: "#15161e",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.4)",
-        }}
-      >
-        <img
-          src={logoUrl}
-          alt={name}
-          className="stock-logo-img"
-          onError={() => setImgError(true)}
-          style={{ width: "24px", height: "24px", objectFit: "contain", borderRadius: "4px" }}
-        />
-      </div>
-    );
-  }
-
-  // 17. High quality fallback: Monogram with tailored HSL palette
-  const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const hue = hash % 360;
-  const initials = ticker.slice(0, 3).toUpperCase() || name.slice(0, 2).toUpperCase();
-
-  return (
-    <div
-      className="stock-logo-circle"
-      style={{
-        background: `hsl(${hue}, 40%, 18%)`,
-        border: `1px solid hsl(${hue}, 50%, 32%)`,
-        color: `hsl(${hue}, 90%, 85%)`,
-      }}
-    >
-      <span>{initials}</span>
-    </div>
-  );
-}
-
-function getStockDayChange(item: AssetPosition): { pct: number; isUp: boolean } {
-  if (item.name.toLowerCase().includes("jio")) {
-    return { pct: 0.68, isUp: true };
-  }
-  if (item.name.toLowerCase().includes("sbi")) {
-    return { pct: 0.63, isUp: true };
-  }
-  const hash = item.name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const diff = ((hash % 240) - 80) / 100;
-  return {
-    pct: Math.abs(diff),
-    isUp: diff >= 0,
-  };
-}
-
 export default function Home() {
   const [active, setActive] = useState("Overview");
   const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+
   const [modal, setModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<EditAssetForm | null>(null);
   const [deletingAsset, setDeletingAsset] = useState<AssetPosition | null>(null);
   const [flashAssetId, setFlashAssetId] = useState<string | null>(null);
   const [dbModal, setDbModal] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
+
   const [assets, setAssets] = useState<AssetPosition[]>([]);
   const [unsavedAssetIds, setUnsavedAssetIds] = useState<Set<string>>(new Set());
   const [isSavingPrices, setIsSavingPrices] = useState(false);
   const dbBaselinePricesRef = useRef<Map<string, number>>(new Map());
+
   const [syncStatus, setSyncStatus] = useState<"live" | "connecting" | "offline">(
     isSupabaseConfigured ? "connecting" : "offline"
   );
@@ -696,6 +497,7 @@ export default function Home() {
   const [priceRefreshMessage, setPriceRefreshMessage] = useState("");
   const autoPriceRequestRef = useRef(0);
   const skipNextAutoPriceLookupRef = useRef(false);
+
   const [sortField, setSortField] = useState<"name" | "price" | "invested" | "value" | "pnl">("pnl");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -752,10 +554,9 @@ export default function Home() {
     };
   }, []);
 
-  // iOS Toggle: Display Rupee (₹) for US Dollar holdings
+  // Display Rupee (₹) for US Dollar holdings
   const [showUsdInRupees, setShowUsdInRupees] = useState<boolean>(true);
 
-  // Load user currency display preference from localStorage on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem("mywealth_show_usd_in_rupees");
@@ -775,7 +576,7 @@ export default function Home() {
     });
   };
 
-  // Add Form states (Holdings are automatically calculated from Invested Amount ÷ Buy Price)
+  // Add Form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState<AssetCategory>("Indian Equities");
   const [investedAmount, setInvestedAmount] = useState("");
@@ -784,7 +585,7 @@ export default function Home() {
   const [currentValue, setCurrentValue] = useState("");
   const [currency, setCurrency] = useState<"INR" | "USD">("INR");
 
-  // Supabase PostgreSQL Realtime Sync Effect (Insert, Update, Delete)
+  // Supabase PostgreSQL Realtime Sync Effect
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       setSyncStatus("offline");
@@ -794,7 +595,6 @@ export default function Home() {
 
     let isMounted = true;
 
-    // 1. Initial Fetch from PostgreSQL
     async function loadAssets() {
       setSyncStatus("connecting");
       setIsLoading(true);
@@ -833,7 +633,6 @@ export default function Home() {
 
     loadAssets();
 
-    // 2. Realtime WebSocket Channel on assets table
     const channel = supabase
       .channel("mywealth-live-sync")
       .on(
@@ -953,16 +752,16 @@ export default function Home() {
   const totalPnlINR = totalCurrentINR - totalInvestedINR;
   const totalReturnPct = totalInvestedINR > 0 ? (totalPnlINR / totalInvestedINR) * 100 : 0;
 
-  // Minimized allocation values
+  // Asset class distributions
   const indianVal = assets.filter((a) => a.category === "Indian Equities").reduce((s, a) => s + a.quantity * a.currentPrice, 0);
   const usVal = assets.filter((a) => a.category === "US Stocks").reduce((s, a) => s + a.quantity * a.currentPrice, 0) * usdInrRate;
   const mfVal = assets.filter((a) => a.category === "Mutual Funds").reduce((s, a) => s + a.quantity * a.currentPrice, 0);
   const goldVal = assets.filter((a) => a.category === "Gold & Fixed Income").reduce((s, a) => s + a.quantity * a.currentPrice, 0);
 
-  const pctIndian = totalCurrentINR > 0 ? Number(((indianVal / totalCurrentINR) * 100).toFixed(0)) : 0;
-  const pctUS = totalCurrentINR > 0 ? Number(((usVal / totalCurrentINR) * 100).toFixed(0)) : 0;
-  const pctMF = totalCurrentINR > 0 ? Number(((mfVal / totalCurrentINR) * 100).toFixed(0)) : 0;
-  const pctGold = totalCurrentINR > 0 ? Number(((goldVal / totalCurrentINR) * 100).toFixed(0)) : 0;
+  const pctIndian = totalCurrentINR > 0 ? Number(((indianVal / totalCurrentINR) * 100).toFixed(1)) : 0;
+  const pctUS = totalCurrentINR > 0 ? Number(((usVal / totalCurrentINR) * 100).toFixed(1)) : 0;
+  const pctMF = totalCurrentINR > 0 ? Number(((mfVal / totalCurrentINR) * 100).toFixed(1)) : 0;
+  const pctGold = totalCurrentINR > 0 ? Number(((goldVal / totalCurrentINR) * 100).toFixed(1)) : 0;
 
   const money = (val: number, cur: "INR" | "USD" = "INR") => {
     if (cur === "USD") {
@@ -1131,7 +930,7 @@ export default function Home() {
       const updatedLabel = `${updates.length} ${updates.length === 1 ? "holding" : "holdings"} updated in real time`;
       const unavailableLabel = unavailableCount > 0 ? ` · ${unavailableCount} unavailable` : "";
       const currencyLabel = currencyMismatchCount > 0 ? ` · ${currencyMismatchCount} currency mismatch${currencyMismatchCount === 1 ? "" : "es"} skipped` : "";
-      setPriceRefreshMessage(`${updatedLabel}${unavailableLabel}${currencyLabel} · Not saved to DB yet`);
+      setPriceRefreshMessage(`${updatedLabel}${unavailableLabel}${currencyLabel} · Live session preview`);
     } catch (error) {
       console.error("Portfolio price refresh failed:", error);
       setPriceRefreshMessage("Could not refresh prices. Try again.");
@@ -1140,7 +939,7 @@ export default function Home() {
     }
   }
 
-  // Explicitly Save Refreshed Prices to PostgreSQL Database
+  // Save Refreshed Prices to Database
   async function handleSavePricesToDb() {
     if (isSavingPrices || unsavedAssetIds.size === 0) return;
     setIsSavingPrices(true);
@@ -1181,7 +980,6 @@ export default function Home() {
     setTimeout(() => setPriceRefreshMessage(""), 4000);
   }
 
-  // Open Edit Asset Modal with pre-filled invested amount (Holdings are computed automatically)
   function startEditing(asset: AssetPosition) {
     const totalInvested = asset.quantity * asset.buyPrice;
     const totalCurrent = asset.quantity * asset.currentPrice;
@@ -1197,14 +995,13 @@ export default function Home() {
     });
   }
 
-  // Real-time Insert Asset (Holdings calculated automatically from invested amount ÷ stock price)
+  // Insert Asset
   async function handleAddAsset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const inv = Number(investedAmount);
     let bp = Number(buyPrice);
     if (!inv || !bp || bp <= 0) return;
 
-    // Automatically compute holdings
     let q = inv / bp;
     let cp = bp;
     const cv = Number(currentValue);
@@ -1220,7 +1017,6 @@ export default function Home() {
       cp = cv / q;
     }
 
-    // Check if the stock or MF was added before
     const existing = assets.find(
       (a) =>
         a.name.trim().toLowerCase() === name.trim().toLowerCase() &&
@@ -1228,14 +1024,12 @@ export default function Home() {
     );
 
     if (existing) {
-      // Stock or MF was added before: ADD to its holdings and current value!
       const existingInvested = existing.quantity * existing.buyPrice;
       const totalMergedInvested = existingInvested + inv;
       const totalMergedQty = existing.quantity + q;
       const newAvgBuyPrice = totalMergedInvested / totalMergedQty;
       const newCurrentPrice = cp;
 
-      // Optimistic update
       setAssets((prev) =>
         prev.map((a) =>
           a.id === existing.id
@@ -1296,7 +1090,6 @@ export default function Home() {
       date: new Date().toISOString().split("T")[0],
     };
 
-    // Optimistic UI update + trigger highlight pulse
     setAssets((prev) => [newAsset, ...prev]);
     setFlashAssetId(tempId);
     setTimeout(() => setFlashAssetId(null), 2000);
@@ -1307,7 +1100,6 @@ export default function Home() {
     setCurrentValue("");
     setModal(false);
 
-    // Write to PostgreSQL
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -1341,7 +1133,7 @@ export default function Home() {
     }
   }
 
-  // Real-time Update Asset (Holdings calculated automatically from invested amount ÷ stock price)
+  // Update Asset
   async function handleUpdateAsset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editingAsset) return;
@@ -1350,7 +1142,6 @@ export default function Home() {
     let bp = Number(editingAsset.buyPrice);
     if (!inv || !bp || bp <= 0) return;
 
-    // Automatically compute holdings
     let q = inv / bp;
     let cp = bp;
     const cv = Number(editingAsset.currentValue);
@@ -1377,7 +1168,6 @@ export default function Home() {
       date: new Date().toISOString().split("T")[0],
     };
 
-    // Optimistic UI update + highlight pulse
     dbBaselinePricesRef.current.set(updated.id, updated.currentPrice);
     setUnsavedAssetIds((prev) => {
       if (!prev.has(updated.id)) return prev;
@@ -1390,7 +1180,6 @@ export default function Home() {
     setTimeout(() => setFlashAssetId(null), 2000);
     setEditingAsset(null);
 
-    // Write to PostgreSQL in real time
     if (isSupabaseConfigured && supabase && !updated.id.startsWith("temp-")) {
       try {
         const { error } = await supabase
@@ -1414,13 +1203,12 @@ export default function Home() {
     }
   }
 
-  // Real-time Delete Asset execution
+  // Delete Asset
   async function confirmDeleteAsset() {
     if (!deletingAsset) return;
     const targetId = deletingAsset.id;
     setDeletingAsset(null);
 
-    // Optimistic UI delete
     dbBaselinePricesRef.current.delete(targetId);
     setUnsavedAssetIds((prev) => {
       if (!prev.has(targetId)) return prev;
@@ -1430,7 +1218,6 @@ export default function Home() {
     });
     setAssets((prev) => prev.filter((a) => a.id !== targetId));
 
-    // Delete in PostgreSQL in real time
     if (isSupabaseConfigured && supabase && !targetId.startsWith("temp-")) {
       try {
         const { error } = await supabase.from("assets").delete().eq("id", targetId);
@@ -1443,14 +1230,38 @@ export default function Home() {
     }
   }
 
-
   // Filtered lists
-  const equities = assets.filter((a) => a.category === "Indian Equities" || a.category === "US Stocks");
-  const mutualFunds = assets.filter((a) => a.category === "Mutual Funds");
+  const equities = useMemo(
+    () => assets.filter((a) => a.category === "Indian Equities" || a.category === "US Stocks"),
+    [assets]
+  );
+  const mutualFunds = useMemo(
+    () => assets.filter((a) => a.category === "Mutual Funds"),
+    [assets]
+  );
 
-  const sortedAssets = sortAssetList(assets);
-  const sortedEquities = sortAssetList(equities);
-  const sortedMutualFunds = sortAssetList(mutualFunds);
+  // Active view list with search filter
+  const currentCategoryList = useMemo(() => {
+    if (active === "Equities") return equities;
+    if (active === "Mutual Funds") return mutualFunds;
+    if (overviewSubTab === "stocks") return equities;
+    if (overviewSubTab === "mf") return mutualFunds;
+    return assets;
+  }, [active, overviewSubTab, equities, mutualFunds, assets]);
+
+  const displayedAssets = useMemo(() => {
+    let list = currentCategoryList;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.name.toLowerCase().includes(q) ||
+          getStockTicker(a.name).toLowerCase().includes(q) ||
+          a.category.toLowerCase().includes(q)
+      );
+    }
+    return sortAssetList(list);
+  }, [currentCategoryList, searchQuery, sortField, sortOrder]);
 
   // Sub-totals for Stocks vs Mutual Funds
   const stocksInvested = equities.reduce((acc, a) => acc + (a.currency === "USD" ? a.quantity * a.buyPrice * usdInrRate : a.quantity * a.buyPrice), 0);
@@ -1464,1041 +1275,743 @@ export default function Home() {
   const mfPnlPct = mfInvested > 0 ? (mfPnl / mfInvested) * 100 : 0;
 
   return (
-    <main className="app-shell">
-      {/* Top Header */}
-      <header className="topbar">
-        <div className="topbar-left">
-          <div className="brand" onClick={() => setActive("Overview")}>
-            <div className="brand-icon">↗</div>
-            <span>
-              My<span style={{ color: "var(--apple-blue)" }}>Wealth</span>
-            </span>
-          </div>
-
-          <div className="topbar-divider" />
-
-          <div className="workspace-badge">
-            <span className="workspace-dot" />
-            <span>Portfolio</span>
-            <span className="breadcrumb-slash">/</span>
-            <span className="breadcrumb-active">{active}</span>
-          </div>
+    <main className="apple-canvas">
+      {/* 1. Apple Floating Glass Island Header */}
+      <header className="apple-island-header">
+        {/* Brand & Status */}
+        <div className="apple-brand-wrap" onClick={() => setActive("Overview")}>
+          <div className="apple-brand-icon">↗</div>
+          <span className="apple-brand-title">
+            My<span>Wealth</span>
+          </span>
+          <span className={`apple-header-status-pill ${syncStatus}`}>
+            <span className="apple-pulse-dot" />
+            {syncStatus === "live" ? "Synced" : syncStatus === "connecting" ? "Connecting" : "Local"}
+          </span>
         </div>
 
-        <div className="topbar-right">
-          <div className="profile-avatar" title="Account profile">
-            <User size={15} />
-          </div>
+        {/* Center: Apple Segmented Pill Switcher */}
+        <nav className="apple-segmented-nav" aria-label="Main Navigation">
+          {navigation.map(({ name, icon: Icon }) => {
+            const isTabActive = active === name;
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => {
+                  setActive(name);
+                  if (name === "Equities") setOverviewSubTab("stocks");
+                  else if (name === "Mutual Funds") setOverviewSubTab("mf");
+                  else setOverviewSubTab("all");
+                }}
+                className={`apple-nav-pill ${isTabActive ? "active" : ""}`}
+              >
+                <Icon size={14} strokeWidth={isTabActive ? 2.4 : 1.8} />
+                <span>{name}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Right: Currency Toggle + Add Investment Button + DB Setup */}
+        <div className="apple-header-right">
+          <IosCurrencyToggle
+            checked={showUsdInRupees}
+            onToggle={toggleUsdInRupees}
+            rate={usdInrRate}
+          />
+          <button
+            type="button"
+            className="apple-add-btn"
+            onClick={() => setModal(true)}
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            <span>Add Asset</span>
+          </button>
+          <button
+            type="button"
+            className="apple-circle-icon-btn"
+            title="PostgreSQL Configuration"
+            onClick={() => setDbModal(true)}
+          >
+            <Database size={15} />
+          </button>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <section className="main-area">
-        <aside className="sidebar" aria-label="Portfolio navigation">
-          <div className="sidebar-section-label">WORKSPACE</div>
-          <nav className="sidebar-navigation" aria-label="Main navigation">
-            {navigation.map(({ name, icon: Icon }) => {
-              const isActive = active === name;
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => setActive(name)}
-                  className={`sidebar-link ${isActive ? "active" : ""}`}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
-                  <span>{name}</span>
-                </button>
-              );
-            })}
-          </nav>
-          <div className="sidebar-divider" />
-          <button type="button" className="sidebar-add-button" onClick={() => setModal(true)}>
-            <span className="sidebar-add-icon"><Plus size={16} strokeWidth={2.5} /></span>
-            <span>Add investment</span>
-          </button>
-          <div className="sidebar-footer">
-            <span className={`sidebar-status-dot ${syncStatus}`} />
-            <span>{syncStatus === "live" ? "Data synced" : syncStatus === "connecting" ? "Connecting" : "Local mode"}</span>
-          </div>
-        </aside>
-        <div className="page-content">
-          {/* Page Heading */}
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">PORTFOLIO TRACKER</div>
-              <h1>
-                {active === "Overview" && "Your wealth, in focus."}
-                {active === "Equities" && "Equities & Stocks"}
-                {active === "Mutual Funds" && "Mutual Funds & SIPs"}
-              </h1>
-              <p className="page-description">
-                {active === "Overview" && "A unified view of your net worth, returns, and real-time asset allocation."}
-                {active === "Equities" && "Direct shares held across Indian and US stock markets."}
-                {active === "Mutual Funds" && "Active mutual fund schemes, index portfolios, and systematic investments."}
-              </p>
+      {/* 2. Apple Dynamic Island (Floating Session Live Prices Notification) */}
+      {unsavedAssetIds.size > 0 && (
+        <div className="apple-dynamic-island">
+          <div className="apple-island-left">
+            <div className="apple-island-sparkle-orb">
+              <Sparkles size={15} />
             </div>
-            <div className="price-refresh-control">
-              <div className="price-refresh-buttons-row">
+            <div className="apple-island-text">
+              <strong>Live Market Prices Active ({unsavedAssetIds.size} {unsavedAssetIds.size === 1 ? "holding" : "holdings"} updated)</strong>
+              <p>Session preview only — not saved to PostgreSQL database yet.</p>
+            </div>
+          </div>
+          <div className="apple-island-actions">
+            <button
+              type="button"
+              className="apple-island-save-btn"
+              onClick={handleSavePricesToDb}
+              disabled={isSavingPrices}
+            >
+              {isSavingPrices ? <RefreshCw size={13} className="refresh-spinning" /> : <Save size={13} />}
+              <span>{isSavingPrices ? "Saving…" : "Save to DB"}</span>
+            </button>
+            <button
+              type="button"
+              className="apple-island-revert-btn"
+              onClick={handleDiscardRefreshedPrices}
+              disabled={isSavingPrices}
+            >
+              <RotateCcw size={12} />
+              <span>Revert</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Main Stage */}
+      <section className="apple-content-stage">
+        {/* OVERVIEW BENTO HERO STAGE */}
+        {active === "Overview" && (
+          <div className="apple-bento-hero">
+            {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
+            <div className="apple-wallet-hero">
+              <div className="apple-wallet-header">
+                <div className="apple-eyebrow-row">
+                  <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
+                  <span className="apple-header-status-pill" style={{ padding: "2px 8px" }}>
+                    <span className="apple-pulse-dot" />
+                    Real-time
+                  </span>
+                </div>
                 <button
                   type="button"
-                  className="price-refresh-button"
+                  className="apple-hero-refresh-btn"
                   onClick={handleRefreshPrices}
                   disabled={isRefreshingPrices || assets.length === 0}
-                  title="Refresh live market prices and recalculate portfolio values in real time"
+                  title="Fetch live market quotes for all holdings"
                 >
                   <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
-                  {isRefreshingPrices ? "Refreshing…" : "Refresh prices"}
+                  <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
                 </button>
-
-                {unsavedAssetIds.size > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      className="save-db-button"
-                      onClick={handleSavePricesToDb}
-                      disabled={isSavingPrices}
-                      title="Save these live market prices to the PostgreSQL database"
-                    >
-                      {isSavingPrices ? <RefreshCw size={13} className="refresh-spinning" /> : <Save size={13} />}
-                      {isSavingPrices ? "Saving…" : "Save to DB"}
-                    </button>
-                    <button
-                      type="button"
-                      className="discard-db-button"
-                      onClick={handleDiscardRefreshedPrices}
-                      disabled={isSavingPrices}
-                      title="Discard live rates and revert back to saved database prices"
-                    >
-                      <RotateCcw size={12} />
-                      Discard
-                    </button>
-                  </>
-                )}
               </div>
-              {priceRefreshMessage && (
-                <span className={`price-refresh-message ${unsavedAssetIds.size > 0 ? "has-unsaved" : ""}`} role="status">
-                  {priceRefreshMessage}
+
+              <div className="apple-hero-main-val">
+                <span className="apple-hero-val-text">{money(totalCurrentINR)}</span>
+              </div>
+
+              <div className="apple-hero-return-row">
+                <div className={`apple-hero-return-badge ${totalPnlINR >= 0 ? "positive" : "negative"}`}>
+                  {totalPnlINR >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                  <span>
+                    {totalPnlINR >= 0 ? `+${money(totalPnlINR)}` : money(totalPnlINR)}
+                    {" "}
+                    ({totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(2)}%` : `${totalReturnPct.toFixed(2)}%`}) All-Time Gain
+                  </span>
+                </div>
+                <span className="apple-hero-caption">
+                  {priceRefreshMessage || "Live valuations synced with market"}
                 </span>
-              )}
+              </div>
+
+              <div className="apple-hero-stat-chips">
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Total Invested</span>
+                  <span className="apple-stat-chip-val">{money(totalInvestedINR)}</span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Active Holdings</span>
+                  <span className="apple-stat-chip-val">{assets.length} Assets</span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">US Exposure</span>
+                  <span className="apple-stat-chip-val">${(usVal / usdInrRate).toFixed(2)} USD</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bento Card 2: Apple Spectrum Allocation Visualizer */}
+            <div className="apple-allocation-card">
+              <div className="apple-alloc-header">
+                <div>
+                  <h3 className="apple-alloc-title">Asset Allocation</h3>
+                  <p className="apple-alloc-sub">Multi-class portfolio distribution</p>
+                </div>
+                <span className="apple-alloc-badge">{assets.length} Positions</span>
+              </div>
+
+              {/* Multi-segment Spectrum Bar */}
+              <div className="apple-spectrum-bar-wrap">
+                <div className="apple-spectrum-bar">
+                  {pctIndian > 0 && (
+                    <div
+                      className="apple-spectrum-segment seg-indian"
+                      style={{ width: `${pctIndian}%` }}
+                      title={`Indian Equities: ${pctIndian}%`}
+                    />
+                  )}
+                  {pctMF > 0 && (
+                    <div
+                      className="apple-spectrum-segment seg-mf"
+                      style={{ width: `${pctMF}%` }}
+                      title={`Mutual Funds: ${pctMF}%`}
+                    />
+                  )}
+                  {pctUS > 0 && (
+                    <div
+                      className="apple-spectrum-segment seg-us"
+                      style={{ width: `${pctUS}%` }}
+                      title={`US Stocks: ${pctUS}%`}
+                    />
+                  )}
+                  {pctGold > 0 && (
+                    <div
+                      className="apple-spectrum-segment seg-gold"
+                      style={{ width: `${pctGold}%` }}
+                      title={`Gold & Fixed: ${pctGold}%`}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Allocation List Items */}
+              <div className="apple-alloc-rows">
+                <div className="apple-alloc-item" onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}>
+                  <div className="apple-alloc-item-left">
+                    <span className="apple-alloc-dot dot-indian" />
+                    <div>
+                      <span className="apple-alloc-name">Indian Equities</span>
+                      <span className="apple-alloc-pct">{pctIndian}% of total</span>
+                    </div>
+                  </div>
+                  <span className="apple-alloc-val">{money(indianVal)}</span>
+                </div>
+
+                <div className="apple-alloc-item" onClick={() => { setActive("Mutual Funds"); setOverviewSubTab("mf"); }}>
+                  <div className="apple-alloc-item-left">
+                    <span className="apple-alloc-dot dot-mf" />
+                    <div>
+                      <span className="apple-alloc-name">Mutual Funds</span>
+                      <span className="apple-alloc-pct">{pctMF}% of total</span>
+                    </div>
+                  </div>
+                  <span className="apple-alloc-val">{money(mfVal)}</span>
+                </div>
+
+                <div className="apple-alloc-item" onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}>
+                  <div className="apple-alloc-item-left">
+                    <span className="apple-alloc-dot dot-us" />
+                    <div>
+                      <span className="apple-alloc-name">US Equities</span>
+                      <span className="apple-alloc-pct">{pctUS}% of total</span>
+                    </div>
+                  </div>
+                  <span className="apple-alloc-val">{money(usVal)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* EQUITIES TAB HERO */}
+        {active === "Equities" && (
+          <div className="apple-bento-hero">
+            <div className="apple-wallet-hero">
+              <div className="apple-wallet-header">
+                <span className="apple-hero-eyebrow">EQUITIES & STOCKS PORTFOLIO</span>
+                <button
+                  type="button"
+                  className="apple-hero-refresh-btn"
+                  onClick={handleRefreshPrices}
+                  disabled={isRefreshingPrices || equities.length === 0}
+                >
+                  <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
+                  <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
+                </button>
+              </div>
+
+              <div className="apple-hero-main-val">
+                <span className="apple-hero-val-text">{money(stocksCurrent)}</span>
+              </div>
+
+              <div className="apple-hero-return-row">
+                <div className={`apple-hero-return-badge ${stocksPnl >= 0 ? "positive" : "negative"}`}>
+                  {stocksPnl >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                  <span>
+                    {stocksPnl >= 0 ? `+${money(stocksPnl)}` : money(stocksPnl)}
+                    {" "}
+                    ({stocksPnlPct >= 0 ? `+${stocksPnlPct.toFixed(2)}%` : `${stocksPnlPct.toFixed(2)}%`}) Gain
+                  </span>
+                </div>
+                <span className="apple-hero-caption">
+                  Invested: {money(stocksInvested)}
+                </span>
+              </div>
+
+              <div className="apple-hero-stat-chips">
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Stock Holdings</span>
+                  <span className="apple-stat-chip-val">{equities.length} Companies</span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Indian Stocks</span>
+                  <span className="apple-stat-chip-val">{assets.filter((a) => a.category === "Indian Equities").length}</span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">US Stocks</span>
+                  <span className="apple-stat-chip-val">{assets.filter((a) => a.category === "US Stocks").length} (${(usVal / usdInrRate).toFixed(2)})</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="apple-allocation-card">
+              <div className="apple-alloc-header">
+                <div>
+                  <h3 className="apple-alloc-title">Equities Diversification</h3>
+                  <p className="apple-alloc-sub">Market exposure</p>
+                </div>
+              </div>
+              <div className="apple-alloc-rows" style={{ marginTop: "12px" }}>
+                <div className="apple-alloc-item">
+                  <div className="apple-alloc-item-left">
+                    <span className="apple-alloc-dot dot-indian" />
+                    <div>
+                      <span className="apple-alloc-name">NSE / BSE Equities</span>
+                      <span className="apple-alloc-pct">{stocksCurrent > 0 ? ((indianVal / stocksCurrent) * 100).toFixed(1) : 0}% of equity</span>
+                    </div>
+                  </div>
+                  <span className="apple-alloc-val">{money(indianVal)}</span>
+                </div>
+                <div className="apple-alloc-item">
+                  <div className="apple-alloc-item-left">
+                    <span className="apple-alloc-dot dot-us" />
+                    <div>
+                      <span className="apple-alloc-name">NASDAQ / NYSE Equities</span>
+                      <span className="apple-alloc-pct">{stocksCurrent > 0 ? ((usVal / stocksCurrent) * 100).toFixed(1) : 0}% of equity</span>
+                    </div>
+                  </div>
+                  <span className="apple-alloc-val">{money(usVal)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MUTUAL FUNDS TAB HERO */}
+        {active === "Mutual Funds" && (
+          <div className="apple-bento-hero">
+            <div className="apple-wallet-hero">
+              <div className="apple-wallet-header">
+                <span className="apple-hero-eyebrow">MUTUAL FUNDS & SIPS</span>
+                <button
+                  type="button"
+                  className="apple-hero-refresh-btn"
+                  onClick={handleRefreshPrices}
+                  disabled={isRefreshingPrices || mutualFunds.length === 0}
+                >
+                  <RefreshCw size={13} className={isRefreshingPrices ? "refresh-spinning" : ""} />
+                  <span>{isRefreshingPrices ? "Updating…" : "Refresh Prices"}</span>
+                </button>
+              </div>
+
+              <div className="apple-hero-main-val">
+                <span className="apple-hero-val-text">{money(mfCurrent)}</span>
+              </div>
+
+              <div className="apple-hero-return-row">
+                <div className={`apple-hero-return-badge ${mfPnl >= 0 ? "positive" : "negative"}`}>
+                  {mfPnl >= 0 ? <TrendingUp size={15} /> : <TrendingDown size={15} />}
+                  <span>
+                    {mfPnl >= 0 ? `+${money(mfPnl)}` : money(mfPnl)}
+                    {" "}
+                    ({mfPnlPct >= 0 ? `+${mfPnlPct.toFixed(2)}%` : `${mfPnlPct.toFixed(2)}%`}) NAV Gain
+                  </span>
+                </div>
+                <span className="apple-hero-caption">
+                  Invested: {money(mfInvested)}
+                </span>
+              </div>
+
+              <div className="apple-hero-stat-chips">
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Schemes Tracked</span>
+                  <span className="apple-stat-chip-val">{mutualFunds.length} Funds</span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Portfolio Share</span>
+                  <span className="apple-stat-chip-val">{pctMF}% of Net Worth</span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Total Units</span>
+                  <span className="apple-stat-chip-val">{mutualFunds.reduce((s, a) => s + a.quantity, 0).toFixed(2)} units</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="apple-allocation-card">
+              <div className="apple-alloc-header">
+                <div>
+                  <h3 className="apple-alloc-title">Fund Schemes</h3>
+                  <p className="apple-alloc-sub">Active mutual fund holdings</p>
+                </div>
+              </div>
+              <div className="apple-alloc-rows" style={{ marginTop: "12px" }}>
+                {mutualFunds.map((mf) => (
+                  <div key={mf.id} className="apple-alloc-item">
+                    <div className="apple-alloc-item-left">
+                      <span className="apple-alloc-dot dot-mf" />
+                      <div>
+                        <span className="apple-alloc-name">{mf.name}</span>
+                        <span className="apple-alloc-pct">{mf.quantity.toFixed(2)} units @ NAV ₹{mf.currentPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <span className="apple-alloc-val">{money(mf.quantity * mf.currentPrice)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. APPLE HOLDINGS SECTION */}
+        <section className="apple-holdings-section">
+          {/* Section Toolbar */}
+          <div className="apple-holdings-toolbar">
+            <div className="apple-filter-group">
+              <button
+                type="button"
+                className={`apple-filter-pill ${overviewSubTab === "all" && active === "Overview" ? "active" : ""}`}
+                onClick={() => { setActive("Overview"); setOverviewSubTab("all"); }}
+              >
+                <LayoutDashboard size={13} />
+                <span>All Assets ({assets.length})</span>
+              </button>
+              <button
+                type="button"
+                className={`apple-filter-pill ${(overviewSubTab === "stocks" || active === "Equities") ? "active" : ""}`}
+                onClick={() => { setActive("Equities"); setOverviewSubTab("stocks"); }}
+              >
+                <ChartNoAxesCombined size={13} />
+                <span>Stocks ({equities.length})</span>
+              </button>
+              <button
+                type="button"
+                className={`apple-filter-pill ${(overviewSubTab === "mf" || active === "Mutual Funds") ? "active" : ""}`}
+                onClick={() => { setActive("Mutual Funds"); setOverviewSubTab("mf"); }}
+              >
+                <Wallet size={13} />
+                <span>Mutual Funds ({mutualFunds.length})</span>
+              </button>
+            </div>
+
+            <div className="apple-toolbar-right">
+              {/* Instant Search Bar */}
+              <div className="apple-search-wrap">
+                <Search size={14} className="apple-search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search assets or tickers…"
+                  className="apple-search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              {/* View Switcher: Apple Cards vs Apple Table */}
+              <div className="apple-view-toggle">
+                <button
+                  type="button"
+                  className={`apple-view-btn ${viewMode === "cards" ? "active" : ""}`}
+                  onClick={() => setViewMode("cards")}
+                  title="Apple Stocks Cards View"
+                >
+                  <Layers size={13} />
+                  <span>Cards</span>
+                </button>
+                <button
+                  type="button"
+                  className={`apple-view-btn ${viewMode === "table" ? "active" : ""}`}
+                  onClick={() => setViewMode("table")}
+                  title="Spreadsheet Table View"
+                >
+                  <TableProperties size={13} />
+                  <span>Table</span>
+                </button>
+              </div>
+
+              {/* Quick Sort Selector */}
+              <button
+                type="button"
+                className="apple-filter-pill"
+                onClick={() => handleSort("pnl")}
+                title="Toggle Sort by Return"
+              >
+                <ArrowUpDown size={12} />
+                <span>Sort: {sortField.toUpperCase()} ({sortOrder})</span>
+              </button>
             </div>
           </div>
 
-          {/* Live Unsaved Prices Session Banner */}
-          {unsavedAssetIds.size > 0 && (
-            <div className="live-unsaved-banner">
-              <div className="live-unsaved-banner-left">
-                <div className="live-unsaved-icon-wrap">
-                  <Sparkles size={16} />
-                </div>
-                <div>
-                  <strong>Live market prices active ({unsavedAssetIds.size} {unsavedAssetIds.size === 1 ? "holding" : "holdings"} updated in real time)</strong>
-                  <p>All values, totals, and returns are live in session preview. The database still has your previous prices until you save.</p>
-                </div>
-              </div>
-              <div className="live-unsaved-banner-actions">
-                <button
-                  type="button"
-                  className="save-db-button-lg"
-                  onClick={handleSavePricesToDb}
-                  disabled={isSavingPrices}
-                >
-                  {isSavingPrices ? <RefreshCw size={14} className="refresh-spinning" /> : <Save size={14} />}
-                  {isSavingPrices ? "Saving to database…" : "Save to Database"}
-                </button>
-                <button
-                  type="button"
-                  className="discard-db-button-lg"
-                  onClick={handleDiscardRefreshedPrices}
-                  disabled={isSavingPrices}
-                >
-                  <RotateCcw size={13} />
-                  Revert to DB
-                </button>
-              </div>
+          {/* Loading State */}
+          {isLoading ? (
+            <IosLoadingView title="Loading Positions" subtitle="Syncing with PostgreSQL..." />
+          ) : displayedAssets.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon"><ChartNoAxesCombined size={24} /></div>
+              <strong>No assets match your search</strong>
+              <p>Add a position or try clearing your search query.</p>
+              <button className="primary-button" onClick={() => setModal(true)}>
+                <Plus size={15} /> Add investment
+              </button>
             </div>
-          )}
+          ) : viewMode === "cards" ? (
+            /* APPLE STOCKS GLASS CARDS STACK */
+            <div className="apple-card-stack">
+              {displayedAssets.map((item) => {
+                const ticker = getStockTicker(item.name);
+                const isUnsaved = unsavedAssetIds.has(item.id);
+                const isFlashed = flashAssetId === item.id;
+                const investedVal = item.quantity * item.buyPrice;
+                const currentVal = item.quantity * item.currentPrice;
+                const pnl = currentVal - investedVal;
+                const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
 
-          {/* OVERVIEW TAB */}
-          {active === "Overview" && (
-            <>
-              {/* 4 Metric Cards */}
-              <div className="metric-grid">
-                <div className="metric-card">
-                  <div className="metric-top">
-                    <span>Portfolio value</span>
-                    <Wallet size={17} />
-                  </div>
-                  <div className="metric-value">{money(totalCurrentINR)}</div>
-                  <div className="metric-note">Total current valuation</div>
-                </div>
-
-                <div className="metric-card">
-                  <div className="metric-top">
-                    <span>Total invested</span>
-                    <CircleDollarSign size={17} />
-                  </div>
-                  <div className="metric-value">{money(totalInvestedINR)}</div>
-                  <div className="metric-note">Actual capital deployed</div>
-                </div>
-
-                <div className="metric-card">
-                  <div className="metric-top">
-                    <span>Total returns (P&L)</span>
-                    {totalPnlINR >= 0 ? <TrendingUp size={17} /> : <TrendingDown size={17} />}
-                  </div>
-                  <div className={`metric-value ${totalPnlINR >= 0 ? "positive" : ""}`} style={{ color: totalPnlINR < 0 ? "var(--rose)" : undefined }}>
-                    {totalPnlINR >= 0 ? `+${money(totalPnlINR)}` : money(totalPnlINR)}
-                  </div>
-                  <div className={`metric-note ${totalPnlINR >= 0 ? "positive" : ""}`} style={{ color: totalPnlINR < 0 ? "var(--rose)" : undefined }}>
-                    {totalReturnPct >= 0 ? `+${totalReturnPct.toFixed(2)}%` : `${totalReturnPct.toFixed(2)}%`} overall return
-                  </div>
-                </div>
-
-                <div className="metric-card">
-                  <div className="metric-top">
-                    <span>Active holdings</span>
-                    <ChartNoAxesCombined size={17} />
-                  </div>
-                  <div className="metric-value">{assets.length}</div>
-                  <div className="metric-note">Live in PostgreSQL</div>
-                </div>
-              </div>
-
-              {/* Filter Pills to switch between All Separated, Stocks Only, or MF Only */}
-              <div className="overview-filter-bar">
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                  <button
-                    type="button"
-                    className={`overview-filter-pill ${overviewSubTab === "all" ? "active" : ""}`}
-                    onClick={() => setOverviewSubTab("all")}
-                  >
-                    <LayoutDashboard size={13} />
-                    <span>All Assets ({assets.length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`overview-filter-pill ${overviewSubTab === "stocks" ? "active" : ""}`}
-                    onClick={() => setOverviewSubTab("stocks")}
-                  >
-                    <ChartNoAxesCombined size={13} />
-                    <span>Stocks ({equities.length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`overview-filter-pill ${overviewSubTab === "mf" ? "active" : ""}`}
-                    onClick={() => setOverviewSubTab("mf")}
-                  >
-                    <Wallet size={13} />
-                    <span>Mutual Funds ({mutualFunds.length})</span>
-                  </button>
-                </div>
-
-                <IosCurrencyToggle
-                  checked={showUsdInRupees}
-                  onToggle={toggleUsdInRupees}
-                  rate={usdInrRate}
-                />
-              </div>
-
-              {/* SECTION 1: STOCKS & DIRECT EQUITIES */}
-              {(overviewSubTab === "all" || overviewSubTab === "stocks") && (
-                <div className="panel holdings-panel" style={{ marginTop: "10px" }}>
-                  <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <ChartNoAxesCombined size={16} style={{ color: "var(--apple-blue)" }} />
-                        <h3 style={{ margin: 0 }}>Stocks & Direct Equities</h3>
-                      </div>
-                      <p>Shares held across Indian and US stock exchanges</p>
-                    </div>
-                    {equities.length > 0 && (
-                      <div className={`panel-summary-badge ${stocksPnl >= 0 ? "positive" : "negative"}`}>
-                        <span>{equities.length} {equities.length === 1 ? "Stock" : "Stocks"}</span>
-                        <span>•</span>
-                        <span>Valuation: {money(stocksCurrent)}</span>
-                        <span>•</span>
-                        <span>PnL: {stocksPnl >= 0 ? `+${money(stocksPnl)}` : money(stocksPnl)} ({stocksPnlPct >= 0 ? "+" : ""}{stocksPnlPct.toFixed(2)}%)</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {isLoading ? (
-                    <IosLoadingView title="Loading Stocks" subtitle="Connecting to PostgreSQL..." />
-                  ) : equities.length === 0 ? (
-                    <div className="empty-state">
-                      <div className="empty-icon"><ChartNoAxesCombined size={22} /></div>
-                      <strong>No stocks recorded yet</strong>
-                      <p>Add your first equity holding to track real-time stock valuation.</p>
-                      <button className="primary-button" onClick={() => { setCategory("Indian Equities"); setModal(true); }}>
-                        <Plus size={15} /> Add first stock
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th onClick={() => handleSort("name")} className="sortable-th col-name">
-                              <div className="th-content">
-                                <span>Company / Stock</span>
-                                <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("price")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Market Price</span>
-                                <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("invested")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Invested (Qty / Avg)</span>
-                                <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("value")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Current Value</span>
-                                <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Total PnL</span>
-                                <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th className="col-actions">
-                              <div className="th-content th-center">
-                                <span>Actions</span>
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sortedEquities.map((item) => {
-                            const invested = item.quantity * item.buyPrice;
-                            const current = item.quantity * item.currentPrice;
-                            const pnl = current - invested;
-                            const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
-                            const isProfit = pnl >= 0;
-                            const ticker = getStockTicker(item.name);
-                            const dayChange = getStockDayChange(item);
-
-                            return (
-                              <tr
-                                key={item.id}
-                                className={`${flashAssetId === item.id ? "row-flash" : ""} ${unsavedAssetIds.has(item.id) ? "row-live-preview" : ""}`.trim() || undefined}
-                              >
-                                <td className="col-name">
-                                  <div className="stock-info">
-                                    <span className="stock-name">{item.name}</span>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                      <span className="stock-ticker">{ticker}</span>
-                                      {item.currency === "USD" && (
-                                        <span
-                                          style={{
-                                            fontSize: "10px",
-                                            fontFamily: "'JetBrains Mono', monospace",
-                                            fontWeight: 700,
-                                            color: showUsdInRupees ? "#10b981" : "#f59e0b",
-                                            background: showUsdInRupees ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
-                                            border: showUsdInRupees ? "1px solid rgba(16, 185, 129, 0.25)" : "1px solid rgba(245, 158, 11, 0.25)",
-                                            padding: "1px 5px",
-                                            borderRadius: "4px",
-                                          }}
-                                        >
-                                          {showUsdInRupees ? "USD in ₹" : "USD ($)"}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className="cell-primary">
-                                      {money(item.currentPrice, item.currency)}
-                                      {unsavedAssetIds.has(item.id) && (
-                                        <span className="live-preview-badge" title="Live market price in session preview (not saved in database)">
-                                          Live
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
-                                      {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
-                                      {item.currency === "USD" && showUsdInRupees && (
-                                        <span style={{ marginLeft: "5px", opacity: 0.85, fontWeight: 500, color: "var(--foreground-muted)" }}>
-                                          (${item.currentPrice.toFixed(2)})
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className="cell-primary">{money(invested, item.currency)}</span>
-                                    <span className="cell-subtext">
-                                      {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Qty &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
-                                      {item.currency === "USD" && showUsdInRupees && (
-                                        <span style={{ marginLeft: "4px", opacity: 0.85, color: "var(--foreground-muted)" }}>
-                                          (${item.buyPrice.toFixed(2)})
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className="cell-primary">{money(current, item.currency)}</span>
-                                    <span className="cell-subtext">
-                                      {item.currency === "USD"
-                                        ? showUsdInRupees
-                                          ? `$${current.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
-                                          : `₹${(current * usdInrRate).toLocaleString("en-IN", { maximumFractionDigits: 2 })} INR`
-                                        : "Valuation"}
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
-                                      {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
-                                    </span>
-                                    <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
-                                      {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-actions">
-                                  <div className="actions-cluster">
-                                    <button className="action-icon-btn" title="Edit position" onClick={() => startEditing(item)}>
-                                      <Pencil size={13} />
-                                    </button>
-                                    <button className="action-icon-btn" title="Delete position" onClick={() => setDeletingAsset(item)}>
-                                      <Trash2 size={13} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* SECTION 2: MUTUAL FUNDS PORTFOLIO */}
-              {(overviewSubTab === "all" || overviewSubTab === "mf") && (
-                <div className="panel holdings-panel" style={{ marginTop: "14px" }}>
-                  <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <Wallet size={16} style={{ color: "#10b981" }} />
-                        <h3 style={{ margin: 0 }}>Mutual Funds Portfolio</h3>
-                      </div>
-                      <p>SIPs, index funds, and active mutual fund schemes</p>
-                    </div>
-                    {mutualFunds.length > 0 && (
-                      <div className={`panel-summary-badge ${mfPnl >= 0 ? "positive" : "negative"}`}>
-                        <span>{mutualFunds.length} {mutualFunds.length === 1 ? "Fund" : "Funds"}</span>
-                        <span>•</span>
-                        <span>Valuation: {money(mfCurrent)}</span>
-                        <span>•</span>
-                        <span>Returns: {mfPnl >= 0 ? `+${money(mfPnl)}` : money(mfPnl)} ({mfPnlPct >= 0 ? "+" : ""}{mfPnlPct.toFixed(2)}%)</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {isLoading ? (
-                    <IosLoadingView title="Loading Mutual Funds" subtitle="Connecting to PostgreSQL..." />
-                  ) : mutualFunds.length === 0 ? (
-                    <div className="empty-state">
-                      <div className="empty-icon"><Wallet size={22} /></div>
-                      <strong>No mutual funds recorded yet</strong>
-                      <p>Record your SIPs and mutual fund schemes with live NAV valuations.</p>
-                      <button className="primary-button" onClick={() => { setCategory("Mutual Funds"); setModal(true); }}>
-                        <Plus size={15} /> Add first mutual fund
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th onClick={() => handleSort("name")} className="sortable-th col-name">
-                              <div className="th-content">
-                                <span>Fund Scheme</span>
-                                <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("price")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Current NAV</span>
-                                <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("invested")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Invested (Units / Avg NAV)</span>
-                                <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("value")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Current Value</span>
-                                <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
-                              <div className="th-content th-right">
-                                <span>Total Returns</span>
-                                <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                              </div>
-                            </th>
-                            <th className="col-actions">
-                              <div className="th-content th-center">
-                                <span>Actions</span>
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sortedMutualFunds.map((item) => {
-                            const invested = item.quantity * item.buyPrice;
-                            const current = item.quantity * item.currentPrice;
-                            const pnl = current - invested;
-                            const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
-                            const isProfit = pnl >= 0;
-                            const ticker = getStockTicker(item.name);
-                            const dayChange = getStockDayChange(item);
-
-                            return (
-                              <tr
-                                key={item.id}
-                                className={`${flashAssetId === item.id ? "row-flash" : ""} ${unsavedAssetIds.has(item.id) ? "row-live-preview" : ""}`.trim() || undefined}
-                              >
-                                <td className="col-name">
-                                  <div className="stock-info">
-                                    <span className="stock-name">{item.name}</span>
-                                    <span className="stock-ticker">{item.category}</span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className="cell-primary">
-                                      {money(item.currentPrice, item.currency)}
-                                      {unsavedAssetIds.has(item.id) && (
-                                        <span className="live-preview-badge" title="Live NAV in session preview (not saved in database)">
-                                          Live
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
-                                      {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className="cell-primary">{money(invested, item.currency)}</span>
-                                    <span className="cell-subtext">
-                                      {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Units &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className="cell-primary">{money(current, item.currency)}</span>
-                                    <span className="cell-subtext">Valuation</span>
-                                  </div>
-                                </td>
-
-                                <td className="col-num">
-                                  <div className="cell-stacked">
-                                    <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
-                                      {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
-                                    </span>
-                                    <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
-                                      {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
-                                    </span>
-                                  </div>
-                                </td>
-
-                                <td className="col-actions">
-                                  <div className="actions-cluster">
-                                    <button className="action-icon-btn" title="Edit position" onClick={() => startEditing(item)}>
-                                      <Pencil size={13} />
-                                    </button>
-                                    <button className="action-icon-btn" title="Delete position" onClick={() => setDeletingAsset(item)}>
-                                      <Trash2 size={13} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Asset allocation */}
-              {assets.length > 0 && (
-                <div className="panel allocation-panel">
+                return (
                   <div
-                    className="allocation-heading"
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}
+                    key={item.id}
+                    className={`apple-asset-card ${isUnsaved ? "unsaved-glow" : ""} ${isFlashed ? "flash-pulse" : ""}`}
                   >
-                    <div>
-                      <h3 style={{ margin: 0 }}>Asset allocation</h3>
-                      <p style={{ margin: "5px 0 0" }}>How your portfolio is distributed</p>
+                    {/* Col 1: Brand Avatar + Asset Identity */}
+                    <div className="apple-card-identity">
+                      <div className="apple-avatar-squircle">
+                        <StockAvatar name={item.name} ticker={ticker} category={item.category} />
+                      </div>
+                      <div className="apple-identity-text">
+                        <div className="apple-asset-name-row">
+                          <h4 className="apple-asset-name" title={item.name}>{item.name}</h4>
+                          {isUnsaved && (
+                            <span className="apple-live-badge" title="Market price updated in live preview mode">
+                              <Sparkles size={9} /> Live
+                            </span>
+                          )}
+                        </div>
+                        <div className="apple-asset-tags">
+                          <span className="apple-ticker-pill">{ticker}</span>
+                          <span className="apple-category-pill">{item.category}</span>
+                          {item.currency === "USD" && <span className="apple-curr-pill">USD</span>}
+                        </div>
+                      </div>
                     </div>
-                    <span className="allocation-holdings-count">{assets.length} holdings</span>
-                  </div>
-                  <div
-                    className="allocation-content"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(155px, 0.75fr) 1.25fr",
-                      alignItems: "center",
-                      gap: "clamp(24px, 5vw, 72px)",
-                      padding: "20px 5% 2px",
-                    }}
-                  >
-                    <div
-                      className="allocation-donut"
-                      role="img"
-                      aria-label={`Asset allocation: ${pctIndian}% Indian Equities, ${pctUS}% US Stocks, ${pctMF}% Mutual Funds, ${pctGold}% Gold and Fixed Income`}
-                      style={{
-                        background: `conic-gradient(#0071e3 0% ${pctIndian}%, #6366f1 ${pctIndian}% ${pctIndian + pctUS}%, #10b981 ${pctIndian + pctUS}% ${pctIndian + pctUS + pctMF}%, #f59e0b ${pctIndian + pctUS + pctMF}% ${pctIndian + pctUS + pctMF + pctGold}%, #e2e8f0 ${pctIndian + pctUS + pctMF + pctGold}% 100%)`,
-                        width: "180px",
-                        height: "180px",
-                        borderRadius: "50%",
-                        display: "grid",
-                        placeItems: "center",
-                        justifySelf: "center",
-                        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
-                      }}
-                    >
-                      <div
-                        className="allocation-donut-center"
-                        style={{
-                          width: "72%",
-                          height: "72%",
-                          borderRadius: "50%",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "5px",
-                          background: "rgba(255, 255, 255, 0.95)",
-                          boxShadow: "inset 0 1px 3px rgba(0, 0, 0, 0.05)",
-                        }}
+
+                    {/* Col 2: Holdings & Invested */}
+                    <div className="apple-card-col">
+                      <span className="apple-col-label">HOLDINGS & COST</span>
+                      <span className="apple-holdings-val">
+                        {item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)} {item.category === "Mutual Funds" ? "units" : "shares"}
+                      </span>
+                      <span className="apple-col-sub">
+                        Avg {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
+                        {" · "}
+                        Inv {money(investedVal, item.currency)}
+                      </span>
+                    </div>
+
+                    {/* Col 3: Live Market Price */}
+                    <div className="apple-card-col">
+                      <span className="apple-col-label">MARKET PRICE</span>
+                      <span className="apple-price-val">
+                        {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
+                      </span>
+                      {item.currency === "USD" && (
+                        <span className="apple-col-sub">
+                          ₹{(item.currentPrice * usdInrRate).toFixed(1)} / share
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Col 4: Current Valuation & Returns */}
+                    <div className="apple-card-col apple-card-val">
+                      <span className="apple-col-label">CURRENT VALUATION</span>
+                      <span className="apple-val-primary">{money(currentVal, item.currency)}</span>
+                      {item.currency === "USD" && showUsdInRupees && (
+                        <span className="apple-val-usd-pill">
+                          ${currentVal.toFixed(2)} USD
+                        </span>
+                      )}
+                      <div className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"}`}>
+                        {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                        <span>
+                          {pnl >= 0 ? "+" : ""}{money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Col 5: Actions */}
+                    <div className="apple-card-actions">
+                      <button
+                        type="button"
+                        className="apple-action-pill-btn"
+                        onClick={() => startEditing(item)}
+                        title="Edit position"
                       >
-                        <strong style={{ maxWidth: "90%", overflow: "hidden", whiteSpace: "nowrap", color: "var(--foreground)" }}>{money(totalCurrentINR)}</strong>
-                        <span style={{ fontSize: "9px", color: "var(--muted)" }}>Portfolio value</span>
-                      </div>
-                    </div>
-                    <div className="allocation-legend" style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" }}>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
-                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#0071e3" }} />
-                        <span className="allocation-category-detail"><span>Indian Equities</span><small>{money(indianVal)}</small></span>
-                        <strong>{pctIndian}%</strong>
-                      </div>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
-                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#6366f1" }} />
-                        <span className="allocation-category-detail"><span>US Stocks</span><small>{money(usVal)}</small></span>
-                        <strong>{pctUS}%</strong>
-                      </div>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
-                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#10b981" }} />
-                        <span className="allocation-category-detail"><span>Mutual Funds</span><small>{money(mfVal)}</small></span>
-                        <strong>{pctMF}%</strong>
-                      </div>
-                      <div className="allocation-legend-item" style={{ minHeight: "62px", display: "grid", gridTemplateColumns: "10px minmax(0, 1fr) auto", alignItems: "center", gap: "10px", padding: "10px 12px" }}>
-                        <span className="allocation-swatch" style={{ width: "8px", height: "8px", borderRadius: "3px", background: "#f59e0b" }} />
-                        <span className="allocation-category-detail"><span>Gold &amp; Fixed Income</span><small>{money(goldVal)}</small></span>
-                        <strong>{pctGold}%</strong>
-                      </div>
+                        <Pencil size={13} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="apple-action-pill-btn delete"
+                        onClick={() => setDeletingAsset(item)}
+                        title="Delete position"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
+                );
+              })}
+            </div>
+          ) : (
+            /* APPLE FROSTED SPREADSHEET TABLE */
+            <div className="apple-table-panel">
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th onClick={() => handleSort("name")} className="sortable-th">
+                        <div className="th-content">
+                          <span>Asset / Company</span>
+                          <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort("price")} className="sortable-th">
+                        <div className="th-content th-right">
+                          <span>Market Price</span>
+                          <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort("invested")} className="sortable-th">
+                        <div className="th-content th-right">
+                          <span>Total Invested</span>
+                          <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort("value")} className="sortable-th">
+                        <div className="th-content th-right">
+                          <span>Current Valuation</span>
+                          <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort("pnl")} className="sortable-th">
+                        <div className="th-content th-right">
+                          <span>Returns (P&L)</span>
+                          <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
+                        </div>
+                      </th>
+                      <th>
+                        <div className="th-content th-center">
+                          <span>Actions</span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayedAssets.map((item) => {
+                      const ticker = getStockTicker(item.name);
+                      const isUnsaved = unsavedAssetIds.has(item.id);
+                      const isFlashed = flashAssetId === item.id;
+                      const investedVal = item.quantity * item.buyPrice;
+                      const currentVal = item.quantity * item.currentPrice;
+                      const pnl = currentVal - investedVal;
+                      const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
 
-          {/* EQUITIES TAB */}
-          {active === "Equities" && (
-            <div className="panel holdings-panel">
-              <div className="panel-heading" style={{ flexWrap: "wrap", gap: "10px", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <h3>Direct Equities Portfolio</h3>
-                  <p>Indian and US stocks held directly</p>
-                </div>
-                <IosCurrencyToggle
-                  checked={showUsdInRupees}
-                  onToggle={toggleUsdInRupees}
-                  rate={usdInrRate}
-                />
-              </div>
-
-              {isLoading ? (
-                <IosLoadingView
-                  title="Loading Equities"
-                  subtitle="Connecting to PostgreSQL..."
-                />
-              ) : equities.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <ChartNoAxesCombined size={22} />
-                  </div>
-                  <strong>No equity holdings recorded.</strong>
-                  <p>Use Add investment in the sidebar to add Indian stocks or US stocks.</p>
-                </div>
-              ) : (
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th onClick={() => handleSort("name")} className="sortable-th col-name">
-                          <div className="th-content">
-                            <span>Company / Stock</span>
-                            <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("price")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Market Price</span>
-                            <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("invested")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Invested (Qty / Avg)</span>
-                            <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("value")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Current Value</span>
-                            <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Total PnL</span>
-                            <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th className="col-actions">
-                          <div className="th-content th-center">
-                            <span>Actions</span>
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedEquities.map((item) => {
-                        const invested = item.quantity * item.buyPrice;
-                        const current = item.quantity * item.currentPrice;
-                        const pnl = current - invested;
-                        const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
-                        const isProfit = pnl >= 0;
-                        const ticker = getStockTicker(item.name);
-                        const dayChange = getStockDayChange(item);
-
-                        return (
-                          <tr
-                            key={item.id}
-                            className={`${flashAssetId === item.id ? "row-flash" : ""} ${unsavedAssetIds.has(item.id) ? "row-live-preview" : ""}`.trim() || undefined}
-                          >
-                            <td className="col-name">
-                              <div className="stock-info">
-                                <span className="stock-name">{item.name}</span>
+                      return (
+                        <tr key={item.id} className={isFlashed ? "flash-pulse" : ""}>
+                          <td>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                              <div className="apple-avatar-squircle" style={{ width: "36px", height: "36px" }}>
+                                <StockAvatar name={item.name} ticker={ticker} category={item.category} />
+                              </div>
+                              <div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                  <span className="stock-ticker">{ticker}</span>
-                                  {item.currency === "USD" && (
-                                    <span
-                                      style={{
-                                        fontSize: "10px",
-                                        fontFamily: "'JetBrains Mono', monospace",
-                                        fontWeight: 700,
-                                        color: showUsdInRupees ? "#10b981" : "#f59e0b",
-                                        background: showUsdInRupees ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
-                                        border: showUsdInRupees ? "1px solid rgba(16, 185, 129, 0.25)" : "1px solid rgba(245, 158, 11, 0.25)",
-                                        padding: "1px 5px",
-                                        borderRadius: "4px",
-                                      }}
-                                    >
-                                      {showUsdInRupees ? "USD in ₹" : "USD ($)"}
-                                    </span>
-                                  )}
+                                  <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>{item.name}</strong>
+                                  {isUnsaved && <span className="apple-live-badge"><Sparkles size={8} /> Live</span>}
+                                </div>
+                                <div style={{ display: "flex", gap: "6px", marginTop: "2px" }}>
+                                  <span className="apple-ticker-pill">{ticker}</span>
+                                  <span className="apple-category-pill">{item.category}</span>
                                 </div>
                               </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className="cell-primary">
-                                  {money(item.currentPrice, item.currency)}
-                                  {unsavedAssetIds.has(item.id) && (
-                                    <span className="live-preview-badge" title="Live market price in session preview (not saved in database)">
-                                      Live
-                                    </span>
-                                  )}
-                                </span>
-                                <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
-                                  {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
-                                  {item.currency === "USD" && showUsdInRupees && (
-                                    <span style={{ marginLeft: "5px", opacity: 0.85, fontWeight: 500, color: "var(--foreground-muted)" }}>
-                                      (${item.currentPrice.toFixed(2)})
-                                    </span>
-                                  )}
-                                </span>
+                            </div>
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>
+                              {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
+                            </strong>
+                            <div style={{ fontSize: "11px", color: "var(--muted)" }}>
+                              Avg {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
+                            </div>
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <strong style={{ color: "var(--foreground)", fontSize: "13px" }}>
+                              {money(investedVal, item.currency)}
+                            </strong>
+                            <div style={{ fontSize: "11px", color: "var(--muted)" }}>
+                              {item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)} units
+                            </div>
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <strong style={{ color: "var(--foreground)", fontSize: "14px" }}>
+                              {money(currentVal, item.currency)}
+                            </strong>
+                            {item.currency === "USD" && showUsdInRupees && (
+                              <div className="apple-val-usd-pill" style={{ display: "inline-block" }}>
+                                ${currentVal.toFixed(2)} USD
                               </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className="cell-primary">{money(invested, item.currency)}</span>
-                                <span className="cell-subtext">
-                                  {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Qty &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
-                                  {item.currency === "USD" && showUsdInRupees && (
-                                    <span style={{ marginLeft: "4px", opacity: 0.85, color: "var(--foreground-muted)" }}>
-                                      (${item.buyPrice.toFixed(2)})
-                                    </span>
-                                  )}
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className="cell-primary">{money(current, item.currency)}</span>
-                                <span className="cell-subtext">
-                                  {item.currency === "USD"
-                                    ? showUsdInRupees
-                                      ? `$${current.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
-                                      : `₹${(current * usdInrRate).toLocaleString("en-IN", { maximumFractionDigits: 2 })} INR`
-                                    : "Valuation"}
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
-                                  {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
-                                </span>
-                                <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
-                                  {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="col-actions">
-                              <div className="actions-cluster">
-                                <button
-                                  className="action-icon-btn"
-                                  title="Edit position"
-                                  onClick={() => startEditing(item)}
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                                <button
-                                  className="action-icon-btn"
-                                  title="Delete position"
-                                  onClick={() => setDeletingAsset(item)}
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* MUTUAL FUNDS TAB */}
-          {active === "Mutual Funds" && (
-            <div className="panel holdings-panel">
-              <div className="panel-heading">
-                <div>
-                  <h3>Mutual Funds & SIPs</h3>
-                  <p>Active fund schemes and index portfolios</p>
-                </div>
+                            )}
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <div className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"}`} style={{ display: "inline-flex" }}>
+                              {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                              <span>{pnl >= 0 ? "+" : ""}{money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%)</span>
+                            </div>
+                          </td>
+                          <td style={{ textAlign: "center" }}>
+                            <div style={{ display: "inline-flex", gap: "6px" }}>
+                              <button
+                                type="button"
+                                className="apple-action-pill-btn"
+                                onClick={() => startEditing(item)}
+                                title="Edit position"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                className="apple-action-pill-btn delete"
+                                onClick={() => setDeletingAsset(item)}
+                                title="Delete position"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-
-              {isLoading ? (
-                <IosLoadingView
-                  title="Loading Mutual Funds"
-                  subtitle="Connecting to PostgreSQL..."
-                />
-              ) : mutualFunds.length === 0 ? (
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <Wallet size={22} />
-                  </div>
-                  <strong>No mutual funds recorded.</strong>
-                  <p>Use Add investment in the sidebar to record mutual funds.</p>
-                </div>
-              ) : (
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th onClick={() => handleSort("name")} className="sortable-th col-name">
-                          <div className="th-content">
-                            <span>Fund Scheme</span>
-                            <span className="sort-icon">{sortField === "name" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("price")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Current NAV</span>
-                            <span className="sort-icon">{sortField === "price" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("invested")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Invested (Units / Avg NAV)</span>
-                            <span className="sort-icon">{sortField === "invested" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("value")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Current Value</span>
-                            <span className="sort-icon">{sortField === "value" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th onClick={() => handleSort("pnl")} className="sortable-th col-num">
-                          <div className="th-content th-right">
-                            <span>Total Returns</span>
-                            <span className="sort-icon">{sortField === "pnl" ? (sortOrder === "asc" ? "↑" : "↓") : "↓↑"}</span>
-                          </div>
-                        </th>
-                        <th className="col-actions">
-                          <div className="th-content th-center">
-                            <span>Actions</span>
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedMutualFunds.map((item) => {
-                        const invested = item.quantity * item.buyPrice;
-                        const current = item.quantity * item.currentPrice;
-                        const pnl = current - invested;
-                        const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
-                        const isProfit = pnl >= 0;
-                        const ticker = getStockTicker(item.name);
-                        const dayChange = getStockDayChange(item);
-
-                        return (
-                          <tr
-                            key={item.id}
-                            className={`${flashAssetId === item.id ? "row-flash" : ""} ${unsavedAssetIds.has(item.id) ? "row-live-preview" : ""}`.trim() || undefined}
-                          >
-                            <td className="col-name">
-                              <div className="stock-info">
-                                <span className="stock-name">{item.name}</span>
-                                <span className="stock-ticker">{item.category}</span>
-                              </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className="cell-primary">
-                                  {money(item.currentPrice, item.currency)}
-                                  {unsavedAssetIds.has(item.id) && (
-                                    <span className="live-preview-badge" title="Live NAV in session preview (not saved in database)">
-                                      Live
-                                    </span>
-                                  )}
-                                </span>
-                                <span className={dayChange.isUp ? "cell-subtext-up" : "cell-subtext-down"}>
-                                  {dayChange.isUp ? "▲" : "▼"}{dayChange.pct.toFixed(2)}%
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className="cell-primary">{money(invested, item.currency)}</span>
-                                <span className="cell-subtext">
-                                  {Number(item.quantity).toLocaleString("en-US", { maximumFractionDigits: 3 })} Units &nbsp;|&nbsp; {money(item.buyPrice, item.currency)} Avg.
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className="cell-primary">{money(current, item.currency)}</span>
-                                <span className="cell-subtext">Valuation</span>
-                              </div>
-                            </td>
-
-                            <td className="col-num">
-                              <div className="cell-stacked">
-                                <span className={isProfit ? "pnl-primary-up" : "pnl-primary-down"}>
-                                  {isProfit ? `+${money(pnl, item.currency)}` : money(pnl, item.currency)}
-                                </span>
-                                <span className={isProfit ? "cell-subtext-up" : "cell-subtext-down"}>
-                                  {isProfit ? "▲" : "▼"}{Math.abs(pnlPct).toFixed(2)}%
-                                </span>
-                              </div>
-                            </td>
-
-                            <td className="col-actions">
-                              <div className="actions-cluster">
-                                <button
-                                  className="action-icon-btn"
-                                  title="Edit position"
-                                  onClick={() => startEditing(item)}
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                                <button
-                                  className="action-icon-btn"
-                                  title="Delete position"
-                                  onClick={() => setDeletingAsset(item)}
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
           )}
-        </div>
+        </section>
       </section>
 
-      {/* Add Asset Modal */}
+      {/* 5. ADD ASSET MODAL */}
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(false)}>
           <form className="investment-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleAddAsset}>
@@ -2517,7 +2030,7 @@ export default function Home() {
                 <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)" }}>
                   Asset / Stock Name
                 </span>
-                <span className="fetch-price-status" aria-live="polite">
+                <span className="fetch-price-status">
                   <Sparkles size={11} />
                   {isFetchingPrice ? "Looking up price…" : name.trim().length >= 3 ? "Auto price lookup" : "Price fills automatically"}
                 </span>
@@ -2530,7 +2043,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="form-row" style={{ marginTop: "14px" }}>
+            <div className="form-row">
               <label>
                 Category
                 <select
@@ -2574,7 +2087,7 @@ export default function Home() {
               </label>
 
               <label>
-                Stock / Buy Price per unit ({currency === "USD" ? "$" : "₹"})
+                Buy Price per unit ({currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
@@ -2587,7 +2100,6 @@ export default function Home() {
               </label>
             </div>
 
-            {/* Live Calculated Holdings Banner */}
             {computedAddHoldings > 0 && (
               <div className="holdings-preview-banner">
                 <Sparkles size={14} style={{ color: "var(--apple-blue)", flexShrink: 0 }} />
@@ -2603,26 +2115,18 @@ export default function Home() {
             <div className="form-row">
               <label>
                 Current Value ({currency === "USD" ? "$" : "₹"})
-                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
-                  (Valuation of position)
-                </span>
                 <input
                   type="number"
                   min="0.01"
                   step="any"
                   value={currentValue}
-                  onChange={(e) => {
-                    setCurrentValue(e.target.value);
-                  }}
+                  onChange={(e) => setCurrentValue(e.target.value)}
                   placeholder={computedAddHoldings > 0 ? (computedAddHoldings * (Number(buyPrice) || 1)).toFixed(2) : "e.g. 50000"}
                 />
               </label>
 
               <label>
-                Current Market Price ({currency === "USD" ? "$" : "₹"})
-                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
-                  (Defaults to buy price)
-                </span>
+                Market Price ({currency === "USD" ? "$" : "₹"})
                 <input
                   type="number"
                   min="0.0001"
@@ -2645,21 +2149,21 @@ export default function Home() {
                 Cancel
               </button>
               <button type="submit" className="primary-button">
-                Save asset
+                Save Asset
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Real-time Edit Asset Modal */}
+      {/* 6. EDIT ASSET MODAL */}
       {editingAsset && (
         <div className="modal-overlay" onClick={() => setEditingAsset(null)}>
           <form className="investment-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleUpdateAsset}>
             <div className="modal-heading">
               <div>
-                <h2>Edit asset position</h2>
-                <p>Modify investment amount or stock price. Holdings calculate automatically.</p>
+                <h2>Edit holding</h2>
+                <p>Update valuation or units in PostgreSQL.</p>
               </div>
               <button type="button" className="icon-button" onClick={() => setEditingAsset(null)}>
                 <X size={18} />
@@ -2668,17 +2172,16 @@ export default function Home() {
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)" }}>
-                  Asset / Stock Name
-                </span>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--foreground-muted)" }}>Asset Name</span>
                 <button
                   type="button"
-                  className="fetch-price-btn"
-                  disabled={!editingAsset.name.trim() || isFetchingPrice}
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                  className="fetch-price-status"
                   onClick={() => handleFetchLivePrice(editingAsset.name, editingAsset.category, "edit")}
-                  title="Fetch real stock price from financial markets"
+                  disabled={isFetchingPrice}
                 >
-                  <Sparkles size={11} /> {isFetchingPrice ? "Fetching..." : "Fetch Real Price"}
+                  <Sparkles size={11} />
+                  {isFetchingPrice ? "Fetching live quote…" : "Refresh price"}
                 </button>
               </div>
               <input
@@ -2688,7 +2191,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="form-row" style={{ marginTop: "14px" }}>
+            <div className="form-row">
               <label>
                 Category
                 <select
@@ -2714,9 +2217,7 @@ export default function Home() {
                 Currency
                 <select
                   value={editingAsset.currency}
-                  onChange={(e) =>
-                    setEditingAsset({ ...editingAsset, currency: e.target.value as "INR" | "USD" })
-                  }
+                  onChange={(e) => setEditingAsset({ ...editingAsset, currency: e.target.value as "INR" | "USD" })}
                 >
                   <option value="INR">INR — Indian Rupee (₹)</option>
                   <option value="USD">USD — US Dollar ($)</option>
@@ -2726,16 +2227,14 @@ export default function Home() {
 
             <div className="form-row">
               <label>
-                Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
+                Amount You Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
                   min="0.01"
                   step="any"
                   value={editingAsset.investedAmount}
-                  onChange={(e) =>
-                    setEditingAsset({ ...editingAsset, investedAmount: e.target.value })
-                  }
+                  onChange={(e) => setEditingAsset({ ...editingAsset, investedAmount: e.target.value })}
                 />
               </label>
 
@@ -2747,22 +2246,16 @@ export default function Home() {
                   min="0.0001"
                   step="any"
                   value={editingAsset.buyPrice}
-                  onChange={(e) =>
-                    setEditingAsset({ ...editingAsset, buyPrice: e.target.value })
-                  }
+                  onChange={(e) => setEditingAsset({ ...editingAsset, buyPrice: e.target.value })}
                 />
               </label>
             </div>
 
-            {/* Live Calculated Holdings Banner in Edit */}
             {computedEditHoldings > 0 && (
               <div className="holdings-preview-banner">
                 <Sparkles size={14} style={{ color: "var(--apple-blue)", flexShrink: 0 }} />
                 <span>
                   Calculated Holdings: <strong>{computedEditHoldings.toFixed(computedEditHoldings % 1 === 0 ? 0 : 4)} units</strong>
-                  <span style={{ opacity: 0.75, marginLeft: "6px", fontSize: "11px" }}>
-                    ({editingAsset.currency === "USD" ? "$" : "₹"}{Number(editingAsset.investedAmount).toLocaleString()} invested ÷ {editingAsset.currency === "USD" ? "$" : "₹"}{Number(editingAsset.buyPrice).toLocaleString()}/unit)
-                  </span>
                 </span>
               </div>
             )}
@@ -2770,46 +2263,23 @@ export default function Home() {
             <div className="form-row">
               <label>
                 Current Value ({editingAsset.currency === "USD" ? "$" : "₹"})
-                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
-                  (Valuation of position)
-                </span>
                 <input
                   type="number"
                   min="0.01"
                   step="any"
                   value={editingAsset.currentValue}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setEditingAsset({
-                      ...editingAsset,
-                      currentValue: val,
-                    });
-                  }}
-                  placeholder="e.g. 96.04"
+                  onChange={(e) => setEditingAsset({ ...editingAsset, currentValue: e.target.value })}
                 />
               </label>
 
               <label>
-                Current Market Price ({editingAsset.currency === "USD" ? "$" : "₹"})
-                <span style={{ fontSize: "11px", color: "var(--foreground-muted)", fontWeight: 400, marginLeft: "4px" }}>
-                  (Unit price)
-                </span>
+                Market Price ({editingAsset.currency === "USD" ? "$" : "₹"})
                 <input
-                  required
                   type="number"
                   min="0.0001"
                   step="any"
                   value={editingAsset.currentPrice}
-                  onChange={(e) => {
-                    const p = e.target.value;
-                    const holdings = computedEditHoldings;
-                    setEditingAsset({
-                      ...editingAsset,
-                      currentPrice: p,
-                      currentValue: Number(p) > 0 && holdings > 0 ? (Number(p) * holdings).toFixed(2) : editingAsset.currentValue,
-                    });
-                  }}
-                  placeholder="e.g. 347.09"
+                  onChange={(e) => setEditingAsset({ ...editingAsset, currentPrice: e.target.value })}
                 />
               </label>
             </div>
@@ -2819,86 +2289,58 @@ export default function Home() {
                 Cancel
               </button>
               <button type="submit" className="primary-button">
-                Update asset
+                Update Asset
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Real-time Delete Asset Confirmation Modal */}
+      {/* 7. DELETE CONFIRMATION MODAL */}
       {deletingAsset && (
         <div className="modal-overlay" onClick={() => setDeletingAsset(null)}>
-          <div className="investment-modal" style={{ width: "min(420px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+          <div className="investment-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-heading">
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(225, 29, 72, 0.08)",
-                    border: "1px solid rgba(225, 29, 72, 0.22)",
-                    display: "grid",
-                    placeItems: "center",
-                    color: "var(--rose)",
-                  }}
-                >
-                  <Trash2 size={18} />
-                </div>
-                <div>
-                  <h2>Delete Position</h2>
-                  <p>Real-time PostgreSQL sync</p>
-                </div>
+              <div>
+                <h2>Delete asset</h2>
+                <p>Are you sure you want to remove <strong>{deletingAsset.name}</strong> from your portfolio?</p>
               </div>
               <button type="button" className="icon-button" onClick={() => setDeletingAsset(null)}>
                 <X size={18} />
               </button>
             </div>
-
-            <p style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: "1.6", margin: "14px 0" }}>
-              Are you sure you want to delete <strong>{deletingAsset.name}</strong> ({deletingAsset.category})?
-            </p>
-
-            <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px", padding: "10px 12px", fontSize: "11px", color: "var(--foreground-muted)", marginBottom: "16px" }}>
-              This will remove this position from your database immediately across all active browser windows.
+            <div style={{ padding: "12px 0", fontSize: "13px", color: "var(--foreground-muted)" }}>
+              This will remove the position permanently from PostgreSQL.
             </div>
-
             <div className="modal-actions">
               <button type="button" className="secondary-button" onClick={() => setDeletingAsset(null)}>
                 Cancel
               </button>
-              <button type="button" className="btn-danger" onClick={confirmDeleteAsset}>
-                <Trash2 size={14} /> Delete Position
+              <button
+                type="button"
+                className="primary-button"
+                style={{ background: "var(--rose)" }}
+                onClick={confirmDeleteAsset}
+              >
+                Delete permanently
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Postgres Setup Modal */}
+      {/* 8. DATABASE MODAL */}
       {dbModal && (
         <div className="modal-overlay" onClick={() => setDbModal(false)}>
-          <div className="investment-modal" style={{ width: "min(580px, 100%)" }} onClick={(e) => e.stopPropagation()}>
+          <div className="investment-modal" style={{ width: "min(100%, 580px)" }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-heading">
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "10px",
-                    background: "rgba(0, 113, 227, 0.08)",
-                    border: "1px solid rgba(0, 113, 227, 0.2)",
-                    display: "grid",
-                    placeItems: "center",
-                    color: "var(--apple-blue)",
-                  }}
-                >
-                  <Database size={18} />
+                <div className="apple-brand-icon" style={{ width: "32px", height: "32px", fontSize: "14px" }}>
+                  <Database size={16} />
                 </div>
                 <div>
-                  <h2>PostgreSQL Connection</h2>
-                  <p>Status: {syncStatus === "live" ? "Connected & Live" : "Connecting..."}</p>
+                  <h2>PostgreSQL Setup</h2>
+                  <p>Connected via Supabase Realtime Engine</p>
                 </div>
               </div>
               <button type="button" className="icon-button" onClick={() => setDbModal(false)}>
@@ -2906,11 +2348,14 @@ export default function Home() {
               </button>
             </div>
 
-            <p style={{ fontSize: "12px", color: "var(--foreground-muted)", lineHeight: "1.6" }}>
-              Your database is connected to <code>{process.env.NEXT_PUBLIC_SUPABASE_URL}</code>. All additions, edits, and deletions sync in real time across all open browser windows!
-            </p>
+            <div style={{ fontSize: "13px", color: "var(--foreground)", lineHeight: "1.6" }}>
+              <p>Your portfolio is synchronized in real time with Supabase PostgreSQL.</p>
+              <div style={{ background: "rgba(0,0,0,0.04)", padding: "14px", borderRadius: "12px", fontFamily: "monospace", fontSize: "12px", margin: "10px 0" }}>
+                Status: {syncStatus.toUpperCase()} ({assets.length} positions)
+              </div>
+            </div>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
+            <div className="modal-actions">
               <button type="button" className="primary-button" onClick={() => setDbModal(false)}>
                 Close
               </button>
