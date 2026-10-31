@@ -115,6 +115,24 @@ async function getIndianMutualFundQuote(
   query: string
 ): Promise<{ symbol: string; name: string; price: number; currency: string } | null> {
   try {
+    const mfCodeMatch = query.match(/^(?:MF-)?(\d{5,7})$/i);
+    if (mfCodeMatch) {
+      const code = mfCodeMatch[1];
+      const navRes = await fetch(`https://api.mfapi.in/mf/${code}`, { cache: "no-store" });
+      if (navRes.ok) {
+        const navPayload = await navRes.json().catch(() => null);
+        const latestNav = Number(navPayload?.data?.[0]?.nav);
+        if (Number.isFinite(latestNav) && latestNav > 0) {
+          return {
+            symbol: `MF-${code}`,
+            name: navPayload?.meta?.scheme_name || query,
+            price: latestNav,
+            currency: "INR",
+          };
+        }
+      }
+    }
+
     const clean = query.replace(/[^a-zA-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
     let res = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(clean)}`, {
       cache: "no-store",
@@ -188,15 +206,24 @@ async function getIndianMutualFundQuote(
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const query = searchParams.get("query")?.trim();
-  const category = searchParams.get("category") || "";
+  const query = searchParams.get("query")?.trim() || searchParams.get("symbol")?.trim();
+  const market = searchParams.get("market")?.toUpperCase();
+  let category = searchParams.get("category") || "";
+
+  if (!category && market) {
+    if (market === "US") category = "US Stocks";
+    else if (market === "INDIA") category = "Indian Equities";
+  }
 
   if (!query) {
     return NextResponse.json({ error: "Missing query" }, { status: 400 });
   }
 
   // 1. Direct Indian Mutual Funds handling via AMFI
-  if (category === "Mutual Funds") {
+  if (
+    category === "Mutual Funds" ||
+    (!category && (query.toUpperCase().includes("FUND") || query.toUpperCase().startsWith("MF-")))
+  ) {
     const mfQuote = await getIndianMutualFundQuote(query);
     if (mfQuote) {
       return NextResponse.json({

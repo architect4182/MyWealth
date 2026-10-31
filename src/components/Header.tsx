@@ -189,6 +189,11 @@ export function Header({
           <Database size={15} />
         </button>
       </div>
+
+      {/* Route Navigation Luminous Micro-Glow Track */}
+      <div className="apple-header-glow-track" aria-hidden="true">
+        <div key={pathname} className="apple-header-glow-pulse" />
+      </div>
     </header>
   );
 }

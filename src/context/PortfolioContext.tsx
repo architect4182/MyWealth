@@ -5,38 +5,7 @@ import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, Prefil
 import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
-const DEFAULT_SAMPLE_ASSETS: AssetPosition[] = [
-  {
-    id: "sample-sbi-mf",
-    name: "SBI Focused Fund",
-    category: "Mutual Funds",
-    quantity: 206.624,
-    buyPrice: 424.34,
-    currentPrice: 437.31,
-    currency: "INR",
-    date: "2024-01-15",
-  },
-  {
-    id: "sample-jio-stock",
-    name: "Jio Platforms Ltd",
-    category: "Indian Equities",
-    quantity: 3,
-    buyPrice: 1371.60,
-    currentPrice: 1431.30,
-    currency: "INR",
-    date: "2024-02-10",
-  },
-  {
-    id: "sample-apple-stock",
-    name: "Apple",
-    category: "US Stocks",
-    quantity: 0.3245,
-    buyPrice: 296.00,
-    currentPrice: 344.63,
-    currency: "USD",
-    date: "2024-03-01",
-  },
-];
+// All asset holdings are fetched dynamically from Supabase PostgreSQL
 
 interface PortfolioContextType {
   assets: AssetPosition[];
@@ -105,12 +74,13 @@ interface PortfolioContextType {
   prefillAsset: PrefillAssetData | null;
   setPrefillAsset: (data: PrefillAssetData | null) => void;
   openAddModalWithPrefill: (data: PrefillAssetData) => void;
+
 }
 
 const PortfolioContext = createContext<PortfolioContextType | null>(null);
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
-  const [assets, setAssets] = useState<AssetPosition[]>(DEFAULT_SAMPLE_ASSETS);
+  const [assets, setAssets] = useState<AssetPosition[]>([]);
   const [unsavedAssetIds, setUnsavedAssetIds] = useState<Set<string>>(new Set());
   const [isSavingPrices, setIsSavingPrices] = useState(false);
   const dbBaselinePricesRef = useRef<Map<string, number>>(new Map());
@@ -183,6 +153,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   };
+
+  // Ensure clean luminous light theme (remove any residual dark mode class)
+  useEffect(() => {
+    try {
+      document.documentElement.classList.remove("dark");
+      localStorage.removeItem("mywealth_theme");
+    } catch {}
+  }, []);
 
   // Local storage cache for offline / fallback
   useEffect(() => {
@@ -449,15 +427,21 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             else if (lower.includes("sbi") || lower.includes("state bank")) ticker = "SBIN";
             else if (lower.includes("infosys")) ticker = "INFY";
             else ticker = asset.name.toUpperCase();
+          } else if (asset.category === "Mutual Funds") {
+            ticker = asset.name;
           }
 
           if (!ticker) return asset;
 
           try {
-            const res = await fetch(`/api/stock-price?symbol=${encodeURIComponent(ticker)}&market=${marketType}`);
+            const url = asset.category === "Mutual Funds"
+              ? `/api/stock-price?query=${encodeURIComponent(ticker)}&category=Mutual%20Funds`
+              : `/api/stock-price?query=${encodeURIComponent(ticker)}&symbol=${encodeURIComponent(ticker)}&category=${encodeURIComponent(asset.category)}&market=${marketType}`;
+            const res = await fetch(url);
             const data = await res.json();
             if (data.price && typeof data.price === "number") {
-              return { ...asset, currentPrice: Number(data.price.toFixed(2)) };
+              const decimals = asset.category === "Mutual Funds" ? 4 : 2;
+              return { ...asset, currentPrice: Number(data.price.toFixed(decimals)) };
             }
           } catch {}
           return asset;
@@ -686,6 +670,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         prefillAsset,
         setPrefillAsset,
         openAddModalWithPrefill,
+
       }}
     >
       {children}

@@ -311,7 +311,7 @@ export function HoldingsTableAndCards({
                       {money(currentVal, item.currency)}
                     </div>
                     <div className="apple-cmp-sub">
-                      CMP: {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.currentPrice.toFixed(2)}`}
+                      {item.category === "Mutual Funds" ? "NAV" : "CMP"}: {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
                       {unitGain !== 0 && (
                         <span className={`apple-unit-diff ${unitGain >= 0 ? "positive-text" : "negative-text"}`}>
                           {" "}({unitGain >= 0 ? "+" : ""}{unitGainPct.toFixed(1)}%)
@@ -488,7 +488,7 @@ export function HoldingsTableAndCards({
                         >
                           {item.currency === "USD"
                             ? `$${item.currentPrice.toFixed(2)}`
-                            : `₹${item.currentPrice.toFixed(2)}`}
+                            : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
                         </strong>
                         <div style={{ fontSize: "11px", color: "var(--muted)" }}>
                           Avg{" "}
