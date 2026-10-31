@@ -21,33 +21,6 @@ const headers = {
   Accept: "application/json",
 };
 
-const COMMON_TICKERS: Record<string, { symbol: string; category: string }> = {
-  "jio": { symbol: "JPL.NS", category: "Indian Equities" },
-  "jio platforms": { symbol: "JPL.NS", category: "Indian Equities" },
-  "jio platforms ltd": { symbol: "JPL.NS", category: "Indian Equities" },
-  "jio platforms limited": { symbol: "JPL.NS", category: "Indian Equities" },
-  "reliance": { symbol: "RELIANCE.NS", category: "Indian Equities" },
-  "reliance industries": { symbol: "RELIANCE.NS", category: "Indian Equities" },
-  "reliance industries ltd": { symbol: "RELIANCE.NS", category: "Indian Equities" },
-  "reliance industries limited": { symbol: "RELIANCE.NS", category: "Indian Equities" },
-  "tcs": { symbol: "TCS.NS", category: "Indian Equities" },
-  "tata consultancy services": { symbol: "TCS.NS", category: "Indian Equities" },
-  "tata motors": { symbol: "TATAMOTORS.NS", category: "Indian Equities" },
-  "tata motors ltd": { symbol: "TATAMOTORS.NS", category: "Indian Equities" },
-  "hdfc bank": { symbol: "HDFCBANK.NS", category: "Indian Equities" },
-  "icici bank": { symbol: "ICICIBANK.NS", category: "Indian Equities" },
-  "infosys": { symbol: "INFY.NS", category: "Indian Equities" },
-  "sbi": { symbol: "SBIN.NS", category: "Indian Equities" },
-  "state bank of india": { symbol: "SBIN.NS", category: "Indian Equities" },
-  "apple": { symbol: "AAPL", category: "US Stocks" },
-  "microsoft": { symbol: "MSFT", category: "US Stocks" },
-  "google": { symbol: "GOOGL", category: "US Stocks" },
-  "alphabet": { symbol: "GOOGL", category: "US Stocks" },
-  "amazon": { symbol: "AMZN", category: "US Stocks" },
-  "tesla": { symbol: "TSLA", category: "US Stocks" },
-  "nvidia": { symbol: "NVDA", category: "US Stocks" },
-  "meta": { symbol: "META", category: "US Stocks" },
-};
 
 function isAllowedQuoteType(category: string, quoteType: string): boolean {
   switch (category) {
@@ -251,24 +224,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Unsupported asset category" }, { status: 400 });
   }
 
-  try {
-    // 2. Common Alias Lookup
-    const lowerQuery = query.toLowerCase();
-    const alias = COMMON_TICKERS[lowerQuery];
-    if (alias && alias.category === category) {
-      const aliasQuote = await getMarketQuote(alias.symbol).catch(() => null);
-      if (aliasQuote && validateMarketQuote(aliasQuote, category)) {
-        return NextResponse.json({
-          success: true,
-          symbol: aliasQuote.symbol,
-          name: aliasQuote.name,
-          price: aliasQuote.price,
-          currency: aliasQuote.currency,
-        });
-      }
-    }
 
-    // 3. Direct ticker symbol check
+  try {
+    // 2. Direct ticker symbol check
     const looksLikeTicker = /^[a-zA-Z0-9.^=-]{1,20}$/.test(query);
     if (looksLikeTicker) {
       let directSymbol = query.toUpperCase();

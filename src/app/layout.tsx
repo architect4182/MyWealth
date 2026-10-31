@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PortfolioProvider } from "@/context/PortfolioContext";
 
 export const metadata: Metadata = {
   title: "MyWealth — Wealth & Investment Tracker",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <PortfolioProvider>{children}</PortfolioProvider>
+      </body>
     </html>
   );
 }
