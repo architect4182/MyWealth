@@ -8,6 +8,7 @@ import {
   Wallet,
   PiggyBank,
   Layers,
+  Repeat,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Header } from "@/components/Header";
@@ -29,19 +30,24 @@ export default function MutualFundsPage() {
     handleRefreshPrices,
     priceRefreshMessage,
     userGender,
+    totalMonthlySipINR,
+    activeSipCount,
   } = usePortfolio();
 
   const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
 
   const [showSidePanel, setShowSidePanel] = useState(true);
-  const [mfSubTab, setMfSubTab] = useState<"all" | "equity" | "focused">("all");
+  const [mfSubTab, setMfSubTab] = useState<"all" | "equity" | "focused" | "sip">("all");
 
   const totalUnits = useMemo(
     () => mutualFunds.reduce((sum, a) => sum + a.quantity, 0),
     [mutualFunds]
   );
 
+  const mfSipList = useMemo(() => mutualFunds.filter((f) => f.isSip), [mutualFunds]);
+
   const displayedFunds = useMemo(() => {
+    if (mfSubTab === "sip") return mfSipList;
     if (mfSubTab === "equity") {
       return mutualFunds.filter((f) =>
         f.name.toLowerCase().includes("equity") ||
@@ -57,7 +63,7 @@ export default function MutualFundsPage() {
       );
     }
     return mutualFunds;
-  }, [mfSubTab, mutualFunds]);
+  }, [mfSubTab, mutualFunds, mfSipList]);
 
   const filterTabs = [
     {
@@ -66,6 +72,16 @@ export default function MutualFundsPage() {
       count: mutualFunds.length,
       icon: <Wallet size={13} />,
     },
+    ...(mfSipList.length > 0
+      ? [
+          {
+            key: "sip",
+            label: "Active SIPs",
+            count: mfSipList.length,
+            icon: <Repeat size={13} />,
+          },
+        ]
+      : []),
     {
       key: "equity",
       label: "Equity & Index",
@@ -178,6 +194,14 @@ export default function MutualFundsPage() {
                     {mutualFunds.length} Funds
                   </span>
                 </div>
+                {totalMonthlySipINR > 0 && (
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Monthly SIP</span>
+                    <span className="apple-stat-chip-val" style={{ color: "var(--apple-blue)" }}>
+                      {money(totalMonthlySipINR)}/mo ({activeSipCount})
+                    </span>
+                  </div>
+                )}
                 <div className="apple-stat-chip">
                   <span className="apple-stat-chip-label">Portfolio Share</span>
                   <span className="apple-stat-chip-val">

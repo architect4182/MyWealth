@@ -6,10 +6,13 @@ import {
   Sparkles,
   Database,
   Clock,
+  Repeat,
+  CalendarClock,
 } from "lucide-react";
 import { AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { MarketTimingBadge } from "@/components/MarketBadge";
+import { getNextSipDate, formatLocalDate } from "@/utils/sip";
 
 export function AddAssetModal() {
   const {
@@ -31,12 +34,20 @@ export function AddAssetModal() {
     defaultCategory === "US Stocks" ? "USD" : "INR"
   );
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [isSip, setIsSip] = useState(false);
+  const [sipAmount, setSipAmount] = useState("");
+  const [sipDay, setSipDay] = useState("5");
+  const [sipStartDate, setSipStartDate] = useState("");
+  const [initialInstallmentDone, setInitialInstallmentDone] = useState(true);
 
   const autoPriceRequestRef = useRef(0);
   const skipNextAutoPriceLookupRef = useRef(false);
 
   useEffect(() => {
     if (modal) {
+      const todayStr = formatLocalDate();
+      setSipStartDate(todayStr);
+      setIsSip(false);
       if (prefillAsset) {
         setName(prefillAsset.name);
         setCategory(prefillAsset.category);
@@ -53,6 +64,11 @@ export function AddAssetModal() {
       setBuyPrice("");
       setCurrentPrice("");
       setCurrentValue("");
+      setIsSip(false);
+      setSipAmount("");
+      setSipDay("5");
+      setSipStartDate("");
+      setInitialInstallmentDone(true);
       setPrefillAsset(null);
     }
   }, [modal, defaultCategory, prefillAsset, setPrefillAsset]);
@@ -139,8 +155,40 @@ export function AddAssetModal() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (isSip) {
+      const amount = Number(sipAmount);
+      if (!amount || amount <= 0) return;
+      const cp = Number(currentPrice) || Number(buyPrice) || 1;
+      const bp = cp;
+      const q = initialInstallmentDone ? amount / cp : 0;
+      const installments = initialInstallmentDone ? 1 : 0;
+      const lastDate = initialInstallmentDone
+        ? sipStartDate || formatLocalDate()
+        : undefined;
+
+      await addAsset({
+        name: name.trim(),
+        category,
+        quantity: q,
+        buyPrice: bp,
+        currentPrice: cp,
+        currency,
+        isSip: true,
+        sipAmount: amount,
+        sipDay: Number(sipDay) || 5,
+        sipStartDate: sipStartDate || formatLocalDate(),
+        sipInstallments: installments,
+        lastSipDate: lastDate,
+        sipStatus: "active",
+      });
+
+      setModal(false);
+      return;
+    }
+
     const inv = Number(investedAmount);
-    let bp = Number(buyPrice);
+    let bp = Number(buyPrice) || Number(currentPrice);
     if (!inv || !bp || bp <= 0) return;
 
     let q = inv / bp;
@@ -165,6 +213,7 @@ export function AddAssetModal() {
       buyPrice: bp,
       currentPrice: cp,
       currency,
+      isSip: false,
     });
 
     setModal(false);
@@ -180,7 +229,7 @@ export function AddAssetModal() {
         <div className="modal-heading">
           <div>
             <h2>Add investment</h2>
-            <p>Record a new asset into PostgreSQL in real time.</p>
+            <p>Record a new asset or scheduled SIP into your portfolio.</p>
           </div>
           <button
             type="button"
@@ -207,7 +256,7 @@ export function AddAssetModal() {
                 color: "var(--foreground-muted)",
               }}
             >
-              Asset / Stock Name
+              Asset / Fund Name
             </span>
             <span className="fetch-price-status">
               <Sparkles size={11} />
@@ -222,7 +271,7 @@ export function AddAssetModal() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Reliance, Tata Motors, Apple, HDFC Bank, Parag Parikh"
+            placeholder="e.g. Reliance, Tata Motors, Apple, Parag Parikh Flexi Cap"
           />
         </div>
 
@@ -258,33 +307,141 @@ export function AddAssetModal() {
           </label>
         </div>
 
-        <div className="form-row">
-          <label>
-            Amount You Invested ({currency === "USD" ? "$" : "₹"})
-            <input
-              required
-              type="number"
-              min="0.01"
-              step="any"
-              value={investedAmount}
-              onChange={(e) => setInvestedAmount(e.target.value)}
-              placeholder="e.g. 50000"
-            />
-          </label>
-
-          <label>
-            Buy Price per unit ({currency === "USD" ? "$" : "₹"})
-            <input
-              required
-              type="number"
-              min="0.0001"
-              step="any"
-              value={buyPrice}
-              onChange={(e) => setBuyPrice(e.target.value)}
-              placeholder="e.g. 1165"
-            />
-          </label>
+        {/* Authentic Apple iOS Switch for SIP Check */}
+        <div className={`apple-ios-sip-toggle-card ${isSip ? "active" : ""}`}>
+          <div className="apple-ios-sip-info">
+            <div className="apple-ios-sip-label-row">
+              <Repeat size={14} style={{ color: isSip ? "#34c759" : "var(--foreground-muted)" }} />
+              <strong className="apple-ios-sip-title">Is this a SIP (Recurring Investment)?</strong>
+            </div>
+            <span className="apple-ios-sip-desc">
+              {isSip
+                ? "Auto-executes monthly on payment date & recalculates P/L"
+                : "Standard one-time lump sum investment"}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={`ios-switch ${isSip ? "active" : ""}`}
+            onClick={() => {
+              const next = !isSip;
+              setIsSip(next);
+              if (next && !sipAmount && investedAmount) setSipAmount(investedAmount);
+            }}
+            role="switch"
+            aria-checked={isSip}
+            aria-label="Toggle SIP"
+          >
+            <span className="ios-switch-knob" />
+          </button>
         </div>
+
+        {isSip ? (
+          <>
+            <div className="form-row">
+              <label>
+                Monthly SIP Amount ({currency === "USD" ? "$" : "₹"})
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={sipAmount}
+                  onChange={(e) => setSipAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                />
+              </label>
+
+              <label>
+                SIP Start Date
+                <input
+                  required
+                  type="date"
+                  value={sipStartDate}
+                  onChange={(e) => setSipStartDate(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Payment / Debit Date of Month
+                <select
+                  value={sipDay}
+                  onChange={(e) => setSipDay(e.target.value)}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28].map((d) => (
+                    <option key={d} value={d}>
+                      {d}{d === 1 ? "st" : d === 2 ? "nd" : d === 3 ? "rd" : "th"} of each month {d === 5 ? "• Recommended" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Current Price / NAV ({currency === "USD" ? "$" : "₹"})
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={currentPrice || buyPrice}
+                  onChange={(e) => {
+                    setCurrentPrice(e.target.value);
+                    setBuyPrice(e.target.value);
+                  }}
+                  placeholder="e.g. 85.50"
+                />
+              </label>
+            </div>
+
+            <div className="apple-sip-schedule-banner">
+              <div className="apple-sip-schedule-left">
+                <CalendarClock size={16} style={{ color: "#34c759", flexShrink: 0 }} />
+                <div>
+                  <strong>Next scheduled payment: {getNextSipDate(Number(sipDay) || 5)}</strong>
+                  <p>On this day each month, MyWealth will automatically add this installment and update your returns.</p>
+                </div>
+              </div>
+              <label className="apple-sip-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={initialInstallmentDone}
+                  onChange={(e) => setInitialInstallmentDone(e.target.checked)}
+                />
+                <span>Debit / Log 1st installment ({currency === "USD" ? "$" : "₹"}{sipAmount || "0"}) today</span>
+              </label>
+            </div>
+          </>
+        ) : (
+          <div className="form-row">
+            <label>
+              Amount You Invested ({currency === "USD" ? "$" : "₹"})
+              <input
+                required
+                type="number"
+                min="0.01"
+                step="any"
+                value={investedAmount}
+                onChange={(e) => setInvestedAmount(e.target.value)}
+                placeholder="e.g. 50000"
+              />
+            </label>
+
+            <label>
+              Buy Price per unit ({currency === "USD" ? "$" : "₹"})
+              <input
+                required
+                type="number"
+                min="0.0001"
+                step="any"
+                value={buyPrice}
+                onChange={(e) => setBuyPrice(e.target.value)}
+                placeholder="e.g. 1165"
+              />
+            </label>
+          </div>
+        )}
 
         {computedAddHoldings > 0 && (
           <div className="holdings-preview-banner">
@@ -312,41 +469,43 @@ export function AddAssetModal() {
           </div>
         )}
 
-        <div className="form-row">
-          <label>
-            Current Value ({currency === "USD" ? "$" : "₹"})
-            <input
-              type="number"
-              min="0.01"
-              step="any"
-              value={currentValue}
-              onChange={(e) => setCurrentValue(e.target.value)}
-              placeholder={
-                computedAddHoldings > 0
-                  ? (computedAddHoldings * (Number(buyPrice) || 1)).toFixed(2)
-                  : "e.g. 50000"
-              }
-            />
-          </label>
-
-          <label>
-            Market Price ({currency === "USD" ? "$" : "₹"})
-            <input
-              type="number"
-              min="0.0001"
-              step="any"
-              value={currentPrice}
-              onChange={(e) => {
-                const p = e.target.value;
-                setCurrentPrice(p);
-                if (Number(p) > 0 && computedAddHoldings > 0 && !currentValue) {
-                  setCurrentValue((Number(p) * computedAddHoldings).toFixed(2));
+        {!isSip && (
+          <div className="form-row">
+            <label>
+              Current Value ({currency === "USD" ? "$" : "₹"})
+              <input
+                type="number"
+                min="0.01"
+                step="any"
+                value={currentValue}
+                onChange={(e) => setCurrentValue(e.target.value)}
+                placeholder={
+                  computedAddHoldings > 0
+                    ? (computedAddHoldings * (Number(buyPrice) || 1)).toFixed(2)
+                    : "e.g. 50000"
                 }
-              }}
-              placeholder={buyPrice ? buyPrice : "e.g. 1165"}
-            />
-          </label>
-        </div>
+              />
+            </label>
+
+            <label>
+              Market Price ({currency === "USD" ? "$" : "₹"})
+              <input
+                type="number"
+                min="0.0001"
+                step="any"
+                value={currentPrice}
+                onChange={(e) => {
+                  const p = e.target.value;
+                  setCurrentPrice(p);
+                  if (Number(p) > 0 && computedAddHoldings > 0 && !currentValue) {
+                    setCurrentValue((Number(p) * computedAddHoldings).toFixed(2));
+                  }
+                }}
+                placeholder={buyPrice ? buyPrice : "e.g. 1165"}
+              />
+            </label>
+          </div>
+        )}
 
         <div className="modal-actions">
           <button
@@ -445,7 +604,14 @@ export function EditAssetModal() {
       buyPrice: bp,
       currentPrice: cp,
       currency: editingAsset.currency,
-      date: new Date().toISOString().split("T")[0],
+      date: formatLocalDate(),
+      isSip: editingAsset.isSip,
+      sipAmount: editingAsset.sipAmount ? Number(editingAsset.sipAmount) : undefined,
+      sipDay: editingAsset.sipDay ? Number(editingAsset.sipDay) : undefined,
+      sipStartDate: editingAsset.sipStartDate,
+      sipInstallments: editingAsset.sipInstallments ? Number(editingAsset.sipInstallments) : undefined,
+      lastSipDate: editingAsset.lastSipDate,
+      sipStatus: editingAsset.sipStatus || (editingAsset.isSip ? "active" : undefined),
     });
 
     setEditingAsset(null);
@@ -641,6 +807,113 @@ export function EditAssetModal() {
             />
           </label>
         </div>
+
+        {/* Authentic Apple iOS Switch for SIP Check */}
+        <div className={`apple-ios-sip-toggle-card ${editingAsset.isSip ? "active" : ""}`}>
+          <div className="apple-ios-sip-info">
+            <div className="apple-ios-sip-label-row">
+              <Repeat size={14} style={{ color: editingAsset.isSip ? "#34c759" : "var(--foreground-muted)" }} />
+              <strong className="apple-ios-sip-title">Is this a SIP (Recurring Investment)?</strong>
+            </div>
+            <span className="apple-ios-sip-desc">
+              {editingAsset.isSip
+                ? "Auto-executes monthly on payment date & recalculates P/L"
+                : "Standard one-time lump sum investment"}
+            </span>
+          </div>
+          <button
+            type="button"
+            className={`ios-switch ${editingAsset.isSip ? "active" : ""}`}
+            onClick={() => {
+              const next = !editingAsset.isSip;
+              setEditingAsset({
+                ...editingAsset,
+                isSip: next,
+                sipStatus: next ? "active" : "paused",
+                sipDay: editingAsset.sipDay || "5",
+              });
+            }}
+            role="switch"
+            aria-checked={Boolean(editingAsset.isSip)}
+            aria-label="Toggle SIP"
+          >
+            <span className="ios-switch-knob" />
+          </button>
+        </div>
+
+        {editingAsset.isSip && (
+          <>
+            <div className="form-row">
+              <label>
+                Monthly SIP Amount ({editingAsset.currency === "USD" ? "$" : "₹"})
+                <input
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={editingAsset.sipAmount || ""}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      sipAmount: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. 5000"
+                />
+              </label>
+
+              <label>
+                SIP Start Date
+                <input
+                  type="date"
+                  value={editingAsset.sipStartDate || ""}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      sipStartDate: e.target.value,
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Payment / Debit Date of Month
+                <select
+                  value={editingAsset.sipDay || "5"}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      sipDay: e.target.value,
+                    })
+                  }
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28].map((d) => (
+                    <option key={d} value={d}>
+                      {d}{d === 1 ? "st" : d === 2 ? "nd" : d === 3 ? "rd" : "th"} of each month {d === 5 ? "• Recommended" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                SIP Status
+                <select
+                  value={editingAsset.sipStatus || "active"}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      sipStatus: e.target.value as "active" | "paused",
+                    })
+                  }
+                >
+                  <option value="active">Active (Auto-add)</option>
+                  <option value="paused">Paused (Hold)</option>
+                </select>
+              </label>
+            </div>
+          </>
+        )}
 
         <div className="modal-actions">
           <button

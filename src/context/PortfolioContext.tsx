@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData } from "@/types/portfolio";
 import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { calculateSipCatchup, formatLocalDate } from "@/utils/sip";
 
 // Pre-cached high performance number formatters (zero C++ constructor allocations per render)
 const inrIntFormatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -101,9 +102,20 @@ interface PortfolioContextType {
     buyPrice: number;
     currentPrice: number;
     currency: "INR" | "USD";
+    isSip?: boolean;
+    sipAmount?: number;
+    sipDay?: number;
+    sipStartDate?: string;
+    sipInstallments?: number;
+    lastSipDate?: string;
+    sipStatus?: "active" | "paused";
   }) => Promise<void>;
   updateAsset: (updated: AssetPosition) => Promise<void>;
   deleteAsset: (id: string) => Promise<void>;
+  totalMonthlySipINR: number;
+  activeSipCount: number;
+  sipNotice: string | null;
+  clearSipNotice: () => void;
   modal: boolean;
   setModal: (v: boolean) => void;
   editingAsset: EditAssetForm | null;
@@ -144,6 +156,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [isRefreshingPrices, setIsRefreshingPrices] = useState(false);
   const [priceRefreshMessage, setPriceRefreshMessage] = useState("");
   const [flashAssetId, setFlashAssetId] = useState<string | null>(null);
+  const [sipNotice, setSipNotice] = useState<string | null>(null);
+  const clearSipNotice = useCallback(() => setSipNotice(null), []);
+  const sipCatchupExecutedRef = useRef<Set<string>>(new Set());
 
   const [modal, setModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<EditAssetForm | null>(null);
@@ -325,6 +340,20 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // Resilient fallback: Query via dedicated server API endpoint
+        if ((error || !data || data.length === 0) && isMounted) {
+          try {
+            const apiRes = await fetch(`/api/assets?username=${encodeURIComponent(uid)}`);
+            if (apiRes.ok) {
+              const apiJson = await apiRes.json();
+              if (apiJson.success && Array.isArray(apiJson.assets) && apiJson.assets.length > 0) {
+                data = apiJson.assets;
+                error = null;
+              }
+            }
+          } catch {}
+        }
+
         if (!error && data && isMounted) {
           const formatted: AssetPosition[] = data.map((row: any) => ({
             id: String(row.id),
@@ -336,14 +365,50 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             buyPrice: Number(row.buy_price),
             currentPrice: Number(row.current_price),
             currency: row.currency as "INR" | "USD",
-            date: row.created_at ? row.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            date: row.created_at ? row.created_at.split("T")[0] : formatLocalDate(),
+            isSip: Boolean(row.is_sip),
+            sipAmount: row.sip_amount ? Number(row.sip_amount) : undefined,
+            sipDay: row.sip_day ? Number(row.sip_day) : undefined,
+            sipStartDate: row.sip_start_date || undefined,
+            sipInstallments: row.sip_installments ? Number(row.sip_installments) : undefined,
+            lastSipDate: row.last_sip_date || undefined,
+            sipStatus: (row.sip_status as "active" | "paused") || (row.is_sip ? "active" : undefined),
           }));
+
+          // Merge local SIP metadata if Supabase schema columns are not yet provisioned
+          try {
+            const localCacheStr = localStorage.getItem(`mywealth_positions_${uid}`);
+            if (localCacheStr) {
+              const localCache: AssetPosition[] = JSON.parse(localCacheStr);
+              const localMap = new Map(localCache.map((a) => [a.id, a]));
+              formatted.forEach((pos) => {
+                const loc = localMap.get(pos.id);
+                if (loc?.isSip && !pos.isSip) {
+                  pos.isSip = loc.isSip;
+                  pos.sipAmount = loc.sipAmount;
+                  pos.sipDay = loc.sipDay;
+                  pos.sipStartDate = loc.sipStartDate;
+                  pos.sipInstallments = loc.sipInstallments;
+                  pos.lastSipDate = loc.lastSipDate;
+                  pos.sipStatus = loc.sipStatus;
+                }
+              });
+            }
+          } catch {}
+
           const deduped = dedupeAssets(formatted);
           deduped.forEach((item) => {
             dbBaselinePricesRef.current.set(item.id, item.currentPrice);
           });
-          setAssets(deduped);
-          persistLocal(deduped, uid);
+          setAssets((prev) => {
+            // Keep recent optimistic temporary items that haven't resolved yet
+            const recentTemp = prev.filter(
+              (a) => a.id.startsWith("temp-") && Date.now() - Number(a.id.replace("temp-", "")) < 20000
+            );
+            const combined = dedupeAssets([...recentTemp, ...deduped]);
+            persistLocal(combined, uid);
+            return combined;
+          });
           setSyncStatus("live");
         } else if (error && (error.code === "42703" || error.message?.includes("user_id") || error.message?.includes("username"))) {
           if (isMounted) {
@@ -389,7 +454,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             buyPrice: Number(row.buy_price),
             currentPrice: Number(row.currentPrice !== undefined ? row.currentPrice : row.current_price),
             currency: row.currency as "INR" | "USD",
-            date: row.created_at ? row.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            date: row.created_at ? row.created_at.split("T")[0] : formatLocalDate(),
+            isSip: Boolean(row.is_sip),
+            sipAmount: row.sip_amount ? Number(row.sip_amount) : undefined,
+            sipDay: row.sip_day ? Number(row.sip_day) : undefined,
+            sipStartDate: row.sip_start_date || undefined,
+            sipInstallments: row.sip_installments ? Number(row.sip_installments) : undefined,
+            lastSipDate: row.last_sip_date || undefined,
+            sipStatus: (row.sip_status as "active" | "paused") || (row.is_sip ? "active" : undefined),
           };
           dbBaselinePricesRef.current.set(newPos.id, newPos.currentPrice);
 
@@ -457,11 +529,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
               a.id === updatedId
                 ? {
                     ...a,
-                    name: row.name,
-                    category: row.category as AssetCategory,
-                    quantity: Number(row.quantity),
-                    currentPrice: Number(row.current_price),
-                    currency: row.currency as "INR" | "USD",
+                    name: row.name ?? a.name,
+                    category: (row.category as AssetCategory) ?? a.category,
+                    quantity: row.quantity !== undefined ? Number(row.quantity) : a.quantity,
+                    buyPrice: row.buy_price !== undefined ? Number(row.buy_price) : a.buyPrice,
+                    currentPrice: row.current_price !== undefined ? Number(row.current_price) : a.currentPrice,
+                    currency: (row.currency as "INR" | "USD") ?? a.currency,
+                    isSip: row.is_sip !== undefined ? Boolean(row.is_sip) : a.isSip,
+                    sipAmount: row.sip_amount !== undefined ? (row.sip_amount ? Number(row.sip_amount) : undefined) : a.sipAmount,
+                    sipDay: row.sip_day !== undefined ? (row.sip_day ? Number(row.sip_day) : undefined) : a.sipDay,
+                    sipStartDate: row.sip_start_date !== undefined ? (row.sip_start_date || undefined) : a.sipStartDate,
+                    sipInstallments: row.sip_installments !== undefined ? (row.sip_installments ? Number(row.sip_installments) : undefined) : a.sipInstallments,
+                    lastSipDate: row.last_sip_date !== undefined ? (row.last_sip_date || undefined) : a.lastSipDate,
+                    sipStatus: (row.sip_status as "active" | "paused") ?? a.sipStatus,
                   }
                 : a
             );
@@ -586,6 +666,106 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     [showUsdInRupees, usdInrRate]
   );
 
+  const totalMonthlySipINR = useMemo(() => {
+    return assets
+      .filter((a) => a.isSip && a.sipStatus !== "paused")
+      .reduce((sum, item) => {
+        const amt = item.sipAmount || 0;
+        return sum + (item.currency === "USD" ? amt * usdInrRate : amt);
+      }, 0);
+  }, [assets, usdInrRate]);
+
+  const activeSipCount = useMemo(() => {
+    return assets.filter((a) => a.isSip && a.sipStatus !== "paused").length;
+  }, [assets]);
+
+  // Automated Monthly SIP Catch-Up & Auto-Execution Engine
+  useEffect(() => {
+    if (!assets || assets.length === 0) return;
+    const uid = (
+      currentUserId ||
+      (typeof window !== "undefined" ? localStorage.getItem("mywealth_current_user") : "") ||
+      ""
+    ).trim();
+
+    const pendingCatches: Array<{
+      asset: AssetPosition;
+      catchup: NonNullable<ReturnType<typeof calculateSipCatchup>>;
+    }> = [];
+
+    assets.forEach((asset) => {
+      if (!asset.isSip || asset.sipStatus === "paused") return;
+      const key = `${asset.id}_${asset.lastSipDate || asset.sipStartDate}_${formatLocalDate()}`;
+      if (sipCatchupExecutedRef.current.has(key)) return;
+
+      const result = calculateSipCatchup(asset);
+      if (result && result.dueCount > 0) {
+        pendingCatches.push({ asset, catchup: result });
+        sipCatchupExecutedRef.current.add(key);
+      }
+    });
+
+    if (pendingCatches.length === 0) return;
+
+    // Apply scheduled catchups to state & persistent store
+    const updatedAssets = assets.map((a) => {
+      const match = pendingCatches.find((p) => p.asset.id === a.id);
+      if (match) {
+        return {
+          ...a,
+          quantity: match.catchup.newQuantity,
+          buyPrice: match.catchup.newBuyPrice,
+          sipInstallments: match.catchup.newInstallments,
+          lastSipDate: match.catchup.newLastSipDate,
+        };
+      }
+      return a;
+    });
+
+    setAssets(dedupeAssets(updatedAssets));
+    if (uid) persistLocal(updatedAssets, uid);
+
+    if (isSupabaseConfigured && supabase) {
+      (async () => {
+        try {
+          await Promise.all(
+            pendingCatches.map(async ({ asset, catchup }) => {
+              const res = await supabase!
+                .from("assets")
+                .update({
+                  quantity: catchup.newQuantity,
+                  buy_price: catchup.newBuyPrice,
+                  sip_installments: catchup.newInstallments,
+                  last_sip_date: catchup.newLastSipDate,
+                })
+                .eq("id", asset.id);
+
+              if (res.error && (res.error.code === "42703" || res.error.message?.includes("sip"))) {
+                await supabase!
+                  .from("assets")
+                  .update({
+                    quantity: catchup.newQuantity,
+                    buy_price: catchup.newBuyPrice,
+                    last_sip_date: catchup.newLastSipDate,
+                  })
+                  .eq("id", asset.id);
+              }
+            })
+          );
+        } catch (err) {
+          console.error("Supabase SIP catchup error:", err);
+        }
+      })();
+    }
+
+    const summaries = pendingCatches.map(
+      (p) => `${p.asset.name} · +${p.catchup.dueCount} installment${p.catchup.dueCount > 1 ? "s" : ""} added`
+    );
+    setSipNotice(summaries.join(", "));
+    const timer = setTimeout(() => setSipNotice(null), 8000);
+    return () => clearTimeout(timer);
+  }, [assets, currentUserId]);
+
   // Live price refresh
   const handleRefreshPrices = async () => {
     if (assets.length === 0 || isRefreshingPrices) return;
@@ -655,7 +835,21 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
       setAssets(refreshedList);
       persistLocal(refreshedList);
-      setUnsavedAssetIds(changedIds);
+
+      // Persist refreshed prices directly to Supabase so DB is immediately updated
+      if (isSupabaseConfigured && supabase && changedIds.size > 0) {
+        const changedAssets = refreshedList.filter((a) => changedIds.has(a.id));
+        await Promise.all(
+          changedAssets.map((a) =>
+            supabase!.from("assets").update({ current_price: a.currentPrice }).eq("id", a.id)
+          )
+        );
+        changedAssets.forEach((a) => dbBaselinePricesRef.current.set(a.id, a.currentPrice));
+        setUnsavedAssetIds(new Set());
+      } else {
+        setUnsavedAssetIds(changedIds);
+      }
+
       setPriceRefreshMessage(`Successfully synced ${changedIds.size} market valuations.`);
       setTimeout(() => setPriceRefreshMessage(""), 4000);
     } catch {
@@ -706,6 +900,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     buyPrice: number;
     currentPrice: number;
     currency: "INR" | "USD";
+    isSip?: boolean;
+    sipAmount?: number;
+    sipDay?: number;
+    sipStartDate?: string;
+    sipInstallments?: number;
+    lastSipDate?: string;
+    sipStatus?: "active" | "paused";
   }) => {
     const uid = (
       currentUserId ||
@@ -724,38 +925,95 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       username: uid,
       userId: uid,
       ...item,
-      date: new Date().toISOString().split("T")[0],
+      date: formatLocalDate(),
     };
 
-    setAssets((prev) => dedupeAssets([newPos, ...prev]));
-    persistLocal([newPos, ...assets], uid);
+    setAssets((prev) => {
+      const next = dedupeAssets([newPos, ...prev]);
+      persistLocal(next, uid);
+      return next;
+    });
     setFlashAssetId(tempId);
     setTimeout(() => setFlashAssetId(null), 2000);
 
-    if (isSupabaseConfigured && supabase) {
-      try {
-        // Try inserting with username column
-        let insertRes = await supabase
-          .from("assets")
-          .insert([
-            {
-              name: newPos.name,
-              category: newPos.category,
-              quantity: newPos.quantity,
-              buy_price: newPos.buyPrice,
-              current_price: newPos.currentPrice,
-              currency: newPos.currency,
-              username: uid,
-            },
-          ])
-          .select();
+    // 1. Primary path: Persist via secure, server-side /api/assets endpoint
+    try {
+      const res = await fetch("/api/assets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...item,
+          username: uid,
+        }),
+      });
 
-        // If username column does not exist yet (code 42703), retry with user_id
-        if (
-          insertRes.error &&
-          (insertRes.error.code === "42703" || insertRes.error.message?.includes("username"))
-        ) {
-          insertRes = await supabase
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok || !resData?.success || !resData?.asset) {
+        throw new Error(resData?.error || "Failed to save asset");
+      }
+
+      const realRow = resData.asset;
+      const realId = String(realRow.id);
+      dbBaselinePricesRef.current.set(realId, newPos.currentPrice);
+
+      setAssets((prev) => {
+        // If Realtime already received this item and added realId, remove tempId
+        if (prev.some((a) => a.id === realId)) {
+          const cleaned = prev.filter((a) => a.id !== tempId);
+          persistLocal(cleaned, uid);
+          return dedupeAssets(cleaned);
+        }
+        // Otherwise, replace tempId with realId and server-confirmed attributes
+        const updated = prev.map((a) =>
+          a.id === tempId
+            ? {
+                ...a,
+                id: realId,
+                username: realRow.username || uid,
+                userId: realRow.username || uid,
+                isSip: Boolean(realRow.is_sip !== undefined ? realRow.is_sip : a.isSip),
+                sipAmount:
+                  realRow.sip_amount !== undefined && realRow.sip_amount !== null
+                    ? Number(realRow.sip_amount)
+                    : a.sipAmount,
+                sipDay:
+                  realRow.sip_day !== undefined && realRow.sip_day !== null
+                    ? Number(realRow.sip_day)
+                    : a.sipDay,
+                sipStartDate: realRow.sip_start_date || a.sipStartDate,
+                sipInstallments:
+                  realRow.sip_installments !== undefined && realRow.sip_installments !== null
+                    ? Number(realRow.sip_installments)
+                    : a.sipInstallments,
+                lastSipDate: realRow.last_sip_date || a.lastSipDate,
+                sipStatus: realRow.sip_status || a.sipStatus,
+              }
+            : a
+        );
+        persistLocal(updated, uid);
+        return dedupeAssets(updated);
+      });
+      setFlashAssetId(realId);
+    } catch (err: any) {
+      console.warn("[addAsset] API call failed, attempting direct Supabase fallback:", err);
+
+      // 2. Secondary fallback: Direct Supabase insert
+      let directSaved = false;
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const sipFields = item.isSip
+            ? {
+                is_sip: true,
+                sip_amount: item.sipAmount,
+                sip_day: item.sipDay,
+                sip_start_date: item.sipStartDate,
+                sip_installments: item.sipInstallments || 1,
+                last_sip_date: item.lastSipDate,
+                sip_status: item.sipStatus || "active",
+              }
+            : {};
+
+          let insertRes = await supabase
             .from("assets")
             .insert([
               {
@@ -765,32 +1023,52 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 buy_price: newPos.buyPrice,
                 current_price: newPos.currentPrice,
                 currency: newPos.currency,
-                user_id: uid,
+                username: uid,
+                ...sipFields,
               },
             ])
             .select();
-        }
 
-        if (!insertRes.error && insertRes.data && insertRes.data[0]) {
-          const realId = String(insertRes.data[0].id);
-          dbBaselinePricesRef.current.set(realId, newPos.currentPrice);
-          setAssets((prev) => {
-            // If Realtime already received this item and added realId, remove tempId
-            if (prev.some((a) => a.id === realId)) {
-              const cleaned = prev.filter((a) => a.id !== tempId);
-              persistLocal(cleaned, uid);
-              return dedupeAssets(cleaned);
-            }
-            // Otherwise, replace tempId with realId
-            const updated = prev.map((a) =>
-              a.id === tempId ? { ...a, id: realId, username: uid, userId: uid } : a
-            );
-            persistLocal(updated, uid);
-            return dedupeAssets(updated);
-          });
+          if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("sip"))) {
+            insertRes = await supabase
+              .from("assets")
+              .insert([
+                {
+                  name: newPos.name,
+                  category: newPos.category,
+                  quantity: newPos.quantity,
+                  buy_price: newPos.buyPrice,
+                  current_price: newPos.currentPrice,
+                  currency: newPos.currency,
+                  username: uid,
+                },
+              ])
+              .select();
+          }
+
+          if (!insertRes.error && insertRes.data && insertRes.data[0]) {
+            const realId = String(insertRes.data[0].id);
+            dbBaselinePricesRef.current.set(realId, newPos.currentPrice);
+            setAssets((prev) => {
+              const updated = prev.map((a) => (a.id === tempId ? { ...a, id: realId } : a));
+              persistLocal(updated, uid);
+              return dedupeAssets(updated);
+            });
+            directSaved = true;
+          }
+        } catch (directErr) {
+          console.error("Direct Supabase fallback failed:", directErr);
         }
-      } catch (err) {
-        console.error("Supabase insert error:", err);
+      }
+
+      if (!directSaved) {
+        // Revert optimistic item so UI matches DB
+        setAssets((prev) => {
+          const reverted = prev.filter((a) => a.id !== tempId);
+          persistLocal(reverted, uid);
+          return dedupeAssets(reverted);
+        });
+        setSipNotice(`Failed to save asset: ${err.message || "Network error"}`);
       }
     }
   };
@@ -812,21 +1090,41 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setFlashAssetId(updated.id);
     setTimeout(() => setFlashAssetId(null), 2000);
 
-    if (isSupabaseConfigured && supabase && !updated.id.startsWith("temp-")) {
+    if (!updated.id.startsWith("temp-")) {
       try {
-        await supabase
-          .from("assets")
-          .update({
-            name: updated.name,
-            category: updated.category,
-            quantity: updated.quantity,
-            buy_price: updated.buyPrice,
-            current_price: updated.currentPrice,
-            currency: updated.currency,
-          })
-          .eq("id", updated.id);
+        const res = await fetch("/api/assets", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updated),
+        });
+        if (!res.ok && isSupabaseConfigured && supabase) {
+          const sipRow = updated.isSip
+            ? {
+                is_sip: true,
+                sip_amount: updated.sipAmount,
+                sip_day: updated.sipDay,
+                sip_start_date: updated.sipStartDate,
+                sip_installments: updated.sipInstallments,
+                last_sip_date: updated.lastSipDate,
+                sip_status: updated.sipStatus || "active",
+              }
+            : { is_sip: false };
+
+          await supabase
+            .from("assets")
+            .update({
+              name: updated.name,
+              category: updated.category,
+              quantity: updated.quantity,
+              buy_price: updated.buyPrice,
+              current_price: updated.currentPrice,
+              currency: updated.currency,
+              ...sipRow,
+            })
+            .eq("id", updated.id);
+        }
       } catch (err) {
-        console.error("Supabase update error:", err);
+        console.error("Asset update error:", err);
       }
     }
   };
@@ -845,11 +1143,21 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     });
     dbBaselinePricesRef.current.delete(id);
 
-    if (isSupabaseConfigured && supabase && !id.startsWith("temp-")) {
+    if (!id.startsWith("temp-")) {
       try {
-        await supabase.from("assets").delete().eq("id", id);
+        const res = await fetch(`/api/assets?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        });
+        if (!res.ok && isSupabaseConfigured && supabase) {
+          await supabase.from("assets").delete().eq("id", id);
+        }
       } catch (err) {
-        console.error("Supabase delete error:", err);
+        console.error("Asset delete error:", err);
+        if (isSupabaseConfigured && supabase) {
+          try {
+            await supabase.from("assets").delete().eq("id", id);
+          } catch {}
+        }
       }
     }
   };
@@ -864,6 +1172,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       currentPrice: asset.currentPrice.toString(),
       currentValue: (asset.quantity * asset.currentPrice).toFixed(2),
       currency: asset.currency,
+      isSip: asset.isSip,
+      sipAmount: asset.sipAmount ? asset.sipAmount.toString() : "",
+      sipDay: asset.sipDay ? asset.sipDay.toString() : "5",
+      sipStartDate: asset.sipStartDate,
+      sipInstallments: asset.sipInstallments ? asset.sipInstallments.toString() : undefined,
+      lastSipDate: asset.lastSipDate,
+      sipStatus: asset.sipStatus,
     });
   };
 
@@ -992,6 +1307,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       currentUserId,
       isLoggingOut,
       handleLogout,
+      totalMonthlySipINR,
+      activeSipCount,
+      sipNotice,
+      clearSipNotice,
     }),
     [
       safeAssets,
@@ -1041,6 +1360,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       userGender,
       currentUserId,
       isLoggingOut,
+      totalMonthlySipINR,
+      activeSipCount,
+      sipNotice,
     ]
   );
 

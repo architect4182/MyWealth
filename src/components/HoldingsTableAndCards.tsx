@@ -13,11 +13,13 @@ import {
   Sparkles,
   Plus,
   ChartNoAxesCombined,
+  Repeat,
 } from "lucide-react";
 import { AssetPosition, AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLogoAvatar, getStockTicker } from "@/components/Logos";
 import { MarketTimingBadge, getAssetMarketStatus } from "@/components/MarketBadge";
+import { getNextSipDate } from "@/utils/sip";
 
 export interface FilterSubTab {
   key: string;
@@ -267,6 +269,15 @@ export function HoldingsTableAndCards({
                     <div className="apple-asset-tags">
                       <span className="apple-ticker-pill">{ticker}</span>
                       <span className="apple-category-pill">{item.category}</span>
+                      {item.isSip && (
+                        <span
+                          className={`apple-sip-pill ${item.sipStatus === "paused" ? "paused" : "active"}`}
+                          title={`Monthly SIP: ${money(item.sipAmount || 0, item.currency)} on ${item.sipDay || 5}th. Next auto-investment: ${getNextSipDate(item.sipDay || 5)}`}
+                        >
+                          <Repeat size={10} /> SIP · {money(item.sipAmount || 0, item.currency)}/mo ({item.sipDay || 5}th)
+                          {item.sipStatus === "paused" ? " • Paused" : ""}
+                        </span>
+                      )}
                       <MarketTimingBadge
                         status={item.category === "US Stocks" ? usStatus : inStatus}
                         compact
@@ -285,6 +296,14 @@ export function HoldingsTableAndCards({
                       <span className="apple-inv-tag">
                         Inv: {money(investedVal, item.currency)}
                       </span>
+                      {item.isSip && (
+                        <>
+                          <span className="apple-dot-sep">•</span>
+                          <span className="apple-sip-sched-tag">
+                            Next: {getNextSipDate(item.sipDay || 5)} ({item.sipInstallments || 1} done)
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -472,6 +491,14 @@ export function HoldingsTableAndCards({
                               <span className="apple-category-pill">
                                 {item.category}
                               </span>
+                              {item.isSip && (
+                                <span
+                                  className={`apple-sip-table-pill ${item.sipStatus === "paused" ? "paused" : "active"}`}
+                                  title={`Monthly SIP: ${money(item.sipAmount || 0, item.currency)} on ${item.sipDay || 5}th. Next: ${getNextSipDate(item.sipDay || 5)}`}
+                                >
+                                  SIP{item.sipStatus === "paused" ? " (Paused)" : ""}
+                                </span>
+                              )}
                               <MarketTimingBadge
                                 status={
                                   item.category === "US Stocks" ? usStatus : inStatus

@@ -16,6 +16,13 @@ export interface AssetPosition {
   currentPrice: number;
   currency: "INR" | "USD";
   date: string;
+  isSip?: boolean;
+  sipAmount?: number;
+  sipDay?: number;
+  sipStartDate?: string;
+  sipInstallments?: number;
+  lastSipDate?: string;
+  sipStatus?: "active" | "paused";
 }
 
 export interface EditAssetForm {
@@ -27,6 +34,13 @@ export interface EditAssetForm {
   currentPrice: string;
   currentValue: string;
   currency: "INR" | "USD";
+  isSip?: boolean;
+  sipAmount?: string;
+  sipDay?: string;
+  sipStartDate?: string;
+  sipInstallments?: string;
+  lastSipDate?: string;
+  sipStatus?: "active" | "paused";
 }
 
 export interface MarketTimingStatus {

@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ChartNoAxesCombined,
   Wallet,
+  Repeat,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Header } from "@/components/Header";
@@ -41,18 +42,23 @@ export default function Home() {
     handleRefreshPrices,
     priceRefreshMessage,
     userGender,
+    totalMonthlySipINR,
+    activeSipCount,
   } = usePortfolio();
 
   const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
 
   const [showSidePanel, setShowSidePanel] = useState(true);
-  const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf">("all");
+  const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf" | "sip">("all");
+
+  const sipAssets = useMemo(() => assets.filter((a) => a.isSip), [assets]);
 
   const displayedAssets = useMemo(() => {
     if (overviewSubTab === "stocks") return equities;
     if (overviewSubTab === "mf") return mutualFunds;
+    if (overviewSubTab === "sip") return sipAssets;
     return assets;
-  }, [overviewSubTab, equities, mutualFunds, assets]);
+  }, [overviewSubTab, equities, mutualFunds, sipAssets, assets]);
 
   const filterTabs = [
     {
@@ -73,6 +79,16 @@ export default function Home() {
       count: mutualFunds.length,
       icon: <Wallet size={13} />,
     },
+    ...(sipAssets.length > 0
+      ? [
+          {
+            key: "sip",
+            label: "Active SIPs",
+            count: sipAssets.length,
+            icon: <Repeat size={13} />,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -179,6 +195,14 @@ export default function Home() {
                     {money(totalInvestedINR)}
                   </span>
                 </div>
+                {totalMonthlySipINR > 0 && (
+                  <div className="apple-stat-chip">
+                    <span className="apple-stat-chip-label">Monthly SIP</span>
+                    <span className="apple-stat-chip-val" style={{ color: "var(--apple-blue)" }}>
+                      {money(totalMonthlySipINR)}/mo ({activeSipCount})
+                    </span>
+                  </div>
+                )}
                 <div className="apple-stat-chip">
                   <span className="apple-stat-chip-label">Active Holdings</span>
                   <span className="apple-stat-chip-val">
