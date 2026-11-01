@@ -74,7 +74,9 @@ interface PortfolioContextType {
   prefillAsset: PrefillAssetData | null;
   setPrefillAsset: (data: PrefillAssetData | null) => void;
   openAddModalWithPrefill: (data: PrefillAssetData) => void;
-
+  userGender: "male" | "female";
+  setUserGender: (gender: "male" | "female") => void;
+  currentUserId: string;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | null>(null);
@@ -100,6 +102,45 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [marketModal, setMarketModal] = useState(false);
   const [defaultCategory, setDefaultCategory] = useState<AssetCategory>("Indian Equities");
   const [prefillAsset, setPrefillAsset] = useState<PrefillAssetData | null>(null);
+  const [userGender, setUserGenderState] = useState<"male" | "female">("male");
+  const [currentUserId, setCurrentUserId] = useState<string>("chait");
+
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem("mywealth_current_user");
+      if (savedUser) setCurrentUserId(savedUser);
+      const saved = localStorage.getItem("mywealth_user_gender");
+      if (saved === "female" || saved === "male") {
+        setUserGenderState(saved);
+      }
+    } catch {}
+
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.authenticated && data.username) {
+          const uid = String(data.username).toLowerCase().trim();
+          setCurrentUserId(uid);
+          try {
+            localStorage.setItem("mywealth_current_user", uid);
+          } catch {}
+        }
+        if (data?.authenticated && (data.gender === "female" || data.gender === "male")) {
+          setUserGenderState(data.gender);
+          try {
+            localStorage.setItem("mywealth_user_gender", data.gender);
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const setUserGender = (gender: "male" | "female") => {
+    setUserGenderState(gender);
+    try {
+      localStorage.setItem("mywealth_user_gender", gender);
+    } catch {}
+  };
 
   const openAddModalWithPrefill = (data: PrefillAssetData) => {
     setDefaultCategory(data.category);
@@ -162,10 +203,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, []);
 
-  // Local storage cache for offline / fallback
+  // Local storage cache for offline / fallback partitioned by user
   useEffect(() => {
     try {
-      const local = localStorage.getItem("mywealth_positions");
+      const uid = (currentUserId || "chait").toLowerCase().trim();
+      const local =
+        localStorage.getItem(`mywealth_positions_${uid}`) ||
+        (uid === "chait" || uid === "admin" ? localStorage.getItem("mywealth_positions") : null);
       if (local && !isSupabaseConfigured) {
         const parsed = JSON.parse(local);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -173,9 +217,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch {}
-  }, []);
+  }, [currentUserId]);
 
-  // Supabase Realtime Sync
+  // Supabase Realtime Sync filtered strictly by user_id
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
       setSyncStatus("offline");
@@ -184,18 +228,27 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }
 
     let isMounted = true;
+    const uid = (currentUserId || "chait").toLowerCase().trim();
+    const isPrimary = uid === "chait" || uid === "admin";
+
     async function loadAssets() {
       setSyncStatus("connecting");
       setIsLoading(true);
       try {
-        const { data, error } = await supabase!
-          .from("assets")
-          .select("*")
-          .order("created_at", { ascending: false });
+        // Multi-tenant query: filter assets by user_id
+        let query = supabase!.from("assets").select("*");
+        if (isPrimary) {
+          query = query.or(`user_id.eq.${uid},user_id.is.null`);
+        } else {
+          query = query.eq("user_id", uid);
+        }
+
+        const { data, error } = await query.order("created_at", { ascending: false });
 
         if (!error && data && isMounted) {
           const formatted: AssetPosition[] = data.map((row: any) => ({
             id: String(row.id),
+            userId: row.user_id || uid,
             name: row.name,
             category: row.category as AssetCategory,
             quantity: Number(row.quantity),
@@ -208,7 +261,48 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             dbBaselinePricesRef.current.set(item.id, item.currentPrice);
           });
           setAssets(formatted);
+          persistLocal(formatted, uid);
           setSyncStatus("live");
+        } else if (error && (error.code === "42703" || error.message?.includes("user_id"))) {
+          // Graceful fallback before the user runs the SQL migration to add user_id column
+          if (isPrimary && isMounted) {
+            const { data: allData } = await supabase!
+              .from("assets")
+              .select("*")
+              .order("created_at", { ascending: false });
+            if (allData) {
+              const formatted: AssetPosition[] = allData.map((row: any) => ({
+                id: String(row.id),
+                userId: uid,
+                name: row.name,
+                category: row.category as AssetCategory,
+                quantity: Number(row.quantity),
+                buyPrice: Number(row.buy_price),
+                currentPrice: Number(row.current_price),
+                currency: row.currency as "INR" | "USD",
+                date: row.created_at ? row.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              }));
+              formatted.forEach((item) => {
+                dbBaselinePricesRef.current.set(item.id, item.currentPrice);
+              });
+              setAssets(formatted);
+              persistLocal(formatted, uid);
+              setSyncStatus("live");
+            }
+          } else if (isMounted) {
+            // Strict isolation for second/registered users: never show primary user's portfolio!
+            const local = localStorage.getItem(`mywealth_positions_${uid}`);
+            if (local) {
+              try {
+                setAssets(JSON.parse(local));
+              } catch {
+                setAssets([]);
+              }
+            } else {
+              setAssets([]);
+            }
+            setSyncStatus("live");
+          }
         }
       } catch (err) {
         console.error("Supabase fetch error:", err);
@@ -221,17 +315,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     loadAssets();
 
     const channel = supabase
-      .channel("mywealth-live-sync")
+      .channel(`mywealth-live-sync-${uid}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "assets" }, (payload) => {
+        const isPrimary = uid === "chait" || uid === "admin";
         if (payload.eventType === "INSERT") {
           const row: any = payload.new;
+          const rowUserId = (row.user_id || "").toLowerCase().trim();
+          const matches = rowUserId === uid || (!rowUserId && isPrimary);
+          if (!matches) return;
+
           const newPos: AssetPosition = {
             id: String(row.id),
+            userId: row.user_id || uid,
             name: row.name,
             category: row.category as AssetCategory,
             quantity: Number(row.quantity),
             buyPrice: Number(row.buy_price),
-            currentPrice: Number(row.current_price),
+            currentPrice: Number(row.currentPrice !== undefined ? row.currentPrice : row.current_price),
             currency: row.currency as "INR" | "USD",
             date: row.created_at ? row.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
           };
@@ -258,6 +358,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           }
         } else if (payload.eventType === "UPDATE") {
           const row: any = payload.new;
+          const rowUserId = (row.user_id || "").toLowerCase().trim();
+          const matches = rowUserId === uid || (!rowUserId && isPrimary);
+          if (!matches) return;
+
           const updatedId = String(row.id);
           dbBaselinePricesRef.current.set(updatedId, Number(row.current_price));
           setUnsavedAssetIds((prev) => {
@@ -277,7 +381,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                     currentPrice: Number(row.current_price),
                     currency: row.currency as "INR" | "USD",
                   }
-                : a
+                 : a
             )
           );
           setFlashAssetId(updatedId);
@@ -294,12 +398,16 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       isMounted = false;
       supabase?.removeChannel(channel);
     };
-  }, []);
+  }, [currentUserId]);
 
-  // Save to localStorage whenever assets change (offline support)
-  const persistLocal = (newAssets: AssetPosition[]) => {
+  // Save to localStorage partitioned per user
+  const persistLocal = (newAssets: AssetPosition[], uid?: string) => {
+    const user = (uid || currentUserId || "chait").toLowerCase().trim();
     try {
-      localStorage.setItem("mywealth_positions", JSON.stringify(newAssets));
+      localStorage.setItem(`mywealth_positions_${user}`, JSON.stringify(newAssets));
+      if (user === "chait" || user === "admin") {
+        localStorage.setItem("mywealth_positions", JSON.stringify(newAssets));
+      }
     } catch {}
   };
 
@@ -419,8 +527,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             else ticker = asset.name.toUpperCase();
           } else if (asset.category === "Indian Equities") {
             marketType = "INDIA";
-            if (lower.includes("reliance")) ticker = "RELIANCE";
-            else if (lower.includes("jio")) ticker = "RELIANCE";
+            if (lower.includes("reliance") && !lower.includes("jio")) ticker = "RELIANCE";
+            else if (lower.includes("jio financial")) ticker = "JIOFIN";
+            else if (lower.includes("jio platforms") || lower.includes("jio") || lower === "jp") ticker = "JPL";
             else if (lower.includes("tata motors")) ticker = "TATAMOTORS";
             else if (lower.includes("tcs") || lower.includes("tata consultancy")) ticker = "TCS";
             else if (lower.includes("hdfc")) ticker = "HDFCBANK";
@@ -516,21 +625,24 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     currency: "INR" | "USD";
   }) => {
     const tempId = `temp-${Date.now()}`;
+    const uid = (currentUserId || "chait").toLowerCase().trim();
+    const isPrimary = uid === "chait" || uid === "admin";
     const newPos: AssetPosition = {
       id: tempId,
+      userId: uid,
       ...item,
       date: new Date().toISOString().split("T")[0],
     };
 
     const next = [newPos, ...assets];
     setAssets(next);
-    persistLocal(next);
+    persistLocal(next, uid);
     setFlashAssetId(tempId);
     setTimeout(() => setFlashAssetId(null), 2000);
 
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase
+        let insertRes = await supabase
           .from("assets")
           .insert([
             {
@@ -540,13 +652,38 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
               buy_price: newPos.buyPrice,
               current_price: newPos.currentPrice,
               currency: newPos.currency,
+              user_id: uid,
             },
           ])
           .select();
-        if (!error && data && data[0]) {
-          const realId = String(data[0].id);
+
+        // If user_id column does not exist yet in Supabase and user is primary admin, retry without user_id
+        if (
+          insertRes.error &&
+          (insertRes.error.code === "42703" || insertRes.error.message?.includes("user_id")) &&
+          isPrimary
+        ) {
+          insertRes = await supabase
+            .from("assets")
+            .insert([
+              {
+                name: newPos.name,
+                category: newPos.category,
+                quantity: newPos.quantity,
+                buy_price: newPos.buyPrice,
+                current_price: newPos.currentPrice,
+                currency: newPos.currency,
+              },
+            ])
+            .select();
+        }
+
+        if (!insertRes.error && insertRes.data && insertRes.data[0]) {
+          const realId = String(insertRes.data[0].id);
           dbBaselinePricesRef.current.set(realId, newPos.currentPrice);
-          setAssets((prev) => prev.map((a) => (a.id === tempId ? { ...a, id: realId } : a)));
+          setAssets((prev) =>
+            prev.map((a) => (a.id === tempId ? { ...a, id: realId, userId: uid } : a))
+          );
         }
       } catch (err) {
         console.error("Supabase insert error:", err);
@@ -555,9 +692,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateAsset = async (updated: AssetPosition) => {
-    const next = assets.map((a) => (a.id === updated.id ? updated : a));
+    const uid = (currentUserId || "chait").toLowerCase().trim();
+    const next = assets.map((a) => (a.id === updated.id ? { ...updated, userId: uid } : a));
     setAssets(next);
-    persistLocal(next);
+    persistLocal(next, uid);
     setFlashAssetId(updated.id);
     setTimeout(() => setFlashAssetId(null), 2000);
 
@@ -581,9 +719,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteAsset = async (id: string) => {
+    const uid = (currentUserId || "chait").toLowerCase().trim();
     const next = assets.filter((a) => a.id !== id);
     setAssets(next);
-    persistLocal(next);
+    persistLocal(next, uid);
     dbBaselinePricesRef.current.delete(id);
 
     if (isSupabaseConfigured && supabase && !id.startsWith("temp-")) {
@@ -670,7 +809,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         prefillAsset,
         setPrefillAsset,
         openAddModalWithPrefill,
-
+        userGender,
+        setUserGender,
+        currentUserId,
       }}
     >
       {children}

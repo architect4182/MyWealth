@@ -40,7 +40,10 @@ export default function Home() {
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
+    userGender,
   } = usePortfolio();
+
+  const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
 
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf">("all");
@@ -93,7 +96,7 @@ export default function Home() {
         {showSidePanel && (
           <aside className="apple-side-panel">
             <img
-              src="/side-panel-image.png"
+              src={sidePanelImg}
               alt="MyWealth Portfolio Vision"
               className="apple-panel-img"
             />

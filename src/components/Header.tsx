@@ -10,6 +10,7 @@ import {
   Plus,
   Database,
   PanelLeft,
+  LogOut,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
@@ -61,6 +62,8 @@ export function Header({
     setDbModal,
     setMarketModal,
     setDefaultCategory,
+    userGender,
+    setUserGender,
   } = usePortfolio();
 
   const navigation = [
@@ -187,6 +190,29 @@ export function Header({
           onClick={() => setDbModal(true)}
         >
           <Database size={15} />
+        </button>
+        <button
+          type="button"
+          className="apple-persona-toggle-pill"
+          title={`Persona Vision: ${userGender === "female" ? "Female" : "Male"} • Click to switch to ${userGender === "female" ? "Male" : "Female"}`}
+          onClick={() => setUserGender(userGender === "female" ? "male" : "female")}
+        >
+          <span className="apple-persona-emoji">{userGender === "female" ? "👩" : "👨"}</span>
+          <span className="apple-persona-label">{userGender === "female" ? "Female" : "Male"}</span>
+        </button>
+        <button
+          type="button"
+          className="apple-circle-icon-btn apple-signout-btn"
+          title="Lock / Sign Out of Portfolio"
+          onClick={async () => {
+            try {
+              await fetch("/api/auth/logout", { method: "POST" });
+            } finally {
+              window.location.href = "/login";
+            }
+          }}
+        >
+          <LogOut size={14} />
         </button>
       </div>
 

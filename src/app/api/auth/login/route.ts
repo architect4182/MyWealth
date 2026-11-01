@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from "next/server";
+import { validateCredentials, createSessionToken, AUTH_COOKIE_NAME } from "@/lib/auth";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json().catch(() => ({}));
+    const { username, password } = body;
+
+    const result = await validateCredentials(username, password);
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error || "Invalid credentials." },
+        { status: 401 }
+      );
+    }
+
+    const token = await createSessionToken(result.username, result.gender);
+
+    const res = NextResponse.json({
+      success: true,
+      username: result.username,
+      gender: result.gender,
+      redirect: "/",
+    });
+
+    res.cookies.set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+
+    return res;
+  } catch (err) {
+    console.error("Login error:", err);
+    return NextResponse.json(
+      { success: false, error: "Authentication failed. Please try again." },
+      { status: 500 }
+    );
+  }
+}

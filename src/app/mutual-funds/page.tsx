@@ -28,7 +28,10 @@ export default function MutualFundsPage() {
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
+    userGender,
   } = usePortfolio();
+
+  const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
 
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [mfSubTab, setMfSubTab] = useState<"all" | "equity" | "focused">("all");
@@ -106,7 +109,7 @@ export default function MutualFundsPage() {
         {showSidePanel && (
           <aside className="apple-side-panel">
             <img
-              src="/side-panel-image.png"
+              src={sidePanelImg}
               alt="MyWealth Portfolio Vision"
               className="apple-panel-img"
             />
