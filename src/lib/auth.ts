@@ -173,21 +173,12 @@ export async function validateCredentials(
     }
   }
 
-  // 2. Check Environment Variables (Vercel & Local fallback)
-  const envUsers = [
-    (process.env.AUTH_USER || "").toLowerCase(),
-    (process.env.ADMIN_USER || "").toLowerCase(),
-    "chait",
-    "admin",
-  ].filter(Boolean);
-
-  const envPassword = process.env.AUTH_PASSWORD || process.env.ADMIN_PASSWORD || "chait2026";
+  // 2. Check Environment Variables (only if explicitly set in .env)
+  const envUser = (process.env.AUTH_USER || process.env.ADMIN_USER || "").toLowerCase().trim();
+  const envPassword = process.env.AUTH_PASSWORD || process.env.ADMIN_PASSWORD || "";
   const envGender: UserGender = process.env.AUTH_GENDER === "female" ? "female" : "male";
 
-  const isUserValid = envUsers.includes(trimmedId.toLowerCase());
-  const isPassValid = trimmedPassword === envPassword;
-
-  if (isUserValid && isPassValid) {
+  if (envUser && envPassword && trimmedId.toLowerCase() === envUser && trimmedPassword === envPassword) {
     return { success: true, username: trimmedId, gender: envGender };
   }
 

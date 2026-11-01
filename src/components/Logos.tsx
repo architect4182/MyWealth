@@ -95,8 +95,55 @@ export function getStockTicker(name: string): string {
 }
 
 /**
+ * In-memory cache for successfully loaded logo domains
+ * Enables instantaneous display for previously seen logos without network flicker
+ */
+const loadedLogosCache = new Set<string>();
+
+const AVATAR_PALETTES = [
+  { bg: "linear-gradient(135deg, rgba(0, 113, 227, 0.14) 0%, rgba(0, 113, 227, 0.05) 100%)", color: "#0071e3", border: "rgba(0, 113, 227, 0.22)" },
+  { bg: "linear-gradient(135deg, rgba(88, 86, 214, 0.14) 0%, rgba(88, 86, 214, 0.05) 100%)", color: "#5856d6", border: "rgba(88, 86, 214, 0.22)" },
+  { bg: "linear-gradient(135deg, rgba(175, 82, 222, 0.14) 0%, rgba(175, 82, 222, 0.05) 100%)", color: "#af52de", border: "rgba(175, 82, 222, 0.22)" },
+  { bg: "linear-gradient(135deg, rgba(52, 199, 89, 0.14) 0%, rgba(52, 199, 89, 0.05) 100%)", color: "#16a34a", border: "rgba(52, 199, 89, 0.22)" },
+  { bg: "linear-gradient(135deg, rgba(255, 149, 0, 0.14) 0%, rgba(255, 149, 0, 0.05) 100%)", color: "#d97706", border: "rgba(255, 149, 0, 0.22)" },
+  { bg: "linear-gradient(135deg, rgba(255, 45, 85, 0.14) 0%, rgba(255, 45, 85, 0.05) 100%)", color: "#e11d48", border: "rgba(255, 45, 85, 0.22)" },
+  { bg: "linear-gradient(135deg, rgba(0, 199, 190, 0.14) 0%, rgba(0, 199, 190, 0.05) 100%)", color: "#0d9488", border: "rgba(0, 199, 190, 0.22)" },
+];
+
+export function getCompanyMonogram(name: string, ticker: string = ""): string {
+  const t = (ticker || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const cleanName = (name || "")
+    .replace(/\b(limited|ltd|corp|corporation|inc|holdings|pvt|fund|etf)\b/gi, "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9\s]/g, "");
+
+  const words = cleanName.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+  if (t.length >= 2) {
+    return t.slice(0, 2);
+  }
+  if (words.length === 1 && words[0].length >= 2) {
+    return words[0].slice(0, 2);
+  }
+  return (t || cleanName || "A").slice(0, 1) || "A";
+}
+
+function getPaletteForEntity(identifier: string) {
+  let hash = 0;
+  for (let i = 0; i < identifier.length; i++) {
+    hash = (hash << 5) - hash + identifier.charCodeAt(i);
+    hash |= 0;
+  }
+  return AVATAR_PALETTES[Math.abs(hash) % AVATAR_PALETTES.length];
+}
+
+/**
  * Universal dynamic Stock/Company Logo Avatar powered by https://api.companyenrich.com/logo/{domain}
- * Gracefully falls back to letter badge if image fails or for special categories (Crypto, Gold)
+ * Immediately renders high-visibility company initials/monogram so names & info
+ * are fully legible before remote logos load asynchronously over the network.
  */
 export function StockLogoAvatar({
   name,
@@ -107,7 +154,9 @@ export function StockLogoAvatar({
   ticker?: string;
   category?: AssetCategory;
 }) {
+  const domain = getCompanyDomain(name, ticker);
   const [imgError, setImgError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(() => (domain ? loadedLogosCache.has(domain) : false));
 
   // Special Category Badges
   if (category === "Gold & Fixed Income") {
@@ -116,13 +165,14 @@ export function StockLogoAvatar({
         style={{
           width: "100%",
           height: "100%",
-          borderRadius: "50%",
+          borderRadius: "8px",
           background: "linear-gradient(135deg, #FFD700, #FFA500)",
           display: "grid",
           placeItems: "center",
           color: "#ffffff",
           fontWeight: 800,
           fontSize: "11px",
+          boxShadow: "inset 0 1px 0.5px rgba(255, 255, 255, 0.6)",
         }}
       >
         AU
@@ -136,13 +186,14 @@ export function StockLogoAvatar({
         style={{
           width: "100%",
           height: "100%",
-          borderRadius: "50%",
+          borderRadius: "8px",
           background: "linear-gradient(135deg, #F7931A, #E07B00)",
           display: "grid",
           placeItems: "center",
           color: "#ffffff",
           fontWeight: 800,
           fontSize: "12px",
+          boxShadow: "inset 0 1px 0.5px rgba(255, 255, 255, 0.6)",
         }}
       >
         ₿
@@ -150,46 +201,72 @@ export function StockLogoAvatar({
     );
   }
 
-  const domain = getCompanyDomain(name, ticker);
-  const logoUrl = `${COMPANY_LOGO_API}/${domain}`;
+  const monogram = getCompanyMonogram(name, ticker);
+  const palette = getPaletteForEntity(ticker || name || "company");
+  const logoUrl = domain ? `${COMPANY_LOGO_API}/${domain}` : "";
 
-  if (!imgError && domain) {
-    return (
-      <img
-        src={logoUrl}
-        alt={name}
-        width="100%"
-        height="100%"
-        loading="lazy"
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "contain",
-          borderRadius: "8px",
-          display: "block",
-          padding: "2px",
-        }}
-        onError={() => setImgError(true)}
-      />
-    );
-  }
-
-  const letter = (ticker?.slice(0, 1) || name?.slice(0, 1) || "A").toUpperCase();
   return (
     <div
+      className="apple-avatar-shell"
       style={{
+        position: "relative",
         width: "100%",
         height: "100%",
         borderRadius: "8px",
-        background: "rgba(0, 113, 227, 0.1)",
-        color: "var(--apple-blue)",
-        display: "grid",
-        placeItems: "center",
-        fontWeight: 700,
-        fontSize: "12px",
+        overflow: "hidden",
       }}
     >
-      {letter}
+      {/* 1. Instant Monogram Base Layer (Company name & info are immediate!) */}
+      <div
+        className="apple-avatar-initials-badge"
+        style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: "8px",
+          background: palette.bg,
+          color: palette.color,
+          border: `1px solid ${palette.border}`,
+          display: "grid",
+          placeItems: "center",
+          fontWeight: 700,
+          fontSize: monogram.length > 2 ? "10px" : "11.5px",
+          letterSpacing: "-0.01em",
+          userSelect: "none",
+          boxShadow: "inset 0 1px 0.5px rgba(255, 255, 255, 0.7)",
+        }}
+      >
+        {monogram}
+      </div>
+
+      {/* 2. Asynchronously Loaded Remote Logo (Fades in over monogram once ready) */}
+      {!imgError && logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={name}
+          width="100%"
+          height="100%"
+          loading="lazy"
+          onLoad={() => {
+            loadedLogosCache.add(domain);
+            setIsLoaded(true);
+          }}
+          onError={() => setImgError(true)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            borderRadius: "8px",
+            background: "#ffffff",
+            padding: "2px",
+            opacity: isLoaded ? 1 : 0,
+            transition: "opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
+            display: "block",
+            pointerEvents: "none",
+          }}
+        />
+      ) : null}
     </div>
   );
 }

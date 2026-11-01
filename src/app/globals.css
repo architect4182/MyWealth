@@ -2107,26 +2107,6 @@ input:focus, select:focus {
   gap: 8px;
 }
 
-@media (max-width: 1080px) {
-  .apple-market-header-capsule {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .apple-island-header {
-    border-radius: 20px;
-    padding: 8px 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .apple-segmented-nav {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
-}
-
 /* ==========================================================================
    Apple-Grade Page Transition Animation
    ========================================================================== */
@@ -2687,22 +2667,158 @@ input:focus, select:focus {
   animation: shimmer 1.6s infinite;
 }
 
+/* Trending Apple Luminous Loading Bar */
+.apple-trending-loading-bar-wrap {
+  width: 100%;
+  padding: 4px 0 12px;
+}
+
+.apple-trending-loading-bar-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 0.5px 1px rgba(0, 0, 0, 0.06);
+}
+
+.apple-trending-loading-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 35%;
+  background: linear-gradient(90deg, transparent 0%, #38bdf8 35%, #0071e3 70%, transparent 100%);
+  border-radius: 9999px;
+  animation: trendingLoadingSweep 1.35s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  box-shadow: 0 0 10px rgba(0, 113, 227, 0.65);
+}
+
+@keyframes trendingLoadingSweep {
+  0% {
+    left: -35%;
+    width: 25%;
+  }
+  50% {
+    width: 55%;
+  }
+  100% {
+    left: 100%;
+    width: 25%;
+  }
+}
+
+.apple-trending-live-sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(0, 113, 227, 0.08);
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  color: #0071e3;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.apple-sync-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0071e3;
+  box-shadow: 0 0 6px #0071e3;
+  animation: syncPulseDot 1.4s ease-in-out infinite;
+}
+
+@keyframes syncPulseDot {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
 /* ==========================================================================
-   Comprehensive Mobile & Tablet Responsive Architecture
-   Zero Image on Mobile/Tablets, Adaptive Bento Cards, Fluid Touch Navigation
+   Comprehensive Responsive Architecture (All Viewport Modes)
+   Large Desktop -> Laptop/Resized -> Tablet Landscape -> Tablet -> Mobile -> Small Mobile
    ========================================================================== */
 
-/* 1. Mobile & Tablet (< 1024px): Hide Side Panel Graphic & Toggle */
+/* 1. Medium Laptops, Resized Desktops & Split Windows (<= 1280px) */
+@media (max-width: 1280px) {
+  .apple-portfolio-app,
+  .apple-canvas {
+    padding: 14px 20px 80px;
+  }
+
+  /* Market capsule takes 220px; hide from floating island on screens <= 1280px to prevent overflow */
+  .apple-market-header-capsule {
+    display: none !important;
+  }
+
+  /* Compact currency pill: hide "USD in ₹" text label, show "₹" symbol + switch */
+  .ios-toggle-label {
+    display: none;
+  }
+  .ios-toggle-pill {
+    padding: 0 8px 0 10px;
+    gap: 6px;
+  }
+
+  .apple-header-right {
+    gap: 7px;
+  }
+
+  .apple-user-label {
+    max-width: 80px;
+  }
+}
+
+/* 2. Compact Laptops & Small Desktops (<= 1100px) */
+@media (max-width: 1100px) {
+  .apple-island-header {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .apple-nav-pill {
+    padding: 0 12px;
+    font-size: 12.5px;
+    gap: 5px;
+  }
+
+  .apple-add-btn {
+    padding: 0 12px;
+    font-size: 12.5px;
+  }
+
+  .apple-user-pill,
+  .apple-user-combo-pill {
+    padding: 0 3px 0 8px;
+  }
+
+  .apple-combo-user-part {
+    gap: 4px;
+    padding-right: 4px;
+  }
+
+  .apple-user-label {
+    max-width: 65px;
+  }
+}
+
+/* 3. Tablets Landscape & Below (< 1024px) */
 @media (max-width: 1024px) {
   .apple-portfolio-app,
   .apple-canvas {
     padding: 12px 16px 80px;
   }
 
-  .apple-side-panel {
-    display: none !important;
-  }
-
+  .apple-side-panel,
   .apple-sidebar-toggle-btn {
     display: none !important;
   }
@@ -2712,45 +2828,119 @@ input:focus, select:focus {
   }
 
   .apple-market-header-capsule {
+    display: none !important;
+  }
+
+  .apple-nav-pill {
+    padding: 0 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .apple-add-btn span {
     display: none;
+  }
+  .apple-add-btn {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .apple-user-label {
+    max-width: 55px;
   }
 }
 
-/* 2. Tablet & Below (< 768px): Header Wrap, Full-Width Toolbar & Fluid Cards */
+/* 4. Tablet Portrait & Below (<= 768px): Dual-Row Apple Island, Fluid Bento & Cards */
 @media (max-width: 768px) {
   .apple-portfolio-app,
   .apple-canvas {
     padding: 8px 12px 60px;
   }
 
-  /* Compact Floating Header */
+  /* Compact Floating Header: 2-Row Layout */
   .apple-island-header {
-    border-radius: 20px;
-    padding: 8px 12px;
+    border-radius: 22px;
+    padding: 10px 12px;
     flex-wrap: wrap;
     gap: 8px;
     min-height: auto;
     top: 8px;
   }
+
   .apple-header-left {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
   }
+
   .apple-header-right {
-    flex-shrink: 0;
+    flex: 1 1 auto;
+    justify-content: flex-end;
     gap: 6px;
+    flex-shrink: 0;
   }
+
   .apple-segmented-nav {
     order: 3;
     width: 100%;
-    justify-content: center;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 4px;
     padding: 3px;
+    overflow-x: visible;
   }
-  .apple-segmented-nav::-webkit-scrollbar {
+
+  .apple-nav-pill {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    height: 34px;
+    padding: 0 6px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .apple-add-btn span {
     display: none;
+  }
+  .apple-add-btn {
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .ios-toggle-label {
+    display: none;
+  }
+  .ios-toggle-pill {
+    padding: 0 6px 0 8px;
+    height: 36px;
+    gap: 6px;
+  }
+
+  .apple-user-pill {
+    padding: 4px 8px;
+  }
+  .apple-user-combo-pill {
+    height: 34px;
+    padding: 0 3px 0 8px;
+  }
+  .apple-combo-signout-btn {
+    width: 26px;
+    height: 26px;
+  }
+  .apple-user-label {
+    max-width: 55px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* Mobile Dynamic Island */
@@ -2883,38 +3073,77 @@ input:focus, select:focus {
   }
 }
 
-/* 4. Small Mobile (< 480px): Micro UI Adaptations */
+/* 5. Small Mobile (< 480px): Micro UI Adaptations */
 @media (max-width: 480px) {
   .apple-portfolio-app,
   .apple-canvas {
-    padding: 6px 10px 48px;
+    padding: 6px 8px 48px;
+  }
+  .apple-island-header {
+    padding: 8px 10px;
+    border-radius: 18px;
+    gap: 6px;
   }
   .apple-brand-title {
-    font-size: 15px;
+    font-size: 14.5px;
   }
-  .apple-nav-pill {
-    padding: 0 10px;
-    font-size: 12px;
+  .apple-header-right {
+    gap: 4px;
   }
-  .apple-add-btn span {
-    display: none;
+  .apple-circle-icon-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
   }
   .apple-add-btn {
-    padding: 8px;
-    width: 36px;
-    height: 36px;
-    justify-content: center;
-    border-radius: 50%;
-  }
-  .ios-toggle-label {
-    display: none;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
   }
   .ios-toggle-pill {
-    padding: 0 8px;
-    height: 36px;
+    height: 32px;
+    padding: 0 5px 0 7px;
+    gap: 4px;
+  }
+  .ios-switch {
+    width: 26px;
+    height: 15px;
+  }
+  .ios-switch-thumb {
+    width: 11px;
+    height: 11px;
+  }
+  .apple-user-pill {
+    height: 32px;
+    padding: 0 6px;
+  }
+  .apple-user-combo-pill {
+    height: 32px;
+    padding: 0 2px 0 7px;
+  }
+  .apple-combo-user-part {
+    padding-right: 3px;
+    gap: 0;
+  }
+  .apple-combo-signout-btn {
+    width: 24px;
+    height: 24px;
+  }
+  .apple-user-label {
+    display: none;
+  }
+  .apple-nav-pill {
+    height: 32px;
+    font-size: 11px;
+    padding: 0 4px;
+    gap: 4px;
+  }
+  .apple-nav-pill-text {
+    font-size: 11px;
   }
   .apple-hero-val-text {
-    font-size: clamp(24px, 7vw, 34px);
+    font-size: clamp(22px, 6.5vw, 32px);
   }
   .apple-hero-stat-chips {
     grid-template-columns: 1fr;
@@ -2942,6 +3171,18 @@ input:focus, select:focus {
   .modal-actions button {
     width: 100%;
     justify-content: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .apple-brand-title {
+    display: none;
+  }
+  .apple-island-header {
+    padding: 6px 8px;
+  }
+  .apple-header-right {
+    gap: 3px;
   }
 }
 
@@ -3338,7 +3579,78 @@ input:focus, select:focus {
   line-height: 1.2;
 }
 
-/* Header User Pill */
+/* Header User Combo Pill (Unified User Identity + Logout) */
+.apple-user-combo-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 4px 0 10px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.55) 100%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03), inset 0 1px 1px #ffffff;
+  color: var(--foreground);
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.apple-user-combo-pill:hover {
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 1.5px 1px #ffffff;
+}
+
+.apple-combo-user-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+  flex-shrink: 0;
+}
+
+.apple-combo-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 0 2px;
+  flex-shrink: 0;
+  border-radius: 1px;
+}
+
+.apple-combo-signout-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--foreground-muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.apple-combo-signout-btn:hover {
+  color: #e11d48 !important;
+  background: rgba(225, 29, 72, 0.09) !important;
+  box-shadow: 0 1px 4px rgba(225, 29, 72, 0.15);
+}
+
+.apple-combo-signout-btn:active {
+  transform: scale(0.9);
+}
+
+.apple-combo-signout-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Header User Pill (legacy / standalone fallback) */
 .apple-user-pill {
   display: inline-flex;
   align-items: center;
@@ -3352,12 +3664,18 @@ input:focus, select:focus {
   font-weight: 600;
   user-select: none;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  max-width: 130px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .apple-user-label {
   font-size: 11.5px;
   letter-spacing: -0.01em;
   opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Header Persona Toggle Pill (legacy) */

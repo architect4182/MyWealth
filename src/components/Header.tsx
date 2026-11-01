@@ -9,9 +9,9 @@ import {
   Wallet,
   Plus,
   Database,
-  PanelLeft,
   LogOut,
   User,
+  Loader2,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { MyWealthLogo } from "@/components/MyWealthLogo";
@@ -65,6 +65,7 @@ export function Header({
     setMarketModal,
     setDefaultCategory,
     currentUserId,
+    isLoggingOut,
     handleLogout,
   } = usePortfolio();
 
@@ -76,19 +77,8 @@ export function Header({
 
   return (
     <header className="apple-island-header">
-      {/* Left: Brand + Toggle + Market Status */}
+      {/* Left: Brand + Market Status */}
       <div className="apple-header-left">
-        {setShowSidePanel && (
-          <button
-            type="button"
-            className={`apple-circle-icon-btn apple-sidebar-toggle-btn ${showSidePanel ? "active" : ""}`}
-            onClick={() => setShowSidePanel((prev) => !prev)}
-            title={showSidePanel ? "Collapse inspiration panel" : "Show inspiration panel"}
-          >
-            <PanelLeft size={14} />
-          </button>
-        )}
-
         <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>
           <MyWealthLogo size={32} />
         </Link>
@@ -188,21 +178,42 @@ export function Header({
         >
           <Database size={15} />
         </button>
-        <div
-          className="apple-user-pill"
-          title={`Signed in as @${currentUserId}`}
-        >
-          <User size={13} strokeWidth={2.2} />
-          <span className="apple-user-label">@{currentUserId}</span>
-        </div>
-        <button
-          type="button"
-          className="apple-circle-icon-btn apple-signout-btn"
-          title={`Lock & Sign Out (@${currentUserId})`}
-          onClick={handleLogout}
-        >
-          <LogOut size={14} />
-        </button>
+        {currentUserId ? (
+          <div
+            className="apple-user-combo-pill"
+            title={`Signed in as @${currentUserId}`}
+            suppressHydrationWarning
+          >
+            <div className="apple-combo-user-part">
+              <User size={13} strokeWidth={2.2} />
+              <span className="apple-user-label" suppressHydrationWarning>@{currentUserId}</span>
+            </div>
+            <span className="apple-combo-divider" aria-hidden="true" />
+            <button
+              type="button"
+              className="apple-combo-signout-btn"
+              title={isLoggingOut ? "Signing out…" : `Sign Out (@${currentUserId})`}
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              aria-label="Sign out"
+              suppressHydrationWarning
+            >
+              {isLoggingOut ? <Loader2 size={13} className="apple-auth-spin" /> : <LogOut size={13} strokeWidth={2.2} />}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="apple-circle-icon-btn apple-signout-btn"
+            title={isLoggingOut ? "Signing out…" : "Lock & Sign Out"}
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            aria-label="Sign out"
+            suppressHydrationWarning
+          >
+            {isLoggingOut ? <Loader2 size={14} className="apple-auth-spin" /> : <LogOut size={14} />}
+          </button>
+        )}
       </div>
 
       {/* Route Navigation Luminous Micro-Glow Track */}

@@ -6,8 +6,6 @@ import {
   Sparkles,
   Database,
   Clock,
-  Copy,
-  Check,
 } from "lucide-react";
 import { AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -63,8 +61,8 @@ export function AddAssetModal() {
     Number(currentValue) > 0 && Number(currentPrice) > 0
       ? Number(currentValue) / Number(currentPrice)
       : Number(investedAmount) > 0 && Number(buyPrice) > 0
-      ? Number(investedAmount) / Number(buyPrice)
-      : 0;
+        ? Number(investedAmount) / Number(buyPrice)
+        : 0;
 
   async function handleFetchLivePrice(
     stockQuery: string,
@@ -216,8 +214,8 @@ export function AddAssetModal() {
               {isFetchingPrice
                 ? "Looking up price…"
                 : name.trim().length >= 3
-                ? "Auto price lookup"
-                : "Price fills automatically"}
+                  ? "Auto price lookup"
+                  : "Price fills automatically"}
             </span>
           </div>
           <input
@@ -378,8 +376,8 @@ export function EditAssetModal() {
       ? Number(editingAsset.currentValue) / Number(editingAsset.currentPrice)
       : Number(editingAsset.investedAmount) > 0 &&
         Number(editingAsset.buyPrice) > 0
-      ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
-      : 0;
+        ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
+        : 0;
 
   async function handleRefreshQuote() {
     if (!editingAsset?.name.trim()) return;
@@ -395,9 +393,9 @@ export function EditAssetModal() {
         const newCp = String(data.price);
         const holdings =
           Number(editingAsset.investedAmount) > 0 &&
-          Number(editingAsset.buyPrice) > 0
+            Number(editingAsset.buyPrice) > 0
             ? Number(editingAsset.investedAmount) /
-              Number(editingAsset.buyPrice)
+            Number(editingAsset.buyPrice)
             : 0;
         setEditingAsset({
           ...editingAsset,
@@ -691,7 +689,7 @@ export function DeleteAssetModal() {
             color: "var(--foreground-muted)",
           }}
         >
-          This will remove the position permanently from PostgreSQL.
+          This will remove the position permanently.
         </div>
         <div className="modal-actions">
           <button
@@ -720,62 +718,14 @@ export function DeleteAssetModal() {
 
 export function DbConfigModal() {
   const { dbModal, setDbModal, syncStatus, assets, currentUserId } = usePortfolio();
-  const [copied, setCopied] = useState(false);
 
   if (!dbModal) return null;
-
-  const sqlSnippet = `-- 1. Rename user_id to username in assets table so both tables share the same column
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'assets' AND column_name = 'user_id'
-  ) AND NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'assets' AND column_name = 'username'
-  ) THEN
-    ALTER TABLE public.assets RENAME COLUMN user_id TO username;
-  END IF;
-END $$;
-
--- Ensure username column exists and defaults to active user
-ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS username TEXT DEFAULT 'CHAY4182';
-UPDATE public.assets SET username = 'CHAY4182' WHERE username IS NULL;
-
--- 2. Make username in users table UNIQUE and Primary identifier
-ALTER TABLE public.users ADD CONSTRAINT users_username_unique UNIQUE (username);
-
--- 3. Link assets(username) to users(username)
-ALTER TABLE public.assets DROP CONSTRAINT IF EXISTS fk_assets_username;
-ALTER TABLE public.assets 
-ADD CONSTRAINT fk_assets_username 
-FOREIGN KEY (username) 
-REFERENCES public.users(username) 
-ON UPDATE CASCADE 
-ON DELETE CASCADE;
-
--- 4. Row Level Security policies
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow anon select users" ON public.users;
-CREATE POLICY "Allow anon select users" ON public.users FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Allow anon insert users" ON public.users;
-CREATE POLICY "Allow anon insert users" ON public.users FOR INSERT WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow anon update users" ON public.users;
-CREATE POLICY "Allow anon update users" ON public.users FOR UPDATE USING (true);`;
-
-  const handleCopy = () => {
-    try {
-      navigator.clipboard.writeText(sqlSnippet);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {}
-  };
 
   return (
     <div className="modal-overlay" onClick={() => setDbModal(false)}>
       <div
         className="investment-modal"
-        style={{ width: "min(100%, 640px)", maxHeight: "90vh", overflowY: "auto" }}
+        style={{ width: "min(100%, 540px)", maxHeight: "90vh", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-heading">
@@ -787,7 +737,7 @@ CREATE POLICY "Allow anon update users" ON public.users FOR UPDATE USING (true);
               <Database size={16} />
             </div>
             <div>
-              <h2>PostgreSQL Multi-User Architecture</h2>
+              <h2>PostgreSQL Database Status</h2>
               <p>Connected via Supabase Realtime Engine • Unified by username</p>
             </div>
           </div>
@@ -845,54 +795,19 @@ CREATE POLICY "Allow anon update users" ON public.users FOR UPDATE USING (true);
 
           <div
             style={{
-              background: "rgba(37, 99, 235, 0.05)",
-              border: "1px solid rgba(37, 99, 235, 0.15)",
+              background: "rgba(22, 163, 74, 0.05)",
+              border: "1px solid rgba(22, 163, 74, 0.2)",
               borderRadius: "12px",
               padding: "12px 14px",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-              <span style={{ fontWeight: 600, fontSize: "12px", color: "#1d4ed8" }}>
-                SQL Migration for Supabase SQL Editor
-              </span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  padding: "4px 10px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(37, 99, 235, 0.3)",
-                  background: copied ? "#16a34a" : "#2563eb",
-                  color: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                {copied ? <Check size={12} /> : <Copy size={12} />}
-                <span>{copied ? "Copied!" : "Copy SQL"}</span>
-              </button>
+            <span style={{ fontSize: "16px" }}>🔒</span>
+            <div style={{ fontSize: "12px", color: "var(--foreground)" }}>
+              <strong>Multi-tenant isolation active.</strong> Holdings, orders, and portfolio allocations are securely scoped to <code>@{currentUserId}</code> in Supabase PostgreSQL.
             </div>
-            <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: "0 0 8px 0" }}>
-              Run this once in your Supabase SQL Editor to unify the tables with <code>username</code>:
-            </p>
-            <pre
-              style={{
-                background: "rgba(0,0,0,0.06)",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                fontFamily: "monospace",
-                fontSize: "11px",
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-                margin: 0,
-              }}
-            >
-              {sqlSnippet}
-            </pre>
           </div>
         </div>
 

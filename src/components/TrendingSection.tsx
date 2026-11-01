@@ -10,6 +10,11 @@ import {
 import { StockLogoAvatar, getStockTicker } from "@/components/Logos";
 import { AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
+import {
+  getInitialTrendingIndiaStocks,
+  getInitialTrendingUSStocks,
+  getInitialTrendingMF,
+} from "@/data/trendingPool";
 
 export interface TrendingItem {
   rank: number;
@@ -28,9 +33,20 @@ export interface TrendingItem {
 
 export function TrendingSection({ type }: { type: "stocks" | "mf" }) {
   const { showUsdInRupees, usdInrRate, money } = usePortfolio();
-  const [items, setItems] = useState<TrendingItem[]>([]);
-  const [indiaItems, setIndiaItems] = useState<TrendingItem[]>([]);
-  const [usItems, setUsItems] = useState<TrendingItem[]>([]);
+
+  // Instant baseline state: load company name and info immediately on frame 0!
+  const [indiaItems, setIndiaItems] = useState<TrendingItem[]>(() =>
+    type === "stocks" ? (getInitialTrendingIndiaStocks() as TrendingItem[]) : []
+  );
+  const [usItems, setUsItems] = useState<TrendingItem[]>(() =>
+    type === "stocks" ? (getInitialTrendingUSStocks() as TrendingItem[]) : []
+  );
+  const [items, setItems] = useState<TrendingItem[]>(() =>
+    type === "mf"
+      ? (getInitialTrendingMF() as TrendingItem[])
+      : ([...getInitialTrendingIndiaStocks(), ...getInitialTrendingUSStocks()] as TrendingItem[])
+  );
+
   const [marketTab, setMarketTab] = useState<"both" | "india" | "us">("both");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -194,6 +210,12 @@ export function TrendingSection({ type }: { type: "stocks" | "mf" }) {
               <span className="apple-trending-top-badge">
                 {type === "stocks" ? "Top 10" : "Top 10"}
               </span>
+              {(isLoading || isRefreshing) && (
+                <span className="apple-trending-live-sync-pill">
+                  <span className="apple-sync-pulse-dot" />
+                  <span>{isRefreshing ? "Refreshing quotes…" : "Syncing live quotes…"}</span>
+                </span>
+              )}
             </div>
             <p className="apple-trending-subtitle">{subtitle}</p>
           </div>
@@ -242,8 +264,17 @@ export function TrendingSection({ type }: { type: "stocks" | "mf" }) {
         </div>
       </div>
 
+      {/* Apple-grade Luminous Loading Progress Bar */}
+      {(isLoading || isRefreshing) && (
+        <div className="apple-trending-loading-bar-wrap" role="progressbar" aria-label="Fetching live market quotes">
+          <div className="apple-trending-loading-bar-track">
+            <div className="apple-trending-loading-bar-fill" />
+          </div>
+        </div>
+      )}
+
       {/* Grid Content */}
-      {isLoading ? (
+      {items.length === 0 && isLoading ? (
         <div className="apple-trending-skeleton-grid">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="apple-trending-skeleton-card" />

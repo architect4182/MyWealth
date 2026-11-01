@@ -99,6 +99,7 @@ export default function Home() {
               src={sidePanelImg}
               alt="MyWealth Portfolio Vision"
               className="apple-panel-img"
+              suppressHydrationWarning
             />
           </aside>
         )}
