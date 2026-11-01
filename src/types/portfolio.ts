@@ -7,6 +7,7 @@ export type AssetCategory =
 
 export interface AssetPosition {
   id: string;
+  username?: string;
   userId?: string;
   name: string;
   category: AssetCategory;

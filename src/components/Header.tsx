@@ -11,8 +11,10 @@ import {
   Database,
   PanelLeft,
   LogOut,
+  User,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { MyWealthLogo } from "@/components/MyWealthLogo";
 
 function IosCurrencyToggle({
   checked,
@@ -62,8 +64,8 @@ export function Header({
     setDbModal,
     setMarketModal,
     setDefaultCategory,
-    userGender,
-    setUserGender,
+    currentUserId,
+    handleLogout,
   } = usePortfolio();
 
   const navigation = [
@@ -88,12 +90,7 @@ export function Header({
         )}
 
         <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <div className="apple-brand-wrap">
-            <div className="apple-brand-icon">↗</div>
-            <span className="apple-brand-title">
-              My<span>Wealth</span>
-            </span>
-          </div>
+          <MyWealthLogo size={32} />
         </Link>
 
         {/* Dual Live Stock Market Timings Capsule */}
@@ -191,26 +188,18 @@ export function Header({
         >
           <Database size={15} />
         </button>
-        <button
-          type="button"
-          className="apple-persona-toggle-pill"
-          title={`Persona Vision: ${userGender === "female" ? "Female" : "Male"} • Click to switch to ${userGender === "female" ? "Male" : "Female"}`}
-          onClick={() => setUserGender(userGender === "female" ? "male" : "female")}
+        <div
+          className="apple-user-pill"
+          title={`Signed in as @${currentUserId}`}
         >
-          <span className="apple-persona-emoji">{userGender === "female" ? "👩" : "👨"}</span>
-          <span className="apple-persona-label">{userGender === "female" ? "Female" : "Male"}</span>
-        </button>
+          <User size={13} strokeWidth={2.2} />
+          <span className="apple-user-label">@{currentUserId}</span>
+        </div>
         <button
           type="button"
           className="apple-circle-icon-btn apple-signout-btn"
-          title="Lock / Sign Out of Portfolio"
-          onClick={async () => {
-            try {
-              await fetch("/api/auth/logout", { method: "POST" });
-            } finally {
-              window.location.href = "/login";
-            }
-          }}
+          title={`Lock & Sign Out (@${currentUserId})`}
+          onClick={handleLogout}
         >
           <LogOut size={14} />
         </button>

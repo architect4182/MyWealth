@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, User, Eye, EyeOff, ShieldCheck, ArrowRight, Loader2, Sparkles, UserPlus, LogIn } from "lucide-react";
+import { MyWealthLogo } from "@/components/MyWealthLogo";
 
 function LoginForm() {
   const router = useRouter();
@@ -49,14 +50,16 @@ function LoginForm() {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok && data.success) {
-        // Store selected gender locally for instant dynamic vision graphic
+        // Store resolved user identity & gender locally for instant zero-lag rendering
         const resolvedGender = data.gender || gender;
+        const resolvedUser = data.username || username.trim();
         try {
           localStorage.setItem("mywealth_user_gender", resolvedGender);
-        } catch { }
+          localStorage.setItem("mywealth_current_user", resolvedUser);
+        } catch {}
 
-        router.push(redirectTo);
-        router.refresh();
+        // Instant direct load into authorized dashboard
+        window.location.replace(redirectTo);
       } else {
         setError(data.error || "Authentication failed. Please verify your details.");
         setIsLoading(false);
@@ -72,10 +75,7 @@ function LoginForm() {
       {/* Brand Emblem */}
       <div className="apple-auth-header">
         <div className="apple-auth-brand">
-          <div className="apple-brand-icon">↗</div>
-          <span className="apple-brand-title">
-            My<span>Wealth</span>
-          </span>
+          <MyWealthLogo size={38} textSize={20} />
         </div>
 
         <div className="apple-auth-badge">

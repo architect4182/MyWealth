@@ -5,6 +5,14 @@ import { PortfolioProvider } from "@/context/PortfolioContext";
 export const metadata: Metadata = {
   title: "MyWealth — Wealth & Investment Tracker",
   description: "A clearer view of everything you're building.",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

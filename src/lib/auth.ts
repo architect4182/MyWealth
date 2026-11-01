@@ -129,30 +129,30 @@ export async function validateCredentials(
   idInput: string,
   passwordInput: string
 ): Promise<{ success: boolean; username: string; gender: UserGender; error?: string }> {
-  const trimmedId = (idInput || "").trim().toLowerCase();
+  const trimmedId = (idInput || "").trim();
   const trimmedPassword = (passwordInput || "").trim();
 
   if (!trimmedId || !trimmedPassword) {
     return { success: false, username: "", gender: "male", error: "User ID and Password are required." };
   }
 
-  // 1. Check Supabase database table `users` if available
+  // 1. Connect to Supabase database in real time and map credentials
   if (supabase) {
     try {
-      // First attempt: with gender column
+      // Query users table with case-insensitive ilike mapping
       let res = await supabase
         .from("users")
         .select("id, username, password, gender")
-        .eq("username", trimmedId)
+        .ilike("username", trimmedId)
         .limit(1)
         .maybeSingle();
 
-      // If gender column is not yet added in Supabase (error 42703), retry with core fields
+      // If gender column is missing in legacy schema, retry with basic fields
       if (res.error && res.error.code === "42703") {
         res = await supabase
           .from("users")
           .select("id, username, password")
-          .eq("username", trimmedId)
+          .ilike("username", trimmedId)
           .limit(1)
           .maybeSingle();
       }
@@ -168,12 +168,12 @@ export async function validateCredentials(
           };
         }
       }
-    } catch {
-      // Table may not exist yet in Supabase, fall through to environment variables
+    } catch (err) {
+      console.error("Supabase real-time auth lookup error:", err);
     }
   }
 
-  // 2. Check Environment Variables (Vercel & Local)
+  // 2. Check Environment Variables (Vercel & Local fallback)
   const envUsers = [
     (process.env.AUTH_USER || "").toLowerCase(),
     (process.env.ADMIN_USER || "").toLowerCase(),
@@ -184,7 +184,7 @@ export async function validateCredentials(
   const envPassword = process.env.AUTH_PASSWORD || process.env.ADMIN_PASSWORD || "chait2026";
   const envGender: UserGender = process.env.AUTH_GENDER === "female" ? "female" : "male";
 
-  const isUserValid = envUsers.includes(trimmedId);
+  const isUserValid = envUsers.includes(trimmedId.toLowerCase());
   const isPassValid = trimmedPassword === envPassword;
 
   if (isUserValid && isPassValid) {
