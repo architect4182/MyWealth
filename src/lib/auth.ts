@@ -4,8 +4,8 @@ export const AUTH_COOKIE_NAME = "mywealth_auth_session";
 
 export type UserGender = "male" | "female";
 
-// 30 days expiration
-const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+// 1 hour expiration for security & inactivity auto-logout
+export const SESSION_MAX_AGE_SECONDS = 60 * 60;
 
 function getAuthSecret(): string {
   return (

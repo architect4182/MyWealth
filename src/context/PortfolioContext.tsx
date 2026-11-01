@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData } from "@/types/portfolio";
 import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -136,13 +136,14 @@ interface PortfolioContextType {
   setUserGender: (gender: "male" | "female") => void;
   currentUserId: string;
   isLoggingOut: boolean;
-  handleLogout: () => Promise<void>;
+  handleLogout: (reason?: string) => Promise<void>;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | null>(null);
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [assets, setAssets] = useState<AssetPosition[]>([]);
   const [unsavedAssetIds, setUnsavedAssetIds] = useState<Set<string>>(new Set());
@@ -192,9 +193,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           setCurrentUserId(uid);
           try {
             localStorage.setItem("mywealth_current_user", uid);
+            if (!localStorage.getItem("mywealth_last_activity")) {
+              localStorage.setItem("mywealth_last_activity", String(Date.now()));
+            }
           } catch {}
         } else if (data && !data.authenticated) {
           setCurrentUserId("");
+          try {
+            localStorage.removeItem("mywealth_current_user");
+            localStorage.removeItem("mywealth_last_activity");
+          } catch {}
+          if (pathname && pathname !== "/login") {
+            router.replace("/login");
+          }
         }
         if (data?.authenticated && (data.gender === "female" || data.gender === "male")) {
           setUserGenderState(data.gender);
@@ -1182,7 +1193,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const handleLogout = async () => {
+  const handleLogout = async (reason?: string) => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
 
@@ -1208,6 +1219,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           "mywealth_user_gender",
           "mywealth_positions",
           "mywealth_show_usd_in_rupees",
+          "mywealth_last_activity",
         ];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
@@ -1232,12 +1244,118 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         await fetch("/api/auth/logout", { method: "POST" });
       } catch {}
 
-      // 6. Seamless direct client-side redirect to /login (no page reload)
-      router.replace("/login");
+      // 6. Seamless direct client-side redirect to /login (with optional reason)
+      const targetUrl = typeof reason === "string" && reason ? `/login?reason=${encodeURIComponent(reason)}` : "/login";
+      router.replace(targetUrl);
     } finally {
       setIsLoggingOut(false);
     }
   };
+
+  // 1-Hour Inactivity Auto-Logout Tracker
+  useEffect(() => {
+    if (!currentUserId || typeof window === "undefined") return;
+
+    const INACTIVITY_LIMIT_MS = 60 * 60 * 1000; // 1 hour = 3,600,000 ms
+    const THROTTLE_WRITE_MS = 10 * 1000; // Throttle storage writes to once every 10s
+    const REFRESH_SESSION_MS = 15 * 60 * 1000; // Ping /api/auth/me every 15m to slide server token
+    const STORAGE_KEY = "mywealth_last_activity";
+
+    let lastRecordedActivity = Date.now();
+    let lastServerPing = Date.now();
+
+    // Initialize or load last activity timestamp
+    try {
+      const existing = localStorage.getItem(STORAGE_KEY);
+      if (!existing) {
+        localStorage.setItem(STORAGE_KEY, String(Date.now()));
+      } else {
+        const parsed = Number(existing);
+        if (!isNaN(parsed) && parsed > 0) {
+          lastRecordedActivity = parsed;
+        } else {
+          localStorage.setItem(STORAGE_KEY, String(Date.now()));
+        }
+      }
+    } catch {}
+
+    const recordActivity = () => {
+      const now = Date.now();
+      if (now - lastRecordedActivity >= THROTTLE_WRITE_MS) {
+        lastRecordedActivity = now;
+        try {
+          localStorage.setItem(STORAGE_KEY, String(now));
+        } catch {}
+
+        // If user has been actively using the app for > 15m since last server ping, refresh server session
+        if (now - lastServerPing >= REFRESH_SESSION_MS) {
+          lastServerPing = now;
+          fetch("/api/auth/me").catch(() => {});
+        }
+      }
+    };
+
+    const checkInactivity = () => {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        const lastActive = stored ? Number(stored) : lastRecordedActivity;
+        const idleTime = Date.now() - lastActive;
+
+        if (idleTime >= INACTIVITY_LIMIT_MS) {
+          console.warn(`[MyWealth Auth] User inactive for ${Math.round(idleTime / 1000)}s (>= 1 hour). Auto-logging out.`);
+          handleLogout("inactivity");
+        }
+      } catch {}
+    };
+
+    // User interaction events that indicate active presence
+    const activityEvents = [
+      "mousedown",
+      "mousemove",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+      "wheel",
+    ];
+
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, recordActivity, { passive: true });
+    });
+
+    // Check inactivity periodically every 20 seconds
+    const intervalId = window.setInterval(checkInactivity, 20 * 1000);
+
+    // Check immediately when tab becomes visible or regains focus (e.g. computer woke from sleep)
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkInactivity();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
+
+    // Cross-tab synchronization: If another tab records activity, update locally
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        const parsed = Number(e.newValue);
+        if (!isNaN(parsed) && parsed > 0) {
+          lastRecordedActivity = parsed;
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      activityEvents.forEach((evt) => {
+        window.removeEventListener(evt, recordActivity);
+      });
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [currentUserId]);
 
   const safeAssets = useMemo(() => dedupeAssets(assets), [assets]);
 

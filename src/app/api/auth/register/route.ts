@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { registerUser, createSessionToken, AUTH_COOKIE_NAME, UserGender } from "@/lib/auth";
+import { registerUser, createSessionToken, AUTH_COOKIE_NAME, SESSION_MAX_AGE_SECONDS, UserGender } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: SESSION_MAX_AGE_SECONDS, // 1 hour max age
     });
 
     return res;

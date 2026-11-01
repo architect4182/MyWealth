@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken, AUTH_COOKIE_NAME } from "@/lib/auth";
+import { verifySessionToken, createSessionToken, AUTH_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
 export async function GET(req: NextRequest) {
@@ -27,10 +27,24 @@ export async function GET(req: NextRequest) {
     } catch {}
   }
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     authenticated: true,
     username: session.username,
     gender: userGender,
   });
+
+  // Rolling 1-hour session extension: Slide cookie forward while user is actively making requests
+  try {
+    const refreshedToken = await createSessionToken(session.username, userGender);
+    res.cookies.set(AUTH_COOKIE_NAME, refreshedToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+  } catch {}
+
+  return res;
 }
 

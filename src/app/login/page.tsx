@@ -9,6 +9,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("from") || "/";
+  const isInactiveReason = searchParams.get("reason") === "inactivity";
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
@@ -56,6 +57,7 @@ function LoginForm() {
         try {
           localStorage.setItem("mywealth_user_gender", resolvedGender);
           localStorage.setItem("mywealth_current_user", resolvedUser);
+          localStorage.setItem("mywealth_last_activity", String(Date.now()));
         } catch {}
 
         // Instant direct load into authorized dashboard
@@ -118,6 +120,14 @@ function LoginForm() {
           </button>
         </div>
       </div>
+
+      {/* Inactivity Notice Banner */}
+      {isInactiveReason && !error && (
+        <div className="apple-auth-notice-banner" role="status">
+          <span className="apple-auth-notice-dot" />
+          <span>You were automatically logged out due to 1 hour of inactivity.</span>
+        </div>
+      )}
 
       {/* Error Alert Pill */}
       {error && (

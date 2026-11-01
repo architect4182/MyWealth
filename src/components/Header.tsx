@@ -195,7 +195,7 @@ export const Header = React.memo(function Header({
               type="button"
               className="apple-combo-signout-btn"
               title={isLoggingOut ? "Signing out…" : `Sign Out (${currentUserId.toUpperCase()})`}
-              onClick={handleLogout}
+              onClick={() => handleLogout()}
               disabled={isLoggingOut}
               aria-label="Sign out"
               suppressHydrationWarning
@@ -208,7 +208,7 @@ export const Header = React.memo(function Header({
             type="button"
             className="apple-circle-icon-btn apple-signout-btn"
             title={isLoggingOut ? "Signing out…" : "Lock & Sign Out"}
-            onClick={handleLogout}
+            onClick={() => handleLogout()}
             disabled={isLoggingOut}
             aria-label="Sign out"
             suppressHydrationWarning
