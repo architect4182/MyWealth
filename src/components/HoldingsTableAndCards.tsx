@@ -72,6 +72,10 @@ export function HoldingsTableAndCards({
     }
   }
 
+  // Pre-cached market statuses for entire collection to eliminate redundant Date calculations
+  const usStatus = useMemo(() => getAssetMarketStatus("US Stocks", currentTime), [currentTime]);
+  const inStatus = useMemo(() => getAssetMarketStatus("Indian Equities", currentTime), [currentTime]);
+
   const displayedAssets = useMemo(() => {
     let list = [...assets];
     const q = searchQuery.trim().toLowerCase();
@@ -264,7 +268,7 @@ export function HoldingsTableAndCards({
                       <span className="apple-ticker-pill">{ticker}</span>
                       <span className="apple-category-pill">{item.category}</span>
                       <MarketTimingBadge
-                        status={getAssetMarketStatus(item.category, currentTime)}
+                        status={item.category === "US Stocks" ? usStatus : inStatus}
                         compact
                       />
                     </div>
@@ -469,10 +473,9 @@ export function HoldingsTableAndCards({
                                 {item.category}
                               </span>
                               <MarketTimingBadge
-                                status={getAssetMarketStatus(
-                                  item.category,
-                                  currentTime
-                                )}
+                                status={
+                                  item.category === "US Stocks" ? usStatus : inStatus
+                                }
                                 compact
                               />
                             </div>

@@ -46,7 +46,7 @@ function IosCurrencyToggle({
   );
 }
 
-export function Header({
+export const Header = React.memo(function Header({
   showSidePanel,
   setShowSidePanel,
 }: {
@@ -181,18 +181,20 @@ export function Header({
         {currentUserId ? (
           <div
             className="apple-user-combo-pill"
-            title={`Signed in as @${currentUserId}`}
+            title={`Signed in as ${currentUserId.toUpperCase()}`}
             suppressHydrationWarning
           >
             <div className="apple-combo-user-part">
               <User size={13} strokeWidth={2.2} />
-              <span className="apple-user-label" suppressHydrationWarning>@{currentUserId}</span>
+              <span className="apple-user-label" suppressHydrationWarning>
+                {currentUserId.toUpperCase()}
+              </span>
             </div>
             <span className="apple-combo-divider" aria-hidden="true" />
             <button
               type="button"
               className="apple-combo-signout-btn"
-              title={isLoggingOut ? "Signing out…" : `Sign Out (@${currentUserId})`}
+              title={isLoggingOut ? "Signing out…" : `Sign Out (${currentUserId.toUpperCase()})`}
               onClick={handleLogout}
               disabled={isLoggingOut}
               aria-label="Sign out"
@@ -222,4 +224,4 @@ export function Header({
       </div>
     </header>
   );
-}
+});

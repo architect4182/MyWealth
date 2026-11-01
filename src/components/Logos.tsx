@@ -145,7 +145,7 @@ function getPaletteForEntity(identifier: string) {
  * Immediately renders high-visibility company initials/monogram so names & info
  * are fully legible before remote logos load asynchronously over the network.
  */
-export function StockLogoAvatar({
+export const StockLogoAvatar = React.memo(function StockLogoAvatar({
   name,
   ticker = "",
   category,
@@ -246,6 +246,7 @@ export function StockLogoAvatar({
           width="100%"
           height="100%"
           loading="lazy"
+          decoding="async"
           onLoad={() => {
             loadedLogosCache.add(domain);
             setIsLoaded(true);
@@ -269,4 +270,4 @@ export function StockLogoAvatar({
       ) : null}
     </div>
   );
-}
+});

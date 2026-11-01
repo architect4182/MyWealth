@@ -1,10 +1,16 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData } from "@/types/portfolio";
 import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+
+// Pre-cached high performance number formatters (zero C++ constructor allocations per render)
+const inrIntFormatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+const inrDecFormatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 });
+const usdIntFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const usdDecFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
 // Comprehensive asset deduplication safeguard
 export function dedupeAssets(items: AssetPosition[]): AssetPosition[] {
@@ -564,28 +570,21 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const pctMF = totalCurrentINR > 0 ? Number(((mfVal / totalCurrentINR) * 100).toFixed(1)) : 0;
   const pctGold = totalCurrentINR > 0 ? Number(((goldVal / totalCurrentINR) * 100).toFixed(1)) : 0;
 
-  const money = (val: number, cur: "INR" | "USD" = "INR") => {
-    if (cur === "USD") {
-      if (showUsdInRupees) {
-        const converted = val * usdInrRate;
-        return new Intl.NumberFormat("en-IN", {
-          style: "currency",
-          currency: "INR",
-          maximumFractionDigits: converted % 1 === 0 ? 0 : 2,
-        }).format(converted);
+  const money = useCallback(
+    (val: number, cur: "INR" | "USD" = "INR") => {
+      if (!Number.isFinite(val)) return cur === "USD" ? "$0" : "₹0";
+      const isInt = val % 1 === 0;
+      if (cur === "USD") {
+        if (showUsdInRupees) {
+          const converted = val * usdInrRate;
+          return (converted % 1 === 0 ? inrIntFormatter : inrDecFormatter).format(converted);
+        }
+        return (isInt ? usdIntFormatter : usdDecFormatter).format(val);
       }
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: val % 1 === 0 ? 0 : 2,
-      }).format(val);
-    }
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: val % 1 === 0 ? 0 : 2,
-    }).format(val);
-  };
+      return (isInt ? inrIntFormatter : inrDecFormatter).format(val);
+    },
+    [showUsdInRupees, usdInrRate]
+  );
 
   // Live price refresh
   const handleRefreshPrices = async () => {
@@ -927,75 +926,126 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   const safeAssets = useMemo(() => dedupeAssets(assets), [assets]);
 
+  const contextValue = useMemo(
+    () => ({
+      assets: safeAssets,
+      syncStatus,
+      isLoading,
+      usdInrRate,
+      showUsdInRupees,
+      toggleUsdInRupees,
+      indianMarket,
+      usMarket,
+      currentTime,
+      totalInvestedINR,
+      totalCurrentINR,
+      totalPnlINR,
+      totalReturnPct,
+      stocksInvested,
+      stocksCurrent,
+      stocksPnl,
+      stocksPnlPct,
+      mfInvested,
+      mfCurrent,
+      mfPnl,
+      mfPnlPct,
+      equities,
+      mutualFunds,
+      indianVal,
+      usVal,
+      mfVal,
+      goldVal,
+      pctIndian,
+      pctUS,
+      pctMF,
+      pctGold,
+      money,
+      isRefreshingPrices,
+      priceRefreshMessage,
+      handleRefreshPrices,
+      unsavedAssetIds,
+      isSavingPrices,
+      handleSavePricesToDb,
+      handleDiscardRefreshedPrices,
+      flashAssetId,
+      addAsset,
+      updateAsset,
+      deleteAsset,
+      modal,
+      setModal,
+      editingAsset,
+      setEditingAsset,
+      deletingAsset,
+      setDeletingAsset,
+      dbModal,
+      setDbModal,
+      marketModal,
+      setMarketModal,
+      defaultCategory,
+      setDefaultCategory,
+      startEditing,
+      prefillAsset,
+      setPrefillAsset,
+      openAddModalWithPrefill,
+      userGender,
+      setUserGender,
+      currentUserId,
+      isLoggingOut,
+      handleLogout,
+    }),
+    [
+      safeAssets,
+      syncStatus,
+      isLoading,
+      usdInrRate,
+      showUsdInRupees,
+      toggleUsdInRupees,
+      indianMarket,
+      usMarket,
+      currentTime,
+      totalInvestedINR,
+      totalCurrentINR,
+      totalPnlINR,
+      totalReturnPct,
+      stocksInvested,
+      stocksCurrent,
+      stocksPnl,
+      stocksPnlPct,
+      mfInvested,
+      mfCurrent,
+      mfPnl,
+      mfPnlPct,
+      equities,
+      mutualFunds,
+      indianVal,
+      usVal,
+      mfVal,
+      goldVal,
+      pctIndian,
+      pctUS,
+      pctMF,
+      pctGold,
+      money,
+      isRefreshingPrices,
+      priceRefreshMessage,
+      unsavedAssetIds,
+      isSavingPrices,
+      flashAssetId,
+      modal,
+      editingAsset,
+      deletingAsset,
+      dbModal,
+      marketModal,
+      defaultCategory,
+      prefillAsset,
+      userGender,
+      currentUserId,
+      isLoggingOut,
+    ]
+  );
+
   return (
-    <PortfolioContext.Provider
-      value={{
-        assets: safeAssets,
-        syncStatus,
-        isLoading,
-        usdInrRate,
-        showUsdInRupees,
-        toggleUsdInRupees,
-        indianMarket,
-        usMarket,
-        currentTime,
-        totalInvestedINR,
-        totalCurrentINR,
-        totalPnlINR,
-        totalReturnPct,
-        stocksInvested,
-        stocksCurrent,
-        stocksPnl,
-        stocksPnlPct,
-        mfInvested,
-        mfCurrent,
-        mfPnl,
-        mfPnlPct,
-        equities,
-        mutualFunds,
-        indianVal,
-        usVal,
-        mfVal,
-        goldVal,
-        pctIndian,
-        pctUS,
-        pctMF,
-        pctGold,
-        money,
-        isRefreshingPrices,
-        priceRefreshMessage,
-        handleRefreshPrices,
-        unsavedAssetIds,
-        isSavingPrices,
-        handleSavePricesToDb,
-        handleDiscardRefreshedPrices,
-        flashAssetId,
-        addAsset,
-        updateAsset,
-        deleteAsset,
-        modal,
-        setModal,
-        editingAsset,
-        setEditingAsset,
-        deletingAsset,
-        setDeletingAsset,
-        dbModal,
-        setDbModal,
-        marketModal,
-        setMarketModal,
-        defaultCategory,
-        setDefaultCategory,
-        startEditing,
-        prefillAsset,
-        setPrefillAsset,
-        openAddModalWithPrefill,
-        userGender,
-        setUserGender,
-        currentUserId,
-        isLoggingOut,
-        handleLogout,
-      }}
-    >
+    <PortfolioContext.Provider value={contextValue}>
       {children}
     </PortfolioContext.Provider>
   );

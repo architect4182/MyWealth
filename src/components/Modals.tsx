@@ -776,7 +776,7 @@ export function DbConfigModal() {
               }}
             >
               <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>Active User Session</div>
-              <div style={{ fontWeight: 600, fontSize: "14px", marginTop: "2px" }}>@{currentUserId}</div>
+              <div style={{ fontWeight: 600, fontSize: "14px", marginTop: "2px", textTransform: "uppercase" }}>{currentUserId}</div>
             </div>
             <div
               style={{
@@ -806,7 +806,7 @@ export function DbConfigModal() {
           >
             <span style={{ fontSize: "16px" }}>🔒</span>
             <div style={{ fontSize: "12px", color: "var(--foreground)" }}>
-              <strong>Multi-tenant isolation active.</strong> Holdings, orders, and portfolio allocations are securely scoped to <code>@{currentUserId}</code> in Supabase PostgreSQL.
+              <strong>Multi-tenant isolation active.</strong> Holdings, orders, and portfolio allocations are securely scoped to <code>{currentUserId ? currentUserId.toUpperCase() : ""}</code> in Supabase PostgreSQL.
             </div>
           </div>
         </div>

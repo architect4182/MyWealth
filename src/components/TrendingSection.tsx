@@ -31,7 +31,7 @@ export interface TrendingItem {
   market?: string;
 }
 
-export function TrendingSection({ type }: { type: "stocks" | "mf" }) {
+export const TrendingSection = React.memo(function TrendingSection({ type }: { type: "stocks" | "mf" }) {
   const { showUsdInRupees, usdInrRate, money } = usePortfolio();
 
   // Instant baseline state: load company name and info immediately on frame 0!
@@ -343,4 +343,4 @@ export function TrendingSection({ type }: { type: "stocks" | "mf" }) {
       )}
     </section>
   );
-}
+});

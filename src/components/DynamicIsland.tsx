@@ -4,7 +4,7 @@ import React from "react";
 import { Sparkles, Save, RotateCcw, RefreshCw } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
-export function DynamicIsland() {
+export const DynamicIsland = React.memo(function DynamicIsland() {
   const {
     unsavedAssetIds,
     handleSavePricesToDb,
@@ -54,4 +54,4 @@ export function DynamicIsland() {
       </div>
     </div>
   );
-}
+});
