@@ -2,8 +2,6 @@ import { supabase } from "./supabase";
 
 export const AUTH_COOKIE_NAME = "mywealth_auth_session";
 
-export type UserGender = "male" | "female";
-
 // 1 hour expiration for security & inactivity auto-logout
 export const SESSION_MAX_AGE_SECONDS = 60 * 60;
 
@@ -40,15 +38,11 @@ function hexToBuffer(hex: string): Uint8Array {
   return bytes;
 }
 
-export async function createSessionToken(
-  username: string,
-  gender: UserGender = "male"
-): Promise<string> {
+export async function createSessionToken(username: string): Promise<string> {
   const secret = getAuthSecret();
   const key = await getHmacKey(secret);
   const timestamp = Math.floor(Date.now() / 1000);
-  const safeGender = gender === "female" ? "female" : "male";
-  const payload = `${username.trim().toLowerCase()}:${safeGender}:${timestamp}`;
+  const payload = `${username.trim().toLowerCase()}:${timestamp}`;
   const enc = new TextEncoder();
   const signature = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
   const sigHex = bufferToHex(signature);
@@ -57,7 +51,7 @@ export async function createSessionToken(
 
 export async function verifySessionToken(
   token: string | undefined | null
-): Promise<{ valid: boolean; username?: string; gender?: UserGender }> {
+): Promise<{ valid: boolean; username?: string }> {
   if (!token || typeof token !== "string") {
     return { valid: false };
   }
@@ -68,20 +62,19 @@ export async function verifySessionToken(
   }
 
   let username = "";
-  let gender: UserGender = "male";
   let timestampStr = "";
   let sigHex = "";
   let payload = "";
 
   if (parts.length === 4) {
+    // Legacy 4-part token: username:gender:timestamp:sig
     username = parts[0];
-    gender = parts[1] === "female" ? "female" : "male";
     timestampStr = parts[2];
     sigHex = parts[3];
-    payload = `${username}:${gender}:${timestampStr}`;
+    payload = `${username}:${parts[1]}:${timestampStr}`;
   } else {
+    // Clean 3-part token: username:timestamp:sig
     username = parts[0];
-    gender = "male";
     timestampStr = parts[1];
     sigHex = parts[2];
     payload = `${username}:${timestampStr}`;
@@ -111,7 +104,7 @@ export async function verifySessionToken(
     );
 
     if (isValid) {
-      return { valid: true, username, gender };
+      return { valid: true, username };
     }
   } catch (err) {
     console.error("Token verification error:", err);
@@ -128,43 +121,30 @@ export async function verifySessionToken(
 export async function validateCredentials(
   idInput: string,
   passwordInput: string
-): Promise<{ success: boolean; username: string; gender: UserGender; error?: string }> {
+): Promise<{ success: boolean; username: string; error?: string }> {
   const trimmedId = (idInput || "").trim();
   const trimmedPassword = (passwordInput || "").trim();
 
   if (!trimmedId || !trimmedPassword) {
-    return { success: false, username: "", gender: "male", error: "User ID and Password are required." };
+    return { success: false, username: "", error: "User ID and Password are required." };
   }
 
   // 1. Connect to Supabase database in real time and map credentials
   if (supabase) {
     try {
-      // Query users table with case-insensitive ilike mapping
-      let res = await supabase
+      const res = await supabase
         .from("users")
-        .select("id, username, password, gender")
+        .select("id, username, password")
         .ilike("username", trimmedId)
         .limit(1)
         .maybeSingle();
 
-      // If gender column is missing in legacy schema, retry with basic fields
-      if (res.error && res.error.code === "42703") {
-        res = await supabase
-          .from("users")
-          .select("id, username, password")
-          .ilike("username", trimmedId)
-          .limit(1)
-          .maybeSingle();
-      }
-
       if (!res.error && res.data) {
         const storedPass = res.data.password;
         if (storedPass && storedPass === trimmedPassword) {
-          const userGender: UserGender = (res.data as any).gender === "female" ? "female" : "male";
           return {
             success: true,
             username: res.data.username || trimmedId,
-            gender: userGender,
           };
         }
       }
@@ -176,67 +156,51 @@ export async function validateCredentials(
   // 2. Check Environment Variables (only if explicitly set in .env)
   const envUser = (process.env.AUTH_USER || process.env.ADMIN_USER || "").toLowerCase().trim();
   const envPassword = process.env.AUTH_PASSWORD || process.env.ADMIN_PASSWORD || "";
-  const envGender: UserGender = process.env.AUTH_GENDER === "female" ? "female" : "male";
 
   if (envUser && envPassword && trimmedId.toLowerCase() === envUser && trimmedPassword === envPassword) {
-    return { success: true, username: trimmedId, gender: envGender };
+    return { success: true, username: trimmedId };
   }
 
-  return { success: false, username: "", gender: "male", error: "Invalid User ID or Password." };
+  return { success: false, username: "", error: "Invalid User ID or Password." };
 }
 
 /**
- * Registers a new user with chosen username, password, and gender (male / female).
+ * Registers a new user with chosen username and password.
  */
 export async function registerUser(
   usernameInput: string,
-  passwordInput: string,
-  genderInput: UserGender
-): Promise<{ success: boolean; username: string; gender: UserGender; error?: string }> {
+  passwordInput: string
+): Promise<{ success: boolean; username: string; error?: string }> {
   const trimmedUser = (usernameInput || "").trim().toLowerCase();
   const trimmedPass = (passwordInput || "").trim();
-  const gender: UserGender = genderInput === "female" ? "female" : "male";
 
   if (!trimmedUser || trimmedUser.length < 3) {
-    return { success: false, username: "", gender, error: "Username must be at least 3 characters." };
+    return { success: false, username: "", error: "Username must be at least 3 characters." };
   }
   if (!trimmedPass || trimmedPass.length < 4) {
-    return { success: false, username: "", gender, error: "Password must be at least 4 characters." };
+    return { success: false, username: "", error: "Password must be at least 4 characters." };
   }
 
   // Try saving to Supabase users table if available
   if (supabase) {
     try {
-      let res = await supabase
+      const res = await supabase
         .from("users")
         .insert({
           username: trimmedUser,
           password: trimmedPass,
-          gender: gender,
         })
         .select()
         .single();
 
-      // If gender column is missing (code 42703), retry without gender
-      if (res.error && res.error.code === "42703") {
-        res = await supabase
-          .from("users")
-          .insert({
-            username: trimmedUser,
-            password: trimmedPass,
-          })
-          .select()
-          .single();
-      }
-
       if (!res.error && res.data) {
-        return { success: true, username: res.data.username || trimmedUser, gender };
+        return { success: true, username: res.data.username || trimmedUser };
       }
     } catch {
       // Table doesn't exist yet or RLS policy, proceed with session registration
     }
   }
 
-  // Fallback: succeeds and issues session token with selected gender
-  return { success: true, username: trimmedUser, gender };
+  // Fallback: succeeds and issues session token
+  return { success: true, username: trimmedUser };
 }

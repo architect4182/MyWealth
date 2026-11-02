@@ -572,6 +572,21 @@ export function EditAssetModal() {
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
 
+  // Synchronize purchased app name when opening or changing holding to edit
+  useEffect(() => {
+    if (editingAsset) {
+      const quicks = getQuickBrokerOptions(editingAsset.category);
+      if (editingAsset.brokerApp && editingAsset.brokerApp.trim()) {
+        const isQuick = quicks.includes(editingAsset.brokerApp.trim());
+        setIsEditCustomBroker(!isQuick);
+      } else {
+        const defaultApp = quicks[0] || "Groww";
+        setEditingAsset({ ...editingAsset, brokerApp: defaultApp });
+        setIsEditCustomBroker(false);
+      }
+    }
+  }, [editingAsset?.id]);
+
   if (!editingAsset) return null;
 
   const computedEditHoldings =
@@ -722,10 +737,15 @@ export function EditAssetModal() {
               value={editingAsset.category}
               onChange={(e) => {
                 const c = e.target.value as AssetCategory;
+                const quicks = getQuickBrokerOptions(c);
+                const nextBroker = isEditCustomBroker
+                  ? editingAsset.brokerApp
+                  : (editingAsset.brokerApp && quicks.includes(editingAsset.brokerApp) ? editingAsset.brokerApp : quicks[0] || "Groww");
                 setEditingAsset({
                   ...editingAsset,
                   category: c,
                   currency: c === "US Stocks" ? "USD" : "INR",
+                  brokerApp: nextBroker,
                 });
               }}
             >

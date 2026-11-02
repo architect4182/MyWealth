@@ -133,8 +133,6 @@ interface PortfolioContextType {
   prefillAsset: PrefillAssetData | null;
   setPrefillAsset: (data: PrefillAssetData | null) => void;
   openAddModalWithPrefill: (data: PrefillAssetData) => void;
-  userGender: "male" | "female";
-  setUserGender: (gender: "male" | "female") => void;
   currentUserId: string;
   isLoggingOut: boolean;
   handleLogout: (reason?: string) => Promise<void>;
@@ -172,7 +170,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [marketModal, setMarketModal] = useState(false);
   const [defaultCategory, setDefaultCategory] = useState<AssetCategory>("Indian Equities");
   const [prefillAsset, setPrefillAsset] = useState<PrefillAssetData | null>(null);
-  const [userGender, setUserGenderState] = useState<"male" | "female">("male");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [viewingAssetId, setViewingAssetId] = useState<string | null>(null);
   const [transientAsset, setTransientAsset] = useState<AssetPosition | null>(null);
@@ -223,10 +220,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       if (savedUser) {
         setCurrentUserId(savedUser);
       }
-      const savedGender = localStorage.getItem("mywealth_user_gender");
-      if (savedGender === "female" || savedGender === "male") {
-        setUserGenderState(savedGender);
-      }
+
     } catch {}
 
     // 2. Concurrently verify server session token
@@ -252,41 +246,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             router.replace("/login");
           }
         }
-        if (data?.authenticated && (data.gender === "female" || data.gender === "male")) {
-          setUserGenderState(data.gender);
-          try {
-            localStorage.setItem("mywealth_user_gender", data.gender);
-          } catch {}
-        }
+
       })
       .catch(() => {});
   }, []);
 
-  const setUserGender = (gender: "male" | "female") => {
-    setUserGenderState(gender);
-    try {
-      localStorage.setItem("mywealth_user_gender", gender);
-      if (isSupabaseConfigured && supabase && currentUserId) {
-        supabase
-          .from("users")
-          .update({ gender })
-          .eq("username", currentUserId.toLowerCase())
-          .then(() => {});
-      }
-    } catch {}
-  };
 
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.body.dataset.gender = userGender;
-    if (userGender === "female") {
-      document.body.classList.add("gender-female");
-      document.body.classList.remove("gender-male");
-    } else {
-      document.body.classList.add("gender-male");
-      document.body.classList.remove("gender-female");
-    }
-  }, [userGender]);
 
   // Body Scroll Lock: Prevent background page from scrolling while any modal is active
   const isAnyModalOpen = Boolean(
@@ -1262,6 +1227,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
               buy_price: updated.buyPrice,
               current_price: updated.currentPrice,
               currency: updated.currency,
+              broker_app: updated.brokerApp || null,
               ...sipRow,
             })
             .eq("id", updated.id);
@@ -1569,8 +1535,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       prefillAsset,
       setPrefillAsset,
       openAddModalWithPrefill,
-      userGender,
-      setUserGender,
       currentUserId,
       isLoggingOut,
       handleLogout,
@@ -1627,7 +1591,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       marketModal,
       defaultCategory,
       prefillAsset,
-      userGender,
       currentUserId,
       isLoggingOut,
       totalMonthlySipINR,

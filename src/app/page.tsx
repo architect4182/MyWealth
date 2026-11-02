@@ -42,7 +42,6 @@ export default function Home() {
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
-    userGender,
     totalMonthlySipINR,
     activeSipCount,
   } = usePortfolio();

@@ -210,16 +210,14 @@ pre {
 }
 
 
-body[data-gender],
-body.gender-female,
-body.gender-male {
+/* gender themes removed */
+.unused-gender-placeholder {
   background: #ffffff !important;
 }
 
 body::before,
-body[data-gender]::before,
-body.gender-female::before,
-body.gender-male::before {
+/* gender themes removed */
+.unused-gender-placeholder::before {
   display: none !important;
 }
 
@@ -6852,4 +6850,13 @@ tbody tr.flash-pulse td {
   .stock-invest-app-tile {
     padding: 8px 10px;
   }
+}
+
+
+/* Invested via App Clickable Anchor Card */
+.stock-broker-nav-card:hover {
+  background: #f4f0ff !important;
+  border-color: rgba(147, 102, 255, 0.4) !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 4px 12px rgba(147, 102, 255, 0.12) !important;
 }

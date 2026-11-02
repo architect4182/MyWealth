@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLogoAvatar, getStockTicker, BrokerLogoAvatar } from "@/components/Logos";
-import { getBrokersForCategory } from "@/utils/brokers";
+import { getBrokersForCategory, getBrokerDestinationUrl } from "@/utils/brokers";
 import { MarketTimingBadge, getAssetMarketStatus } from "@/components/MarketBadge";
 import { getNextSipDate } from "@/utils/sip";
 
@@ -692,16 +692,42 @@ export function AssetDetailModal() {
                 </h3>
 
                 <div className="stock-bento-grid">
-                  {viewingAsset.brokerApp && (
-                    <div className="stock-bento-card">
-                      <span className="bento-label">Invested via App</span>
-                      <strong className="bento-value" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
-                        <BrokerLogoAvatar brokerName={viewingAsset.brokerApp} size={18} />
-                        <span>{viewingAsset.brokerApp}</span>
-                      </strong>
-                      <span className="bento-subtext">Executing broker platform</span>
-                    </div>
-                  )}
+                  {viewingAsset.brokerApp && (() => {
+                    const brokerUrl = getBrokerDestinationUrl(
+                      viewingAsset.brokerApp,
+                      viewingAsset.name,
+                      ticker,
+                      viewingAsset.category
+                    );
+                    return (
+                      <a
+                        href={brokerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="stock-bento-card stock-broker-nav-card"
+                        title={`Open ${viewingAsset.brokerApp} website in new tab`}
+                        style={{
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          display: "block",
+                          color: "inherit",
+                          transition: "all 0.18s ease",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <span className="bento-label">Invested via App</span>
+                          <ExternalLink size={12} style={{ color: "#9366FF" }} />
+                        </div>
+                        <strong className="bento-value" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", marginTop: "2px" }}>
+                          <BrokerLogoAvatar brokerName={viewingAsset.brokerApp} size={18} />
+                          <span>{viewingAsset.brokerApp}</span>
+                        </strong>
+                        <span className="bento-subtext" style={{ color: "#9366FF", fontWeight: 600 }}>
+                          Open {viewingAsset.brokerApp} site ↗
+                        </span>
+                      </a>
+                    );
+                  })()}
                   <div className="stock-bento-card">
                     <span className="bento-label">Holdings Quantity</span>
                     <strong className="bento-value">

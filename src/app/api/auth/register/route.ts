@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { registerUser, createSessionToken, AUTH_COOKIE_NAME, SESSION_MAX_AGE_SECONDS, UserGender } from "@/lib/auth";
+import { registerUser, createSessionToken, AUTH_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const { username, password, gender } = body;
+    const { username, password } = body;
 
-    const safeGender: UserGender = gender === "female" ? "female" : "male";
-
-    const result = await registerUser(username, password, safeGender);
+    const result = await registerUser(username, password);
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error || "Registration failed." },
@@ -16,12 +14,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = await createSessionToken(result.username, result.gender);
+    const token = await createSessionToken(result.username);
 
     const res = NextResponse.json({
       success: true,
       username: result.username,
-      gender: result.gender,
       redirect: "/",
     });
 
@@ -42,4 +39,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

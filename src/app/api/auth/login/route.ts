@@ -14,12 +14,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = await createSessionToken(result.username, result.gender);
+    const token = await createSessionToken(result.username);
 
     const res = NextResponse.json({
       success: true,
       username: result.username,
-      gender: result.gender,
       redirect: "/",
     });
 

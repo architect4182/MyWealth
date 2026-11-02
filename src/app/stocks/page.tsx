@@ -33,7 +33,6 @@ export default function StocksPage() {
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
-    userGender,
   } = usePortfolio();
   const [stockSubTab, setStockSubTab] = useState<"all" | "indian" | "us">("all");
 

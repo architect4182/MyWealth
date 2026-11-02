@@ -14,7 +14,6 @@ function LoginForm() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [gender, setGender] = useState<"male" | "female">("male");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +37,7 @@ function LoginForm() {
 
     try {
       const endpoint = mode === "register" ? "/api/auth/register" : "/api/auth/login";
-      const payload = mode === "register"
-        ? { username: username.trim(), password: password.trim(), gender }
-        : { username: username.trim(), password: password.trim() };
+      const payload = { username: username.trim(), password: password.trim() };
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -51,11 +48,9 @@ function LoginForm() {
       const data = await res.json().catch(() => ({}));
 
       if (res.ok && data.success) {
-        // Store resolved user identity & gender locally for instant zero-lag rendering
-        const resolvedGender = data.gender || gender;
+        // Store resolved user identity locally for instant zero-lag rendering
         const resolvedUser = data.username || username.trim();
         try {
-          localStorage.setItem("mywealth_user_gender", resolvedGender);
           localStorage.setItem("mywealth_current_user", resolvedUser);
           localStorage.setItem("mywealth_last_activity", String(Date.now()));
         } catch { }
@@ -190,36 +185,6 @@ function LoginForm() {
             </button>
           </div>
         </div>
-
-        {/* Gender Selection during Registration */}
-        {mode === "register" && (
-          <div className="apple-auth-field-group">
-            <label className="apple-auth-label">
-              Dashboard Vision Character
-            </label>
-            <div className="apple-auth-gender-grid">
-              <button
-                type="button"
-                className={`apple-auth-gender-card ${gender === "male" ? "active" : ""}`}
-                onClick={() => setGender("male")}
-              >
-                <div className="apple-gender-text">
-                  <strong>Male</strong>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                className={`apple-auth-gender-card ${gender === "female" ? "active" : ""}`}
-                onClick={() => setGender("female")}
-              >
-                <div className="apple-gender-text">
-                  <strong>Female</strong>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
 
         <button
           type="submit"

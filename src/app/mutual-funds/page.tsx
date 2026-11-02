@@ -30,7 +30,6 @@ export default function MutualFundsPage() {
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
-    userGender,
     totalMonthlySipINR,
     activeSipCount,
   } = usePortfolio();
