@@ -66,7 +66,7 @@ export default function MutualFundsPage() {
       key: "all",
       label: "All Mutual Funds",
       count: mutualFunds.length,
-      icon: <Wallet size={15} />,
+      icon: <Wallet size={13} />,
     },
     ...(mfSipList.length > 0
       ? [
@@ -74,7 +74,7 @@ export default function MutualFundsPage() {
           key: "sip",
           label: "Active SIPs",
           count: mfSipList.length,
-          icon: <Repeat size={15} />,
+          icon: <Repeat size={13} />,
         },
       ]
       : []),
@@ -86,7 +86,7 @@ export default function MutualFundsPage() {
         f.name.toLowerCase().includes("flexi") ||
         f.name.toLowerCase().includes("index")
       ).length,
-      icon: <Layers size={15} />,
+      icon: <Layers size={13} />,
     },
     {
       key: "focused",
@@ -96,7 +96,7 @@ export default function MutualFundsPage() {
         f.name.toLowerCase().includes("growth") ||
         f.name.toLowerCase().includes("bluechip")
       ).length,
-      icon: <PiggyBank size={15} />,
+      icon: <PiggyBank size={13} />,
     },
   ];
 

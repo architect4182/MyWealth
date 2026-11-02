@@ -61,19 +61,19 @@ export default function Home() {
       key: "all",
       label: "All Assets",
       count: assets.length,
-      icon: <LayoutDashboard size={15} />,
+      icon: <LayoutDashboard size={13} />,
     },
     {
       key: "stocks",
       label: "Stocks",
       count: equities.length,
-      icon: <ChartNoAxesCombined size={15} />,
+      icon: <ChartNoAxesCombined size={13} />,
     },
     {
       key: "mf",
       label: "Mutual Funds",
       count: mutualFunds.length,
-      icon: <Wallet size={15} />,
+      icon: <Wallet size={13} />,
     },
     ...(sipAssets.length > 0
       ? [
@@ -81,7 +81,7 @@ export default function Home() {
           key: "sip",
           label: "Active SIPs",
           count: sipAssets.length,
-          icon: <Repeat size={15} />,
+          icon: <Repeat size={13} />,
         },
       ]
       : []),
