@@ -31,7 +31,7 @@ export const Footer = React.memo(function Footer() {
       <div className="apple-footer-grid">
         {/* Column 1: Brand & Profile Info */}
         <div className="apple-footer-brand-col">
-          <MyWealthLogo size={32} textSize={18} />
+          <MyWealthLogo size={42} textSize={19} />
           <p className="apple-footer-desc">
             A high-precision personal portfolio intelligence suite. Seamlessly track
             Indian equities, US Wall Street stocks, and mutual funds with real-time quotes,

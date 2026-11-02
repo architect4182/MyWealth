@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 
 export function MyWealthIcon({
-  size = 32,
+  size = 42,
   className = "",
 }: {
   size?: number;
@@ -12,15 +12,16 @@ export function MyWealthIcon({
     <Image
       src="/logo.png"
       alt="MyWealth Logo"
-      width={size}
-      height={size}
+      width={Math.max(128, size * 2)}
+      height={Math.max(128, size * 2)}
+      unoptimized
       priority
       className={`apple-brand-logo-img ${className}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
         objectFit: "contain",
-        borderRadius: size >= 36 ? "10px" : "8px",
+        borderRadius: size >= 48 ? "12px" : size >= 36 ? "10px" : "8px",
         display: "inline-block",
         flexShrink: 0,
       }}
@@ -29,8 +30,8 @@ export function MyWealthIcon({
 }
 
 export function MyWealthLogo({
-  size = 32,
-  textSize = 17,
+  size = 42,
+  textSize = 18,
   className = "",
 }: {
   size?: number;

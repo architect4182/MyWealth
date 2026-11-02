@@ -72,7 +72,7 @@ function LoginForm() {
       {/* Brand Emblem */}
       <div className="apple-auth-header">
         <div className="apple-auth-brand">
-          <MyWealthLogo size={38} textSize={20} />
+          <MyWealthLogo size={56} textSize={24} />
         </div>
 
         <div className="apple-auth-badge">

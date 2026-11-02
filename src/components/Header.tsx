@@ -80,7 +80,7 @@ export const Header = React.memo(function Header({
       {/* Left: Brand + Market Status */}
       <div className="apple-header-left">
         <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <MyWealthLogo size={32} />
+          <MyWealthLogo size={42} textSize={18} />
         </Link>
 
         {/* Dual Live Stock Market Timings Capsule */}
