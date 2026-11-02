@@ -396,22 +396,6 @@ export function AssetDetailModal() {
               <>
                 <button
                   type="button"
-                  className="stock-header-btn invest-now-btn"
-                  onClick={() => {
-                    const sec = document.getElementById("stock-invest-platforms-section");
-                    if (sec) {
-                      sec.scrollIntoView({ behavior: "smooth", block: "start" });
-                    } else if (categoryBrokers[0]) {
-                      window.open(categoryBrokers[0].getUrl(viewingAsset.name, ticker, viewingAsset.category), "_blank", "noopener,noreferrer");
-                    }
-                  }}
-                  title="Want to invest now"
-                >
-                  <ExternalLink size={13} />
-                  <span>Want to invest now</span>
-                </button>
-                <button
-                  type="button"
                   className="stock-header-btn add-pos"
                   onClick={() => {
                     const toAdd = {
@@ -680,6 +664,67 @@ export function AssetDetailModal() {
                 </div>
               </div>
             </div>
+
+            {/* Scheme / Exchange Profile (Moved to Left Side to fill empty space) */}
+            {viewingAsset.category === "Mutual Funds" ? (
+              <div className="stock-bento-section" style={{ marginTop: "4px" }}>
+                <h3 className="stock-bento-title">
+                  <Landmark size={15} /> Mutual Fund Scheme Profile
+                </h3>
+                <div className="stock-bento-grid three-col">
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Fund House / AMC</span>
+                    <strong className="bento-value" style={{ fontSize: "13px" }}>
+                      {chartData?.fundHouse || "AMFI Recognized"}
+                    </strong>
+                    <span className="bento-subtext">Asset Management Co</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Scheme Category</span>
+                    <strong className="bento-value" style={{ fontSize: "13px" }}>
+                      {chartData?.schemeCategory || "Growth / Equity"}
+                    </strong>
+                    <span className="bento-subtext">{chartData?.schemeType || "Open Ended"}</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">AMFI Scheme Code</span>
+                    <strong className="bento-value" style={{ fontSize: "13px" }}>
+                      {chartData?.schemeCode || "Registered"}
+                    </strong>
+                    <span className="bento-subtext">{chartData?.isin || "Growth Option"}</span>
+                  </div>
+                </div>
+              </div>
+            ) : chartData?.exchange ? (
+              <div className="stock-bento-section" style={{ marginTop: "4px" }}>
+                <h3 className="stock-bento-title">
+                  <Building2 size={15} /> Exchange & Security Profile
+                </h3>
+                <div className="stock-bento-grid three-col">
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Exchange</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData.exchange}
+                    </strong>
+                    <span className="bento-subtext">Primary Listing</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Ticker Symbol</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData.symbol || ticker}
+                    </strong>
+                    <span className="bento-subtext">{viewingAsset.category}</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Trading Session</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData.marketState || "Regular Hours"}
+                    </strong>
+                    <span className="bento-subtext">Session Status</span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* Right Column: Holdings / Investment Platforms & Profile */}
@@ -841,7 +886,7 @@ export function AssetDetailModal() {
                         }}
                       >
                         <div className="stock-invest-app-left">
-                          <BrokerLogoAvatar brokerName={broker.name} size={36} />
+                          <BrokerLogoAvatar brokerName={broker.name} size={28} />
                           <div className="stock-invest-app-info">
                             <div className="stock-invest-name-row">
                               <span className="stock-invest-app-name">{broker.name}</span>
@@ -882,69 +927,6 @@ export function AssetDetailModal() {
                 </div>
               </div>
             )}
-
-
-
-            {/* Scheme / Exchange Profile */}
-            {viewingAsset.category === "Mutual Funds" ? (
-              <div className="stock-bento-section">
-                <h3 className="stock-bento-title">
-                  <Landmark size={15} /> Mutual Fund Scheme Profile
-                </h3>
-                <div className="stock-bento-grid">
-                  <div className="stock-bento-card span-2">
-                    <span className="bento-label">Fund House / AMC</span>
-                    <strong className="bento-value" style={{ fontSize: "14px" }}>
-                      {chartData?.fundHouse || "AMFI Recognized Fund House"}
-                    </strong>
-                    <span className="bento-subtext">Asset Management Company</span>
-                  </div>
-                  <div className="stock-bento-card">
-                    <span className="bento-label">Scheme Category</span>
-                    <strong className="bento-value" style={{ fontSize: "13px" }}>
-                      {chartData?.schemeCategory || "Growth / Equity"}
-                    </strong>
-                    <span className="bento-subtext">{chartData?.schemeType || "Open Ended"}</span>
-                  </div>
-                  <div className="stock-bento-card">
-                    <span className="bento-label">AMFI Scheme Code</span>
-                    <strong className="bento-value" style={{ fontSize: "13px" }}>
-                      {chartData?.schemeCode || "Registered"}
-                    </strong>
-                    <span className="bento-subtext">{chartData?.isin || "Growth Option"}</span>
-                  </div>
-                </div>
-              </div>
-            ) : chartData?.exchange ? (
-              <div className="stock-bento-section">
-                <h3 className="stock-bento-title">
-                  <Building2 size={15} /> Exchange & Security Profile
-                </h3>
-                <div className="stock-bento-grid">
-                  <div className="stock-bento-card">
-                    <span className="bento-label">Exchange</span>
-                    <strong className="bento-value" style={{ fontSize: "14px" }}>
-                      {chartData.exchange}
-                    </strong>
-                    <span className="bento-subtext">Primary Listing</span>
-                  </div>
-                  <div className="stock-bento-card">
-                    <span className="bento-label">Ticker Symbol</span>
-                    <strong className="bento-value" style={{ fontSize: "14px" }}>
-                      {chartData.symbol || ticker}
-                    </strong>
-                    <span className="bento-subtext">{viewingAsset.category}</span>
-                  </div>
-                  <div className="stock-bento-card span-2">
-                    <span className="bento-label">Trading Session</span>
-                    <strong className="bento-value" style={{ fontSize: "14px" }}>
-                      {chartData.marketState || "Regular Hours"}
-                    </strong>
-                    <span className="bento-subtext">Session Status</span>
-                  </div>
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </div>
