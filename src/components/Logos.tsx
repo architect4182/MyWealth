@@ -78,6 +78,14 @@ export function getStockTicker(name: string): string {
   if (paren) return paren[1].toUpperCase();
   if (/^[A-Z]{1,6}$/.test(name.trim())) return name.trim();
 
+  const lower = name.toLowerCase().trim();
+  if (lower.includes("jio platforms") || lower === "jpl") return "JPL";
+  if (lower.includes("jio financial") || lower === "jiofin") return "JIOFIN";
+  if (lower.includes("reliance") && !lower.includes("jio")) return "RELIANCE";
+  if (lower.includes("tata motors")) return "TATAMOTORS";
+  if (lower.includes("tcs") || lower.includes("tata consultancy")) return "TCS";
+  if (lower.includes("hdfc bank") || lower === "hdfc") return "HDFCBANK";
+
   const clean = name
     .replace(
       /\b(limited|ltd|corporation|corp|incorporated|inc|holdings|company|co|group|plc|pvt|private)\b/gi,

@@ -191,20 +191,9 @@ export function AddAssetModal() {
     let bp = Number(buyPrice) || Number(currentPrice);
     if (!inv || !bp || bp <= 0) return;
 
-    let q = inv / bp;
-    let cp = bp;
-    const cv = Number(currentValue);
+    const q = inv / bp;
     const userCp = Number(currentPrice);
-
-    if (userCp > 0) {
-      cp = userCp;
-      if (cv > 0) {
-        q = cv / cp;
-        bp = inv / q;
-      }
-    } else if (cv > 0 && q > 0) {
-      cp = cv / q;
-    }
+    const cp = userCp > 0 ? userCp : bp;
 
     await addAsset({
       name: name.trim(),
@@ -581,20 +570,9 @@ export function EditAssetModal() {
     let bp = Number(editingAsset.buyPrice);
     if (!inv || !bp || bp <= 0) return;
 
-    let q = inv / bp;
-    let cp = bp;
-    const cv = Number(editingAsset.currentValue);
+    const q = inv / bp;
     const userCp = Number(editingAsset.currentPrice);
-
-    if (userCp > 0) {
-      cp = userCp;
-      if (cv > 0) {
-        q = cv / cp;
-        bp = inv / q;
-      }
-    } else if (cv > 0 && q > 0) {
-      cp = cv / q;
-    }
+    const cp = userCp > 0 ? userCp : (Number(editingAsset.currentPrice) || bp);
 
     await updateAsset({
       id: editingAsset.id,
@@ -782,12 +760,16 @@ export function EditAssetModal() {
               min="0.01"
               step="any"
               value={editingAsset.currentValue}
-              onChange={(e) =>
+              onChange={(e) => {
+                const cv = e.target.value;
+                const holdings = computedEditHoldings;
+                const cp = Number(cv) > 0 && holdings > 0 ? (Number(cv) / holdings).toFixed(2) : editingAsset.currentPrice;
                 setEditingAsset({
                   ...editingAsset,
-                  currentValue: e.target.value,
-                })
-              }
+                  currentValue: cv,
+                  currentPrice: cp,
+                });
+              }}
             />
           </label>
 
@@ -798,12 +780,16 @@ export function EditAssetModal() {
               min="0.0001"
               step="any"
               value={editingAsset.currentPrice}
-              onChange={(e) =>
+              onChange={(e) => {
+                const cp = e.target.value;
+                const holdings = computedEditHoldings;
+                const cv = Number(cp) > 0 && holdings > 0 ? (Number(cp) * holdings).toFixed(2) : editingAsset.currentValue;
                 setEditingAsset({
                   ...editingAsset,
-                  currentPrice: e.target.value,
-                })
-              }
+                  currentPrice: cp,
+                  currentValue: cv,
+                });
+              }}
             />
           </label>
         </div>

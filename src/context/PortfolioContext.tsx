@@ -89,7 +89,7 @@ interface PortfolioContextType {
   money: (val: number, cur?: "INR" | "USD") => string;
   isRefreshingPrices: boolean;
   priceRefreshMessage: string;
-  handleRefreshPrices: () => Promise<void>;
+  handleRefreshPrices: (silent?: boolean | unknown) => Promise<void>;
   unsavedAssetIds: Set<string>;
   isSavingPrices: boolean;
   handleSavePricesToDb: () => Promise<void>;
@@ -777,11 +777,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [assets, currentUserId]);
 
-  // Live price refresh
-  const handleRefreshPrices = async () => {
+  // Live price refresh (manual or automatic background sync)
+  const handleRefreshPrices = async (silentParam?: boolean | unknown) => {
+    const silent = typeof silentParam === "boolean" ? silentParam : false;
     if (assets.length === 0 || isRefreshingPrices) return;
-    setIsRefreshingPrices(true);
-    setPriceRefreshMessage("Fetching latest market prices...");
+    if (!silent) {
+      setIsRefreshingPrices(true);
+      setPriceRefreshMessage("Fetching latest market prices...");
+    }
 
     try {
       const refreshedList = await Promise.all(
@@ -845,7 +848,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       });
 
       setAssets(refreshedList);
-      persistLocal(refreshedList);
+      const uid = (currentUserId || (typeof window !== "undefined" ? localStorage.getItem("mywealth_current_user") : "") || "").trim();
+      persistLocal(refreshedList, uid);
 
       // Persist refreshed prices directly to Supabase so DB is immediately updated
       if (isSupabaseConfigured && supabase && changedIds.size > 0) {
@@ -861,15 +865,56 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         setUnsavedAssetIds(changedIds);
       }
 
-      setPriceRefreshMessage(`Successfully synced ${changedIds.size} market valuations.`);
-      setTimeout(() => setPriceRefreshMessage(""), 4000);
+      if (!silent) {
+        setPriceRefreshMessage(`Successfully synced ${changedIds.size} market valuations.`);
+        setTimeout(() => setPriceRefreshMessage(""), 4000);
+      }
     } catch {
-      setPriceRefreshMessage("Price refresh failed.");
-      setTimeout(() => setPriceRefreshMessage(""), 4000);
+      if (!silent) {
+        setPriceRefreshMessage("Price refresh failed.");
+        setTimeout(() => setPriceRefreshMessage(""), 4000);
+      }
     } finally {
-      setIsRefreshingPrices(false);
+      if (!silent) {
+        setIsRefreshingPrices(false);
+      }
     }
   };
+
+  // Automated background price sync: automatically fetches live prices on load and periodically every 60s
+  const hasAutoSyncedInitialPricesRef = useRef(false);
+  useEffect(() => {
+    if (assets.length === 0 || !currentUserId) return;
+
+    // 1. Initial automated price sync when assets are first loaded
+    if (!hasAutoSyncedInitialPricesRef.current) {
+      hasAutoSyncedInitialPricesRef.current = true;
+      const initTimer = setTimeout(() => {
+        handleRefreshPrices(true);
+      }, 1000);
+      return () => clearTimeout(initTimer);
+    }
+
+    // 2. Periodic background refresh every 60 seconds
+    const intervalTimer = setInterval(() => {
+      handleRefreshPrices(true);
+    }, 60 * 1000);
+
+    // 3. Tab visibility / focus refresh
+    const handleVisibilityRefresh = () => {
+      if (document.visibilityState === "visible") {
+        handleRefreshPrices(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityRefresh);
+    window.addEventListener("focus", handleVisibilityRefresh);
+
+    return () => {
+      clearInterval(intervalTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityRefresh);
+      window.removeEventListener("focus", handleVisibilityRefresh);
+    };
+  }, [assets.length, currentUserId]);
 
   const handleSavePricesToDb = async () => {
     if (unsavedAssetIds.size === 0 || isSavingPrices) return;
