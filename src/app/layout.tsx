@@ -3,15 +3,20 @@ import "./globals.css";
 import { PortfolioProvider } from "@/context/PortfolioContext";
 
 export const metadata: Metadata = {
-  title: "MyWealth — Wealth & Investment Tracker",
+  title: "MyWealth",
   description: "A clearer view of everything you're building.",
   icons: {
     icon: [
-      { url: "/icon.png", type: "image/png" },
-      { url: "/logo.png", type: "image/png" },
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon.png", sizes: "64x64", type: "image/png" },
+      { url: "/logo.png", sizes: "192x192", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
-    shortcut: "/icon.png",
-    apple: "/apple-icon.png",
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
   },
 };
 

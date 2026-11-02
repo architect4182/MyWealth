@@ -144,7 +144,7 @@ export const Header = React.memo(function Header({
               className={`apple-nav-pill ${isTabActive ? "active" : ""}`}
               style={{ textDecoration: "none" }}
             >
-              <Icon size={14} strokeWidth={isTabActive ? 2.4 : 1.8} />
+              <Icon size={16} strokeWidth={isTabActive ? 2.2 : 1.8} />
               <span className="apple-nav-pill-text">{name}</span>
             </Link>
           );

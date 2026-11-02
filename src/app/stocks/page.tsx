@@ -56,19 +56,19 @@ export default function StocksPage() {
       key: "all",
       label: "All Stocks",
       count: equities.length,
-      icon: <ChartNoAxesCombined size={13} />,
+      icon: <ChartNoAxesCombined size={15} />,
     },
     {
       key: "indian",
       label: "NSE / BSE India",
       count: indianAssets.length,
-      icon: <Building2 size={13} />,
+      icon: <Building2 size={15} />,
     },
     {
       key: "us",
       label: "US Equities",
       count: usAssets.length,
-      icon: <Globe size={13} />,
+      icon: <Globe size={15} />,
     },
   ];
 
