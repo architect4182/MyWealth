@@ -19,6 +19,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLogoAvatar, getStockTicker } from "@/components/Logos";
 import { MarketTimingBadge, getAssetMarketStatus } from "@/components/MarketBadge";
 import { getNextSipDate } from "@/utils/sip";
+import { getBrokerDestinationUrl } from "@/utils/brokers";
 
 export interface FilterSubTab {
   key: string;
@@ -290,11 +291,26 @@ export function HoldingsTableAndCards({
                         status={item.category === "US Stocks" ? usStatus : inStatus}
                         compact
                       />
-                      {item.brokerApp && (
-                        <span className="apple-broker-pill" title={`Invested via ${item.brokerApp}`}>
-                          via {item.brokerApp}
-                        </span>
-                      )}
+                      {item.brokerApp && (() => {
+                        const brokerUrl = getBrokerDestinationUrl(
+                          item.brokerApp,
+                          item.name,
+                          ticker,
+                          item.category
+                        );
+                        return (
+                          <a
+                            href={brokerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="apple-broker-pill"
+                            title={`Open ${item.brokerApp} website in new tab`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            via {item.brokerApp} ↗
+                          </a>
+                        );
+                      })()}
                     </div>
 
                     <div className="apple-asset-holdings-line">
@@ -504,6 +520,26 @@ export function HoldingsTableAndCards({
                                 }
                                 compact
                               />
+                              {item.brokerApp && (() => {
+                                const brokerUrl = getBrokerDestinationUrl(
+                                  item.brokerApp,
+                                  item.name,
+                                  ticker,
+                                  item.category
+                                );
+                                return (
+                                  <a
+                                    href={brokerUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="apple-broker-pill"
+                                    title={`Open ${item.brokerApp} website in new tab`}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    via {item.brokerApp} ↗
+                                  </a>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
