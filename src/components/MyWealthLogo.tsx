@@ -20,7 +20,6 @@ export function MyWealthIcon({
         width: `${size}px`,
         height: `${size}px`,
         objectFit: "contain",
-        borderRadius: size >= 36 ? "10px" : "8px",
         display: "inline-block",
         flexShrink: 0,
       }}
