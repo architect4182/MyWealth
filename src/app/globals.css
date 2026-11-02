@@ -4586,6 +4586,32 @@ button.ios-switch {
   color: var(--foreground);
 }
 
+.stock-market-closed-notice-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 1.5px 8px !important;
+  border-radius: 9999px !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.stock-market-live-notice-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 1.5px 8px !important;
+  border-radius: 9999px !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #059669 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+
 /* Period Segmented Control */
 .stock-period-segmented-bar {
   display: flex;

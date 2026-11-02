@@ -104,6 +104,12 @@ export function AssetDetailModal() {
   const fetchChart = useCallback(
     async (period: Period, silent = false) => {
       if (!viewingAsset) return;
+
+      // If market is closed or category is Mutual Funds, skip background polling calls completely
+      if (silent && (!marketStatus.isOpen || viewingAsset.category === "Mutual Funds")) {
+        return;
+      }
+
       if (!silent) {
         setIsLoadingChart(true);
         setChartError(null);
@@ -169,10 +175,10 @@ export function AssetDetailModal() {
         if (!silent) setIsLoadingChart(false);
       }
     },
-    [viewingAsset]
+    [viewingAsset, marketStatus.isOpen]
   );
 
-  // Initial load when modal opens or period changes
+  // Initial load when modal opens or period changes (runs once on open or when switching period)
   useEffect(() => {
     if (viewingAsset) {
       prevPriceRef.current = viewingAsset.currentPrice;
@@ -185,9 +191,15 @@ export function AssetDetailModal() {
     }
   }, [viewingAsset, selectedPeriod, fetchChart]);
 
-  // Real-time live polling every 5 seconds while modal is open
+  // Real-time live polling every 5 seconds ONLY while market is open
   useEffect(() => {
     if (!viewingAsset) return;
+
+    // Multiple calls should happen ONLY while the market is open!
+    // When market is closed (or Mutual Funds), make the call only once on open and do NOT poll repeatedly.
+    if (!marketStatus.isOpen || viewingAsset.category === "Mutual Funds") {
+      return;
+    }
 
     const pollInterval = window.setInterval(() => {
       fetchChart(selectedPeriod, true);
@@ -196,7 +208,7 @@ export function AssetDetailModal() {
     return () => {
       window.clearInterval(pollInterval);
     };
-  }, [viewingAsset, selectedPeriod, fetchChart]);
+  }, [viewingAsset, selectedPeriod, fetchChart, marketStatus.isOpen]);
 
   // Escape key handler to close modal
   useEffect(() => {
@@ -356,7 +368,7 @@ export function AssetDetailModal() {
               <div className="stock-detail-pills">
                 <span className="apple-ticker-pill">{ticker}</span>
                 <span className="apple-category-pill">{viewingAsset.category}</span>
-                <MarketTimingBadge status={marketStatus} compact />
+                <MarketTimingBadge status={marketStatus} />
               </div>
             </div>
           </div>
@@ -464,11 +476,28 @@ export function AssetDetailModal() {
                     {hoveredPoint.price.toFixed(2)}
                   </span>
                 ) : (
-                  <span>
-                    {viewingAsset.category === "Mutual Funds" ? "AMFI NAV" : "Current Market Price"} · Prev Close:{" "}
-                    {viewingAsset.currency === "USD" ? "$" : "₹"}
-                    {referencePrice.toFixed(2)}
-                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <span>
+                      {viewingAsset.category === "Mutual Funds" ? "AMFI NAV" : "Current Market Price"} · Prev Close:{" "}
+                      {viewingAsset.currency === "USD" ? "$" : "₹"}
+                      {referencePrice.toFixed(2)}
+                    </span>
+                    {!marketStatus.isOpen && viewingAsset.category !== "Mutual Funds" && (
+                      <span className="stock-market-closed-notice-pill">
+                        ● Market is closed · {marketStatus.detail} (Single call made)
+                      </span>
+                    )}
+                    {marketStatus.isOpen && viewingAsset.category !== "Mutual Funds" && (
+                      <span className="stock-market-live-notice-pill">
+                        ● Market is open · Live polling active
+                      </span>
+                    )}
+                    {viewingAsset.category === "Mutual Funds" && (
+                      <span className="stock-market-closed-notice-pill">
+                        ● Daily NAV · Loaded once
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

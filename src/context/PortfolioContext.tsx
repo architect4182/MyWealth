@@ -947,13 +947,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Periodic background refresh every 60 seconds
     const intervalTimer = setInterval(() => {
-      handleRefreshPrices(true);
+      if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) { handleRefreshPrices(true); }
     }, 60 * 1000);
 
     // 3. Tab visibility / focus refresh
     const handleVisibilityRefresh = () => {
       if (document.visibilityState === "visible") {
-        handleRefreshPrices(true);
+        if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) { handleRefreshPrices(true); }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityRefresh);
