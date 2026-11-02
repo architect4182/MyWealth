@@ -5,10 +5,13 @@ import { verifySessionToken, AUTH_COOKIE_NAME } from "@/lib/auth";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Allow public static assets and auth API routes unconditionally
+  // 1. Allow public static assets, auth API routes, and public market data unconditionally
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/stock-price") ||
+    pathname.startsWith("/api/stock-chart") ||
+    pathname.startsWith("/api/trending") ||
     pathname.endsWith(".png") ||
     pathname.endsWith(".jpg") ||
     pathname.endsWith(".jpeg") ||

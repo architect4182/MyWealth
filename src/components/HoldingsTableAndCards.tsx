@@ -8,9 +8,8 @@ import {
   ArrowUpDown,
   TrendingUp,
   TrendingDown,
-  Pencil,
-  Trash2,
   Sparkles,
+  ChevronRight,
   Plus,
   ChartNoAxesCombined,
   Repeat,
@@ -54,10 +53,9 @@ export function HoldingsTableAndCards({
     money,
     showUsdInRupees,
     currentTime,
-    startEditing,
-    setDeletingAsset,
     setModal,
     setDefaultCategory,
+    openAssetDetail,
   } = usePortfolio();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -245,6 +243,16 @@ export function HoldingsTableAndCards({
                 className={`apple-asset-card ${isFlashed ? "flash-pulse" : ""} ${
                   isUnsaved ? "unsaved-glow" : ""
                 }`}
+                onClick={() => openAssetDetail(item)}
+                style={{ cursor: "pointer" }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openAssetDetail(item);
+                  }
+                }}
               >
                 {/* Left Side: Avatar + Full Name + Ticker & Category + Holdings & Cost */}
                 <div className="apple-asset-card-main">
@@ -308,27 +316,8 @@ export function HoldingsTableAndCards({
                   </div>
                 </div>
 
-                {/* Right Side: Actions + Valuation + CMP + Return Gain */}
+                {/* Right Side: Valuation + CMP + Return Gain */}
                 <div className="apple-asset-card-right">
-                  <div className="apple-card-actions-top">
-                    <button
-                      type="button"
-                      className="apple-action-pill-btn"
-                      onClick={() => startEditing(item)}
-                      title="Edit position"
-                    >
-                      <Pencil size={11} />
-                    </button>
-                    <button
-                      type="button"
-                      className="apple-action-pill-btn delete"
-                      onClick={() => setDeletingAsset(item)}
-                      title="Delete position"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  </div>
-
                   <div className="apple-card-valuation-group">
                     <div className="apple-val-primary">
                       {money(currentVal, item.currency)}
@@ -359,6 +348,10 @@ export function HoldingsTableAndCards({
                         {pnlPct.toFixed(2)}%)
                       </span>
                     </div>
+                  </div>
+
+                  <div className="apple-card-chevron-circle" title="Click to view live charts & details">
+                    <ChevronRight size={14} />
                   </div>
                 </div>
               </div>
@@ -417,11 +410,7 @@ export function HoldingsTableAndCards({
                       <ArrowUpDown size={11} />
                     </div>
                   </th>
-                  <th>
-                    <div className="th-content th-center">
-                      <span>Actions</span>
-                    </div>
-                  </th>
+                  <th style={{ width: "28px" }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -438,6 +427,8 @@ export function HoldingsTableAndCards({
                     <tr
                       key={item.id}
                       className={isFlashed ? "flash-pulse" : ""}
+                      onClick={() => openAssetDetail(item)}
+                      style={{ cursor: "pointer" }}
                     >
                       <td>
                         <div
@@ -580,24 +571,9 @@ export function HoldingsTableAndCards({
                           </span>
                         </div>
                       </td>
-                      <td style={{ textAlign: "center" }}>
-                        <div style={{ display: "inline-flex", gap: "6px" }}>
-                          <button
-                            type="button"
-                            className="apple-action-pill-btn"
-                            onClick={() => startEditing(item)}
-                            title="Edit position"
-                          >
-                            <Pencil size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            className="apple-action-pill-btn delete"
-                            onClick={() => setDeletingAsset(item)}
-                            title="Delete position"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                      <td style={{ textAlign: "right", width: "28px", paddingRight: "10px" }}>
+                        <div className="apple-table-chevron-circle" title="Click to view live charts & details">
+                          <ChevronRight size={13} />
                         </div>
                       </td>
                     </tr>

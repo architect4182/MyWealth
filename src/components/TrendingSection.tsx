@@ -6,6 +6,7 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
+  ChevronRight,
 } from "lucide-react";
 import { StockLogoAvatar, getStockTicker } from "@/components/Logos";
 import { AssetCategory } from "@/types/portfolio";
@@ -32,7 +33,33 @@ export interface TrendingItem {
 }
 
 export const TrendingSection = React.memo(function TrendingSection({ type }: { type: "stocks" | "mf" }) {
-  const { showUsdInRupees, usdInrRate, money } = usePortfolio();
+  const { showUsdInRupees, usdInrRate, money, assets, openAssetDetail } = usePortfolio();
+
+  const handleTrendingClick = (item: TrendingItem) => {
+    // 1. Check if user already owns this asset in their portfolio
+    const existing = assets.find(
+      (a) =>
+        a.name.toLowerCase() === item.name.toLowerCase() ||
+        (item.symbol && a.name.toLowerCase().includes(item.symbol.toLowerCase())) ||
+        (item.code && a.name.includes(String(item.code)))
+    );
+
+    if (existing) {
+      openAssetDetail(existing);
+    } else {
+      openAssetDetail({
+        id: item.code ? `MF-${item.code}` : item.symbol || `trending-${item.name}`,
+        name: item.name,
+        category: item.category,
+        quantity: 0,
+        buyPrice: item.price,
+        currentPrice: item.price,
+        currency: item.currency,
+        date: new Date().toISOString().split("T")[0],
+        isSip: false,
+      });
+    }
+  };
 
   // Instant baseline state: load company name and info immediately on frame 0!
   const [indiaItems, setIndiaItems] = useState<TrendingItem[]>(() =>
@@ -113,7 +140,21 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
         const isConverted = isUsd && showUsdInRupees;
 
         return (
-          <div key={`${item.rank}-${item.symbol || item.name}`} className="apple-trending-card">
+          <div
+            key={`${item.rank}-${item.symbol || item.name}`}
+            className="apple-trending-card"
+            onClick={() => handleTrendingClick(item)}
+            style={{ cursor: "pointer" }}
+            role="button"
+            tabIndex={0}
+            title={`Click to view live chart & details for ${item.name}`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleTrendingClick(item);
+              }
+            }}
+          >
             <div className="apple-trending-card-left">
               <span
                 className={`apple-trending-rank ${
@@ -188,6 +229,9 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
                   {money(absChange, item.currency)}{" "}
                   ({isPos ? "+" : ""}{item.changePercent.toFixed(2)}%)
                 </span>
+              </div>
+              <div className="apple-trending-chevron" title="Click to view live chart & details">
+                <ChevronRight size={13} />
               </div>
             </div>
           </div>

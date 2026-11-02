@@ -13,6 +13,7 @@ import { AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate, formatLocalDate } from "@/utils/sip";
+import { AssetDetailModal } from "@/components/AssetDetailModal";
 
 export function AddAssetModal() {
   const {
@@ -1289,6 +1290,7 @@ export function PortfolioModals() {
       <DeleteAssetModal />
       <DbConfigModal />
       <MarketSessionsModal />
+      <AssetDetailModal />
     </>
   );
 }

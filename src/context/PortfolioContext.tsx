@@ -137,6 +137,9 @@ interface PortfolioContextType {
   currentUserId: string;
   isLoggingOut: boolean;
   handleLogout: (reason?: string) => Promise<void>;
+  viewingAsset: AssetPosition | null;
+  setViewingAsset: (asset: AssetPosition | null) => void;
+  openAssetDetail: (asset: AssetPosition) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | null>(null);
@@ -170,6 +173,47 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [prefillAsset, setPrefillAsset] = useState<PrefillAssetData | null>(null);
   const [userGender, setUserGenderState] = useState<"male" | "female">("male");
   const [currentUserId, setCurrentUserId] = useState<string>("");
+  const [viewingAssetId, setViewingAssetId] = useState<string | null>(null);
+  const [transientAsset, setTransientAsset] = useState<AssetPosition | null>(null);
+
+  const viewingAsset = useMemo(() => {
+    if (transientAsset) {
+      const matching = assets.find(
+        (a) => a.id === transientAsset.id || a.name.toLowerCase() === transientAsset.name.toLowerCase()
+      );
+      return matching || transientAsset;
+    }
+    if (!viewingAssetId) return null;
+    return assets.find((a) => a.id === viewingAssetId) || null;
+  }, [viewingAssetId, transientAsset, assets]);
+
+  const setViewingAsset = useCallback(
+    (asset: AssetPosition | null) => {
+      if (!asset) {
+        setViewingAssetId(null);
+        setTransientAsset(null);
+      } else {
+        const existing = assets.find(
+          (a) => a.id === asset.id || a.name.toLowerCase() === asset.name.toLowerCase()
+        );
+        if (existing) {
+          setViewingAssetId(existing.id);
+          setTransientAsset(null);
+        } else {
+          setViewingAssetId(null);
+          setTransientAsset(asset);
+        }
+      }
+    },
+    [assets]
+  );
+
+  const openAssetDetail = useCallback(
+    (asset: AssetPosition) => {
+      setViewingAsset(asset);
+    },
+    [setViewingAsset]
+  );
 
   useEffect(() => {
     // 1. Immediately read cached identity and vision preference on client mount
@@ -230,6 +274,30 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {}
   };
+
+  // Body Scroll Lock: Prevent background page from scrolling while any modal is active
+  const isAnyModalOpen = Boolean(
+    modal || editingAsset || deletingAsset || dbModal || marketModal || viewingAsset
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isAnyModalOpen) {
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      const prevOverflow = document.body.style.overflow;
+      const prevPaddingRight = document.body.style.paddingRight;
+
+      document.body.style.overflow = "hidden";
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+
+      return () => {
+        document.body.style.overflow = prevOverflow;
+        document.body.style.paddingRight = prevPaddingRight;
+      };
+    }
+  }, [isAnyModalOpen]);
 
   const openAddModalWithPrefill = (data: PrefillAssetData) => {
     setDefaultCategory(data.category);
@@ -1249,6 +1317,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       dbBaselinePricesRef.current.clear();
       setCurrentUserId("");
       setShowUsdInRupees(false);
+      setViewingAssetId(null);
+      setTransientAsset(null);
 
       // 2. Unsubscribe Supabase Realtime channel
       if (supabase) {
@@ -1474,6 +1544,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       activeSipCount,
       sipNotice,
       clearSipNotice,
+      viewingAsset,
+      setViewingAsset,
+      openAssetDetail,
     }),
     [
       safeAssets,
@@ -1526,6 +1599,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       totalMonthlySipINR,
       activeSipCount,
       sipNotice,
+      viewingAsset,
+      setViewingAsset,
+      openAssetDetail,
     ]
   );
 
