@@ -210,14 +210,7 @@ pre {
 }
 
 
-/* gender themes removed */
-.unused-gender-placeholder {
-  background: #ffffff !important;
-}
-
-body::before,
-/* gender themes removed */
-.unused-gender-placeholder::before {
+body::before {
   display: none !important;
 }
 
@@ -4010,59 +4003,6 @@ select:focus {
   background: rgba(147, 102, 255, 0.25);
   color: var(--foreground);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Gender Selection Cards during Registration */
-.apple-auth-gender-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.apple-auth-gender-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1.5px solid rgba(147, 102, 255, 0.16);
-  background: rgba(24, 24, 34, 0.75);
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.apple-auth-gender-card:hover {
-  background: rgba(32, 32, 44, 0.9);
-  border-color: rgba(147, 102, 255, 0.35);
-}
-
-.apple-auth-gender-card.active {
-  background: rgba(147, 102, 255, 0.18);
-  border-color: var(--apple-blue);
-  box-shadow: 0 0 0 3px rgba(147, 102, 255, 0.2);
-}
-
-.apple-gender-emoji {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.apple-gender-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.apple-gender-text strong {
-  font-size: 13px;
-  color: var(--foreground);
-}
-
-.apple-gender-text small {
-  font-size: 10px;
-  color: var(--muted);
-  line-height: 1.2;
 }
 
 /* Header User Combo Pill (Unified User Identity + Logout) */
