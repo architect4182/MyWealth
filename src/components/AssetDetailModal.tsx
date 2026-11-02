@@ -872,59 +872,24 @@ export function AssetDetailModal() {
                   {categoryBrokers.map((broker) => {
                     const destUrl = broker.getUrl(viewingAsset.name, ticker, viewingAsset.category);
                     return (
-                      <div
+                      <a
                         key={broker.id}
+                        href={destUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="stock-invest-app-tile"
-                        onClick={() => window.open(destUrl, "_blank", "noopener,noreferrer")}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            window.open(destUrl, "_blank", "noopener,noreferrer");
-                          }
-                        }}
+                        title={`Invest in ${ticker || viewingAsset.name} via ${broker.name}`}
                       >
                         <div className="stock-invest-app-left">
-                          <BrokerLogoAvatar brokerName={broker.name} size={28} />
-                          <div className="stock-invest-app-info">
-                            <div className="stock-invest-name-row">
-                              <span className="stock-invest-app-name">{broker.name}</span>
-                              {broker.badge && (
-                                <span className="stock-invest-app-badge">{broker.badge}</span>
-                              )}
-                            </div>
-                            <span className="stock-invest-app-tagline">{broker.tagline}</span>
-                          </div>
+                          <BrokerLogoAvatar brokerName={broker.name} size={24} />
+                          <span className="stock-invest-app-name">{broker.name}</span>
                         </div>
-
-                        <div className="stock-invest-app-cta">
-                          <span>Invest ↗</span>
-                        </div>
-                      </div>
+                        <ExternalLink size={12} className="stock-invest-app-arrow" />
+                      </a>
                     );
                   })}
                 </div>
 
-                <div className="stock-invest-footer-note">
-                  <span>Already hold this asset?</span>
-                  <button
-                    type="button"
-                    className="stock-invest-record-link"
-                    onClick={() => {
-                      const toAdd = {
-                        name: chartData?.name || viewingAsset.name,
-                        category: viewingAsset.category,
-                        price: activeCurrentPrice,
-                        currency: viewingAsset.currency,
-                      };
-                      setViewingAsset(null);
-                      openAddModalWithPrefill(toAdd);
-                    }}
-                  >
-                    + Record in portfolio
-                  </button>
-                </div>
               </div>
             )}
           </div>

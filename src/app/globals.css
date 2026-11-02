@@ -6672,14 +6672,14 @@ tbody tr.flash-pulse td {
 
 .stock-invest-grid {
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important;
   gap: 8px !important;
   margin-bottom: 12px !important;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 540px) {
   .stock-invest-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
@@ -6692,17 +6692,18 @@ tbody tr.flash-pulse td {
   background: #f8f9fc !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   cursor: pointer !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
   text-decoration: none !important;
+  color: #111116 !important;
   gap: 8px !important;
-  min-height: 48px !important;
+  min-height: 42px !important;
 }
 
 .stock-invest-app-tile:hover {
   background: #f4f0ff !important;
-  border-color: rgba(147, 102, 255, 0.4) !important;
+  border-color: rgba(147, 102, 255, 0.45) !important;
   transform: translateY(-1.5px) !important;
-  box-shadow: 0 4px 12px rgba(147, 102, 255, 0.12) !important;
+  box-shadow: 0 4px 12px rgba(147, 102, 255, 0.14) !important;
 }
 
 .stock-invest-app-left {
@@ -6713,70 +6714,24 @@ tbody tr.flash-pulse td {
   flex: 1 !important;
 }
 
-.stock-invest-app-info {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 1px !important;
-  min-width: 0 !important;
-  flex: 1 !important;
-}
-
-.stock-invest-name-row {
-  display: flex !important;
-  align-items: center !important;
-  gap: 5px !important;
-}
-
 .stock-invest-app-name {
   font-size: 13px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   color: #111116 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
-.stock-invest-app-badge {
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  color: #10b981 !important;
-  background: rgba(16, 185, 129, 0.1) !important;
-  padding: 0.5px 5px !important;
-  border-radius: 4px !important;
-}
-
-.stock-invest-app-tagline {
-  font-size: 10.5px !important;
-  color: #64748b !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 140px !important;
-}
-
-.stock-invest-app-cta {
-  display: flex !important;
-  align-items: center !important;
+.stock-invest-app-arrow {
+  color: #9366FF !important;
   flex-shrink: 0 !important;
+  transition: transform 0.18s ease !important;
 }
 
-.stock-invest-app-cta span {
-  display: inline-flex !important;
-  align-items: center !important;
-  padding: 4px 10px !important;
-  border-radius: 7px !important;
-  background: #9366FF !important;
-  color: #ffffff !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  white-space: nowrap !important;
-  transition: all 0.18s ease !important;
-}
-
-.stock-invest-app-tile:hover .stock-invest-app-cta span {
-  background: #7c3aed !important;
-  box-shadow: 0 2px 8px rgba(147, 102, 255, 0.35) !important;
-  transform: scale(1.03) !important;
+.stock-invest-app-tile:hover .stock-invest-app-arrow {
+  transform: translate(2px, -2px) !important;
+  color: #7c3aed !important;
 }
 
 .stock-bento-grid.three-col {
