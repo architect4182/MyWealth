@@ -6341,6 +6341,7 @@ select:focus {
   word-break: break-word !important;
   overflow-wrap: break-word !important;
   display: -webkit-box !important;
+  line-clamp: 3 !important;
   -webkit-line-clamp: 3 !important;
   -webkit-box-orient: vertical !important;
   overflow: hidden !important;
