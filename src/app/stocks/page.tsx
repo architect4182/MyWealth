@@ -15,6 +15,7 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
 import { TrendingSection } from "@/components/TrendingSection";
+import { Footer } from "@/components/Footer";
 
 export default function StocksPage() {
   const {
@@ -34,10 +35,6 @@ export default function StocksPage() {
     priceRefreshMessage,
     userGender,
   } = usePortfolio();
-
-  const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
-
-  const [showSidePanel, setShowSidePanel] = useState(true);
   const [stockSubTab, setStockSubTab] = useState<"all" | "indian" | "us">("all");
 
   const indianAssets = useMemo(
@@ -80,33 +77,13 @@ export default function StocksPage() {
     <main className="apple-portfolio-app">
       {/* 1. Capsule Header with Route Pill Switcher */}
       <Header
-        showSidePanel={showSidePanel}
-        setShowSidePanel={setShowSidePanel}
       />
 
       {/* 2. Floating Session Live Prices Notification */}
       <DynamicIsland />
 
       {/* 3. Main Stage Layout */}
-      <div
-        className={`apple-stage-layout ${
-          showSidePanel ? "with-sidebar" : "full-width"
-        }`}
-      >
-        {/* Left Side Inspiration Panel (Desktop only, naturally feathered & dissolved) */}
-        {showSidePanel && (
-          <aside className="apple-side-panel">
-            <img
-              src={sidePanelImg}
-              alt="MyWealth Portfolio Vision"
-              className="apple-panel-img"
-              loading="lazy"
-              decoding="async"
-              suppressHydrationWarning
-            />
-          </aside>
-        )}
-
+      <div className="apple-stage-layout full-width">
         <section className="apple-content-stage">
           {/* EQUITIES TAB HERO */}
           <div className="apple-bento-hero">
@@ -138,9 +115,8 @@ export default function StocksPage() {
 
               <div className="apple-hero-return-row">
                 <div
-                  className={`apple-hero-return-badge ${
-                    stocksPnl >= 0 ? "positive" : "negative"
-                  }`}
+                  className={`apple-hero-return-badge ${stocksPnl >= 0 ? "positive" : "negative"
+                    }`}
                 >
                   {stocksPnl >= 0 ? (
                     <TrendingUp size={15} />
@@ -294,13 +270,8 @@ export default function StocksPage() {
         </section>
       </div>
 
-      {/* 4. Bottom Footer Glass Pill */}
-      <footer className="apple-canvas-footer">
-        <div className="apple-footer-pill">
-          <span className="apple-footer-dot" />
-          <span>MyWealth • Real-time Portfolio & Market Intelligence</span>
-        </div>
-      </footer>
+      {/* Common Footer */}
+      <Footer />
 
       {/* Modals Container */}
       <PortfolioModals />

@@ -985,7 +985,7 @@ export function DbConfigModal() {
     <div className="modal-overlay" onClick={() => setDbModal(false)}>
       <div
         className="investment-modal"
-        style={{ width: "min(100%, 540px)", maxHeight: "90vh", overflowY: "auto" }}
+        style={{ width: "min(100%, 540px)", maxHeight: "90vh", overflowY: "auto", scrollbarWidth: "none" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-heading">
@@ -1029,24 +1029,24 @@ export function DbConfigModal() {
           >
             <div
               style={{
-                background: "rgba(0,0,0,0.03)",
-                border: "1px solid rgba(0,0,0,0.06)",
+                background: "rgba(28, 28, 38, 0.7)",
+                border: "1px solid rgba(147, 102, 255, 0.16)",
                 padding: "10px 14px",
                 borderRadius: "12px",
               }}
             >
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>Active User Session</div>
+              <div style={{ fontSize: "11px", color: "var(--foreground-muted)" }}>Active User Session</div>
               <div style={{ fontWeight: 600, fontSize: "14px", marginTop: "2px", textTransform: "uppercase" }}>{currentUserId}</div>
             </div>
             <div
               style={{
-                background: "rgba(0,0,0,0.03)",
-                border: "1px solid rgba(0,0,0,0.06)",
+                background: "rgba(28, 28, 38, 0.7)",
+                border: "1px solid rgba(147, 102, 255, 0.16)",
                 padding: "10px 14px",
                 borderRadius: "12px",
               }}
             >
-              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>Sync & Multi-Tenant Status</div>
+              <div style={{ fontSize: "11px", color: "var(--foreground-muted)" }}>Sync & Multi-Tenant Status</div>
               <div style={{ fontWeight: 600, fontSize: "14px", marginTop: "2px", color: "#16a34a" }}>
                 {syncStatus.toUpperCase()} ({assets.length} isolated positions)
               </div>

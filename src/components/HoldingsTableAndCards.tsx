@@ -319,22 +319,25 @@ export function HoldingsTableAndCards({
                 {/* Right Side: Valuation + CMP + Return Gain */}
                 <div className="apple-asset-card-right">
                   <div className="apple-card-valuation-group">
-                    <div className="apple-val-primary">
-                      {money(currentVal, item.currency)}
-                    </div>
-                    <div className="apple-cmp-sub">
-                      {item.category === "Mutual Funds" ? "NAV" : "CMP"}: {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
-                      {unitGain !== 0 && (
-                        <span className={`apple-unit-diff ${unitGain >= 0 ? "positive-text" : "negative-text"}`}>
-                          {" "}({unitGain >= 0 ? "+" : ""}{unitGainPct.toFixed(1)}%)
+                    <div className="apple-card-val-primary-col">
+                      <div className="apple-val-primary">
+                        {money(currentVal, item.currency)}
+                      </div>
+                      <div className="apple-cmp-sub">
+                        {item.category === "Mutual Funds" ? "NAV" : "CMP"}: {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
+                        {unitGain !== 0 && (
+                          <span className={`apple-unit-diff ${unitGain >= 0 ? "positive-text" : "negative-text"}`}>
+                            {" "}({unitGain >= 0 ? "+" : ""}{unitGainPct.toFixed(1)}%)
+                          </span>
+                        )}
+                      </div>
+                      {item.currency === "USD" && showUsdInRupees && (
+                        <span className="apple-val-usd-pill" style={{ margin: "1px 0" }}>
+                          ${currentVal.toFixed(2)} USD
                         </span>
                       )}
                     </div>
-                    {item.currency === "USD" && showUsdInRupees && (
-                      <span className="apple-val-usd-pill" style={{ margin: "1px 0" }}>
-                        ${currentVal.toFixed(2)} USD
-                      </span>
-                    )}
+
                     <div
                       className={`apple-return-pill ${
                         pnl >= 0 ? "positive" : "negative"

@@ -16,6 +16,7 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
 import { TrendingSection } from "@/components/TrendingSection";
+import { Footer } from "@/components/Footer";
 
 export default function MutualFundsPage() {
   const {
@@ -33,10 +34,6 @@ export default function MutualFundsPage() {
     totalMonthlySipINR,
     activeSipCount,
   } = usePortfolio();
-
-  const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
-
-  const [showSidePanel, setShowSidePanel] = useState(true);
   const [mfSubTab, setMfSubTab] = useState<"all" | "equity" | "focused" | "sip">("all");
 
   const totalUnits = useMemo(
@@ -74,13 +71,13 @@ export default function MutualFundsPage() {
     },
     ...(mfSipList.length > 0
       ? [
-          {
-            key: "sip",
-            label: "Active SIPs",
-            count: mfSipList.length,
-            icon: <Repeat size={13} />,
-          },
-        ]
+        {
+          key: "sip",
+          label: "Active SIPs",
+          count: mfSipList.length,
+          icon: <Repeat size={13} />,
+        },
+      ]
       : []),
     {
       key: "equity",
@@ -108,33 +105,13 @@ export default function MutualFundsPage() {
     <main className="apple-portfolio-app">
       {/* 1. Capsule Header with Route Pill Switcher */}
       <Header
-        showSidePanel={showSidePanel}
-        setShowSidePanel={setShowSidePanel}
       />
 
       {/* 2. Floating Session Live Prices Notification */}
       <DynamicIsland />
 
       {/* 3. Main Stage Layout */}
-      <div
-        className={`apple-stage-layout ${
-          showSidePanel ? "with-sidebar" : "full-width"
-        }`}
-      >
-        {/* Left Side Inspiration Panel (Desktop only, naturally feathered & dissolved) */}
-        {showSidePanel && (
-          <aside className="apple-side-panel">
-            <img
-              src={sidePanelImg}
-              alt="MyWealth Portfolio Vision"
-              className="apple-panel-img"
-              loading="lazy"
-              decoding="async"
-              suppressHydrationWarning
-            />
-          </aside>
-        )}
-
+      <div className="apple-stage-layout full-width">
         <section className="apple-content-stage">
           {/* MUTUAL FUNDS HERO */}
           <div className="apple-bento-hero">
@@ -164,9 +141,8 @@ export default function MutualFundsPage() {
 
               <div className="apple-hero-return-row">
                 <div
-                  className={`apple-hero-return-badge ${
-                    mfPnl >= 0 ? "positive" : "negative"
-                  }`}
+                  className={`apple-hero-return-badge ${mfPnl >= 0 ? "positive" : "negative"
+                    }`}
                 >
                   {mfPnl >= 0 ? (
                     <TrendingUp size={15} />
@@ -242,7 +218,7 @@ export default function MutualFundsPage() {
                     const mfVal = mf.quantity * mf.currentPrice;
                     const pct = mfCurrent > 0 ? (mfVal / mfCurrent) * 100 : 0;
                     if (pct <= 0) return null;
-                    const bgColors = ["#34c759", "#30b0c7", "#5856d6", "#ff9500", "#af52de"];
+                    const bgColors = ["#9366FF", "#b28eff", "#7844eb", "#c5aaff", "#6032d6"];
                     return (
                       <div
                         key={mf.id}
@@ -305,13 +281,8 @@ export default function MutualFundsPage() {
         </section>
       </div>
 
-      {/* 4. Bottom Footer Glass Pill */}
-      <footer className="apple-canvas-footer">
-        <div className="apple-footer-pill">
-          <span className="apple-footer-dot" />
-          <span>MyWealth • Real-time Portfolio & Market Intelligence</span>
-        </div>
-      </footer>
+      {/* Common Footer */}
+      <Footer />
 
       {/* Modals Container */}
       <PortfolioModals />

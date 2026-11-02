@@ -203,33 +203,36 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
             </div>
 
             <div className="apple-trending-card-right">
-              <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
-                <span className="apple-trending-price">
-                  {money(item.price, item.currency)}
-                </span>
-                {isConverted && (
-                  <span
-                    className="apple-val-usd-pill"
-                    style={{ margin: 0, fontSize: "9px", padding: "1px 5px", lineHeight: "1.2" }}
-                    title={`Original: $${item.price.toFixed(2)} USD (converted at live 1 USD = ₹${usdInrRate.toFixed(2)})`}
-                  >
-                    ${item.price.toFixed(2)}
+              <div className="apple-trending-price-group">
+                <div className="apple-trending-price-row">
+                  <span className="apple-trending-price">
+                    {money(item.price, item.currency)}
                   </span>
-                )}
+                  {isConverted && (
+                    <span
+                      className="apple-val-usd-pill"
+                      style={{ margin: 0, fontSize: "9px", padding: "1px 5px", lineHeight: "1.2" }}
+                      title={`Original: $${item.price.toFixed(2)} USD (converted at live 1 USD = ₹${usdInrRate.toFixed(2)})`}
+                    >
+                      ${item.price.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={`apple-return-pill ${
+                    isPos ? "positive" : "negative"
+                  }`}
+                  style={{ margin: 0, padding: "2px 7px", fontSize: "11px" }}
+                >
+                  {isPos ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                  <span>
+                    {isPos ? "+" : "-"}
+                    {money(absChange, item.currency)}{" "}
+                    ({isPos ? "+" : ""}{item.changePercent.toFixed(2)}%)
+                  </span>
+                </div>
               </div>
-              <div
-                className={`apple-return-pill ${
-                  isPos ? "positive" : "negative"
-                }`}
-                style={{ margin: 0, padding: "2px 7px", fontSize: "11px" }}
-              >
-                {isPos ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                <span>
-                  {isPos ? "+" : "-"}
-                  {money(absChange, item.currency)}{" "}
-                  ({isPos ? "+" : ""}{item.changePercent.toFixed(2)}%)
-                </span>
-              </div>
+
               <div className="apple-trending-chevron" title="Click to view live chart & details">
                 <ChevronRight size={13} />
               </div>

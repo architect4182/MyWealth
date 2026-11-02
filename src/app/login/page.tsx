@@ -58,7 +58,7 @@ function LoginForm() {
           localStorage.setItem("mywealth_user_gender", resolvedGender);
           localStorage.setItem("mywealth_current_user", resolvedUser);
           localStorage.setItem("mywealth_last_activity", String(Date.now()));
-        } catch {}
+        } catch { }
 
         // Instant direct load into authorized dashboard
         window.location.replace(redirectTo);
@@ -203,7 +203,6 @@ function LoginForm() {
                 className={`apple-auth-gender-card ${gender === "male" ? "active" : ""}`}
                 onClick={() => setGender("male")}
               >
-                <span className="apple-gender-emoji">👨</span>
                 <div className="apple-gender-text">
                   <strong>Male</strong>
                 </div>
@@ -214,7 +213,6 @@ function LoginForm() {
                 className={`apple-auth-gender-card ${gender === "female" ? "active" : ""}`}
                 onClick={() => setGender("female")}
               >
-                <span className="apple-gender-emoji">👩</span>
                 <div className="apple-gender-text">
                   <strong>Female</strong>
                 </div>
@@ -263,7 +261,7 @@ export default function LoginPage() {
       <div className="apple-auth-card-wrap">
         <Suspense fallback={
           <div className="apple-auth-card" style={{ minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Loader2 size={24} className="apple-auth-spin" style={{ color: "#0071e3" }} />
+            <Loader2 size={24} className="apple-auth-spin" style={{ color: "#9366FF" }} />
           </div>
         }>
           <LoginForm />

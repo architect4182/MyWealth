@@ -17,6 +17,7 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
 import { MarketTimingBadge } from "@/components/MarketBadge";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   const {
@@ -45,10 +46,6 @@ export default function Home() {
     totalMonthlySipINR,
     activeSipCount,
   } = usePortfolio();
-
-  const sidePanelImg = userGender === "female" ? "/side-panel-female.png" : "/side-panel-male.png";
-
-  const [showSidePanel, setShowSidePanel] = useState(true);
   const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf" | "sip">("all");
 
   const sipAssets = useMemo(() => assets.filter((a) => a.isSip), [assets]);
@@ -81,13 +78,13 @@ export default function Home() {
     },
     ...(sipAssets.length > 0
       ? [
-          {
-            key: "sip",
-            label: "Active SIPs",
-            count: sipAssets.length,
-            icon: <Repeat size={13} />,
-          },
-        ]
+        {
+          key: "sip",
+          label: "Active SIPs",
+          count: sipAssets.length,
+          icon: <Repeat size={13} />,
+        },
+      ]
       : []),
   ];
 
@@ -95,33 +92,13 @@ export default function Home() {
     <main className="apple-portfolio-app">
       {/* 1. Apple Floating Capsule Header with Route Nav */}
       <Header
-        showSidePanel={showSidePanel}
-        setShowSidePanel={setShowSidePanel}
       />
 
       {/* 2. Floating Session Live Prices Notification */}
       <DynamicIsland />
 
       {/* 3. Main Stage Layout */}
-      <div
-        className={`apple-stage-layout ${
-          showSidePanel ? "with-sidebar" : "full-width"
-        }`}
-      >
-        {/* Left Side Inspiration Panel (Desktop only, naturally feathered & dissolved) */}
-        {showSidePanel && (
-          <aside className="apple-side-panel">
-            <img
-              src={sidePanelImg}
-              alt="MyWealth Portfolio Vision"
-              className="apple-panel-img"
-              loading="lazy"
-              decoding="async"
-              suppressHydrationWarning
-            />
-          </aside>
-        )}
-
+      <div className="apple-stage-layout full-width">
         <section className="apple-content-stage">
           {/* OVERVIEW BENTO HERO STAGE */}
           <div className="apple-bento-hero">
@@ -135,8 +112,8 @@ export default function Home() {
                       indianMarket.isOpen
                         ? indianMarket
                         : usMarket.isOpen
-                        ? usMarket
-                        : indianMarket
+                          ? usMarket
+                          : indianMarket
                     }
                   />
                 </div>
@@ -165,9 +142,8 @@ export default function Home() {
 
               <div className="apple-hero-return-row">
                 <div
-                  className={`apple-hero-return-badge ${
-                    totalPnlINR >= 0 ? "positive" : "negative"
-                  }`}
+                  className={`apple-hero-return-badge ${totalPnlINR >= 0 ? "positive" : "negative"
+                    }`}
                 >
                   {totalPnlINR >= 0 ? (
                     <TrendingUp size={15} />
@@ -342,13 +318,8 @@ export default function Home() {
         </section>
       </div>
 
-      {/* 5. Bottom Footer Glass Pill */}
-      <footer className="apple-canvas-footer">
-        <div className="apple-footer-pill">
-          <span className="apple-footer-dot" />
-          <span>MyWealth • Real-time Portfolio & Market Intelligence</span>
-        </div>
-      </footer>
+      {/* Common Footer */}
+      <Footer />
 
       {/* Modals Container */}
       <PortfolioModals />

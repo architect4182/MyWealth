@@ -98,23 +98,36 @@ export function AssetDetailModal() {
   const fetchChart = useCallback(
     async (period: Period, silent = false) => {
       if (!viewingAsset) return;
-      if (!silent) setIsLoadingChart(true);
-      setChartError(null);
+      if (!silent) {
+        setIsLoadingChart(true);
+        setChartError(null);
+      }
 
       try {
         const queryParam = encodeURIComponent(viewingAsset.name);
         const catParam = encodeURIComponent(viewingAsset.category);
         let url = `/api/stock-chart?query=${queryParam}&category=${catParam}&range=${period}`;
 
-        const codeMatch = viewingAsset.id?.match(/^(?:MF-)?(\d{5,7})$/i);
+        // Check if viewingAsset has an AMFI scheme code (MF-120503 or digits in ID or in name)
+        const codeMatch =
+          viewingAsset.id?.match(/^(?:MF-)?(\d{5,7})$/i) ||
+          viewingAsset.name.match(/\b(\d{5,7})\b/);
         if (codeMatch) {
           url += `&code=${encodeURIComponent(codeMatch[1])}`;
-        } else if (
-          viewingAsset.id &&
-          !viewingAsset.id.startsWith("trending-") &&
-          !viewingAsset.id.includes(" ")
-        ) {
-          url += `&symbol=${encodeURIComponent(viewingAsset.id)}`;
+        } else if (viewingAsset.id?.startsWith("trending-")) {
+          const trendSym = viewingAsset.id.replace("trending-", "").trim();
+          if (trendSym) {
+            url += `&symbol=${encodeURIComponent(trendSym)}`;
+          }
+        } else {
+          // If viewingAsset has a clean ticker (e.g. AAPL, JPL, RELIANCE)
+          let sym = ticker || getStockTicker(viewingAsset.name);
+          if (sym && sym !== viewingAsset.name && /^[A-Z0-9.^=-]{1,15}$/.test(sym)) {
+            if (viewingAsset.category === "Indian Equities" && !sym.endsWith(".NS") && !sym.endsWith(".BO")) {
+              sym += ".NS";
+            }
+            url += `&symbol=${encodeURIComponent(sym)}`;
+          }
         }
 
         const res = await fetch(url, {
@@ -200,14 +213,34 @@ export function AssetDetailModal() {
     };
   }, [viewingAsset]);
 
-  if (!viewingAsset) return null;
+  // SVG Chart Geometry dimensions
+  const chartWidth = 560;
+  const chartHeight = 180;
 
   // Active price values (either hovered point or latest live quote)
-  const activeCurrentPrice = chartData?.currentPrice ?? viewingAsset.currentPrice;
+  const activeCurrentPrice = chartData?.currentPrice ?? viewingAsset?.currentPrice ?? 0;
+  const referencePrice = chartData?.previousClose || viewingAsset?.buyPrice || 0;
+
+  const points = useMemo(() => {
+    if (chartData?.points && chartData.points.length > 0) {
+      return chartData.points;
+    }
+    if (viewingAsset) {
+      const now = Math.floor(Date.now() / 1000);
+      const prev = referencePrice || viewingAsset.buyPrice || activeCurrentPrice;
+      return [
+        { timestamp: now - 3600, date: "Prev", price: Number(prev.toFixed(2)) },
+        { timestamp: now, date: "Live", price: Number(activeCurrentPrice.toFixed(2)) },
+      ];
+    }
+    return [];
+  }, [chartData, viewingAsset, referencePrice, activeCurrentPrice]);
+
+  if (!viewingAsset) return null;
+
   const displayPrice = hoveredPoint ? hoveredPoint.price : activeCurrentPrice;
 
   // Change computation
-  const referencePrice = chartData?.previousClose || viewingAsset.buyPrice;
   const periodStartPrice = chartData?.points?.[0]?.price || referencePrice;
   const baselineForChange = hoveredPoint ? periodStartPrice : referencePrice;
   const activeChange = displayPrice - baselineForChange;
@@ -237,16 +270,11 @@ export function AssetDetailModal() {
   const fiftyTwoSliderPct =
     fiftyTwoSpan > 0 ? Math.min(100, Math.max(0, ((activeCurrentPrice - fiftyTwoLow) / fiftyTwoSpan) * 100)) : 50;
 
-  // SVG Chart Geometry calculations
-  const chartWidth = 560;
-  const chartHeight = 180;
-  const points = chartData?.points || [];
-
   let pathD = "";
   let areaD = "";
   let coordinates: { x: number; y: number; point: ChartPoint }[] = [];
 
-  if (points.length > 1) {
+  if (points.length >= 2) {
     const prices = points.map((p) => p.price);
     const minP = Math.min(...prices);
     const maxP = Math.max(...prices);
@@ -265,6 +293,15 @@ export function AssetDetailModal() {
       return idx === 0 ? `M ${curr.x.toFixed(2)},${curr.y.toFixed(2)}` : `${acc} L ${curr.x.toFixed(2)},${curr.y.toFixed(2)}`;
     }, "");
 
+    areaD = `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z`;
+  } else if (points.length === 1) {
+    const p = points[0];
+    const y = chartHeight / 2;
+    coordinates = [
+      { x: 0, y, point: p },
+      { x: chartWidth, y, point: p },
+    ];
+    pathD = `M 0,${y.toFixed(2)} L ${chartWidth},${y.toFixed(2)}`;
     areaD = `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z`;
   }
 
@@ -287,8 +324,8 @@ export function AssetDetailModal() {
     setHoverPosition(null);
   };
 
-  const strokeColor = isPositive ? "#34c759" : "#ff3b30";
-  const gradientId = `chartGrad_${viewingAsset.id}_${isPositive ? "green" : "red"}`;
+  const strokeColor = "#9366FF";
+  const gradientId = `chartGrad_${viewingAsset.id}`;
 
   return (
     <div
@@ -301,24 +338,18 @@ export function AssetDetailModal() {
       <div
         className="investment-modal stock-detail-modal"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(100%, 680px)",
-          maxHeight: "92vh",
-          overflowY: "auto",
-          padding: "24px",
-        }}
       >
         {/* Top Header Bar: Logo, Identity, Market Status, Actions */}
         <div className="stock-detail-header">
           <div className="stock-detail-identity">
-            <div className="apple-avatar-squircle" style={{ width: "48px", height: "48px" }}>
+            <div className="apple-avatar-squircle" style={{ width: "48px", height: "48px", flexShrink: 0 }}>
               <StockLogoAvatar
                 name={viewingAsset.name}
                 ticker={ticker}
                 category={viewingAsset.category}
               />
             </div>
-            <div>
+            <div className="stock-detail-info">
               <div className="stock-detail-title-row">
                 <h2 id="asset-detail-title" className="stock-detail-name">
                   {viewingAsset.name}
@@ -383,395 +414,428 @@ export function AssetDetailModal() {
                 <span>+ Add to Portfolio</span>
               </button>
             )}
-            <button
-              type="button"
-              className="icon-button"
-              onClick={() => setViewingAsset(null)}
-              aria-label="Close modal"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Live Hero Price Section */}
-        <div className={`stock-hero-price-card ${priceFlash ? `flash-${priceFlash}` : ""}`}>
-          <div className="stock-hero-price-row">
-            <div className="stock-price-main">
-              <span className="stock-price-currency">
-                {viewingAsset.currency === "USD" ? "$" : "₹"}
-              </span>
-              <span className="stock-price-digits">
-                {viewingAsset.category === "Mutual Funds"
-                  ? displayPrice.toFixed(4)
-                  : displayPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <div className={`stock-change-badge ${isPositive ? "positive" : "negative"}`}>
-              {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              <span>
-                {isPositive ? "+" : ""}
-                {viewingAsset.currency === "USD" ? "$" : "₹"}
-                {Math.abs(activeChange).toFixed(viewingAsset.category === "Mutual Funds" ? 4 : 2)} (
-                {isPositive ? "+" : ""}
-                {activeChangePct.toFixed(2)}%)
-              </span>
-            </div>
           </div>
 
-          <div className="stock-hero-subtext">
-            {hoveredPoint ? (
-              <span className="stock-hover-timestamp">
-                Point: <strong>{hoveredPoint.date}</strong> · {viewingAsset.currency === "USD" ? "$" : "₹"}
-                {hoveredPoint.price.toFixed(2)}
-              </span>
-            ) : (
-              <span>
-                {viewingAsset.category === "Mutual Funds" ? "AMFI NAV" : "Current Market Price"} · Prev Close:{" "}
-                {viewingAsset.currency === "USD" ? "$" : "₹"}
-                {referencePrice.toFixed(2)}
-              </span>
-            )}
-          </div>
+          {/* Close button: always pinned in top right corner */}
+          <button
+            type="button"
+            className="icon-button stock-modal-close-btn"
+            onClick={() => setViewingAsset(null)}
+            aria-label="Close modal"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Segmented Period Tabs */}
-        <div className="stock-period-segmented-bar">
-          {PERIODS.map((period) => (
-            <button
-              key={period}
-              type="button"
-              className={`stock-period-tab ${selectedPeriod === period ? "active" : ""}`}
-              onClick={() => setSelectedPeriod(period)}
-            >
-              {period}
-            </button>
-          ))}
-        </div>
-
-        {/* Interactive SVG Chart Container */}
-        <div className="stock-chart-wrapper">
-          {isLoadingChart && !chartData && (
-            <div className="stock-chart-loading-overlay">
-              <RefreshCw size={24} className="spin-icon" />
-              <span>Fetching real-time market data...</span>
-            </div>
-          )}
-
-          {chartError && !chartData ? (
-            <div className="stock-chart-error-banner">
-              <p>{chartError}</p>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => fetchChart(selectedPeriod, false)}
-                style={{ marginTop: "8px", padding: "4px 12px", fontSize: "12px" }}
-              >
-                Retry
-              </button>
-            </div>
-          ) : (
-            <svg
-              ref={svgRef}
-              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-              className="stock-svg-chart"
-              onMouseMove={handleChartMouseMove}
-              onMouseLeave={handleChartMouseLeave}
-              onTouchMove={(e) => {
-                if (e.touches[0] && svgRef.current) {
-                  const rect = svgRef.current.getBoundingClientRect();
-                  const relX = Math.max(0, Math.min(rect.width, e.touches[0].clientX - rect.left));
-                  const ratio = relX / rect.width;
-                  const idx = Math.min(coordinates.length - 1, Math.max(0, Math.round(ratio * (coordinates.length - 1))));
-                  const match = coordinates[idx];
-                  if (match) {
-                    setHoveredPoint(match.point);
-                    setHoverPosition({ x: match.x, y: match.y });
-                  }
-                }
-              }}
-              onTouchEnd={handleChartMouseLeave}
-            >
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={strokeColor} stopOpacity="0.32" />
-                  <stop offset="85%" stopColor={strokeColor} stopOpacity="0.02" />
-                  <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
-                </linearGradient>
-              </defs>
-
-              {/* Chart Gradient Area */}
-              {areaD && <path d={areaD} fill={`url(#${gradientId})`} />}
-
-              {/* Chart Line Path */}
-              {pathD && (
-                <path
-                  d={pathD}
-                  fill="none"
-                  stroke={strokeColor}
-                  strokeWidth="2.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              )}
-
-              {/* Interactive Crosshair & Cursor Point */}
-              {hoverPosition && (
-                <g>
-                  {/* Vertical dashed crosshair */}
-                  <line
-                    x1={hoverPosition.x}
-                    y1={0}
-                    x2={hoverPosition.x}
-                    y2={chartHeight}
-                    stroke="var(--foreground-muted)"
-                    strokeWidth="1.2"
-                    strokeDasharray="3 3"
-                    opacity={0.6}
-                  />
-                  {/* Outer glow ring */}
-                  <circle
-                    cx={hoverPosition.x}
-                    cy={hoverPosition.y}
-                    r={7}
-                    fill={strokeColor}
-                    opacity={0.25}
-                  />
-                  {/* Center circle */}
-                  <circle
-                    cx={hoverPosition.x}
-                    cy={hoverPosition.y}
-                    r={4}
-                    fill={strokeColor}
-                    stroke="#ffffff"
-                    strokeWidth={2}
-                  />
-                </g>
-              )}
-            </svg>
-          )}
-
-          {/* Chart Period Date Range Footnote */}
-          {points.length > 0 && (
-            <div className="stock-chart-dates-footer">
-              <span>{points[0].date}</span>
-              <span>{points[points.length - 1].date}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Personal Portfolio Holdings Breakdown (Only if owned in portfolio) */}
-        {isOwnedInPortfolio && (
-          <div className="stock-bento-section">
-            <h3 className="stock-bento-title">
-              <Wallet size={15} /> Your Investment Position
-            </h3>
-
-            <div className="stock-bento-grid">
-              {/* 1. Units Owned */}
-              <div className="stock-bento-card">
-                <span className="bento-label">Holdings Quantity</span>
-                <strong className="bento-value">
-                  {totalQuantity.toFixed(totalQuantity % 1 === 0 ? 0 : 4)}{" "}
-                  <span className="bento-unit">{viewingAsset.category === "Mutual Funds" ? "units" : "shares"}</span>
-                </strong>
-                <span className="bento-subtext">Registered in portfolio</span>
-              </div>
-
-              {/* 2. Avg Buy Price */}
-              <div className="stock-bento-card">
-                <span className="bento-label">Average Buy Price</span>
-                <strong className="bento-value">
-                  {viewingAsset.currency === "USD" ? "$" : "₹"}
-                  {avgBuyPrice.toFixed(2)}
-                </strong>
-                <span className="bento-subtext">Cost basis per unit</span>
-              </div>
-
-              {/* 3. Invested Capital */}
-              <div className="stock-bento-card">
-                <span className="bento-label">Total Invested</span>
-                <strong className="bento-value">{money(personalInvested, viewingAsset.currency)}</strong>
-                <span className="bento-subtext">Principal committed</span>
-              </div>
-
-              {/* 4. Current Valuation */}
-              <div className="stock-bento-card highlight">
-                <span className="bento-label">Current Valuation</span>
-                <strong className="bento-value">{money(personalCurrentVal, viewingAsset.currency)}</strong>
-                {viewingAsset.currency === "USD" && showUsdInRupees && (
-                  <span className="bento-subtext">${personalCurrentVal.toFixed(2)} USD</span>
-                )}
-                {!(viewingAsset.currency === "USD" && showUsdInRupees) && (
-                  <span className="bento-subtext">Live value @ CMP</span>
-                )}
-              </div>
-
-              {/* 5. Total Return / P&L */}
-              <div className={`stock-bento-card span-2 ${isPersonalPositive ? "gain" : "loss"}`}>
-                <div className="bento-pnl-header">
-                  <span className="bento-label">Total Net Return (P&L)</span>
-                  <span className={`bento-pnl-tag ${isPersonalPositive ? "positive" : "negative"}`}>
-                    {isPersonalPositive ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-                    {isPersonalPositive ? "+" : ""}
-                    {personalPnlPct.toFixed(2)}%
+        {/* Main Content: Panoramic 2-Column Grid on Desktop */}
+        <div className="stock-modal-panoramic-body">
+          {/* Left Column: Price Header + Period Bar + Interactive Chart */}
+          <div className="stock-modal-chart-col">
+            {/* Live Hero Price Section */}
+            <div className={`stock-hero-price-card ${priceFlash ? `flash-${priceFlash}` : ""}`}>
+              <div className="stock-hero-price-row">
+                <div className="stock-price-main">
+                  <span className="stock-price-currency">
+                    {viewingAsset.currency === "USD" ? "$" : "₹"}
+                  </span>
+                  <span className="stock-price-digits">
+                    {viewingAsset.category === "Mutual Funds"
+                      ? displayPrice.toFixed(4)
+                      : displayPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
-                <strong className="bento-value pnl">
-                  {isPersonalPositive ? "+" : ""}
-                  {money(personalPnl, viewingAsset.currency)}
-                </strong>
-                <span className="bento-subtext">
-                  Unrealized gain / loss across all {totalQuantity.toFixed(totalQuantity % 1 === 0 ? 0 : 4)} units
-                </span>
+
+                <div className={`stock-change-badge ${isPositive ? "positive" : "negative"}`}>
+                  {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  <span>
+                    {isPositive ? "+" : ""}
+                    {viewingAsset.currency === "USD" ? "$" : "₹"}
+                    {Math.abs(activeChange).toFixed(viewingAsset.category === "Mutual Funds" ? 4 : 2)} (
+                    {isPositive ? "+" : ""}
+                    {activeChangePct.toFixed(2)}%)
+                  </span>
+                </div>
               </div>
 
-              {/* 6. SIP Schedule Card (Only if SIP enabled) */}
-              {viewingAsset.isSip && (
-                <div className="stock-bento-card span-2 sip-card">
-                  <div className="bento-pnl-header">
-                    <span className="bento-label">
-                      <Repeat size={13} /> Automated SIP Schedule
-                    </span>
-                    <span className={`apple-sip-pill ${viewingAsset.sipStatus === "paused" ? "paused" : "active"}`}>
-                      {viewingAsset.sipStatus === "paused" ? "Paused" : "Active Monthly SIP"}
-                    </span>
-                  </div>
-                  <div className="bento-sip-body">
-                    <div>
-                      <strong>{money(viewingAsset.sipAmount || 0, viewingAsset.currency)}</strong>
-                      <span> / month</span>
-                    </div>
-                    <div className="bento-sip-schedule-info">
-                      <span>Debit Day: <strong>{viewingAsset.sipDay || 5}th of month</strong></span>
-                      <span>Next Auto-Debit: <strong>{getNextSipDate(viewingAsset.sipDay || 5)}</strong></span>
-                      <span>Completed: <strong>{viewingAsset.sipInstallments || 1} installments</strong></span>
-                    </div>
-                  </div>
+              <div className="stock-hero-subtext">
+                {hoveredPoint ? (
+                  <span className="stock-hover-timestamp">
+                    Point: <strong>{hoveredPoint.date}</strong> · {viewingAsset.currency === "USD" ? "$" : "₹"}
+                    {hoveredPoint.price.toFixed(2)}
+                  </span>
+                ) : (
+                  <span>
+                    {viewingAsset.category === "Mutual Funds" ? "AMFI NAV" : "Current Market Price"} · Prev Close:{" "}
+                    {viewingAsset.currency === "USD" ? "$" : "₹"}
+                    {referencePrice.toFixed(2)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Segmented Period Tabs */}
+            <div className="stock-period-segmented-bar">
+              {PERIODS.map((period) => (
+                <button
+                  key={period}
+                  type="button"
+                  className={`stock-period-tab ${selectedPeriod === period ? "active" : ""}`}
+                  onClick={() => setSelectedPeriod(period)}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+
+            {/* Interactive SVG Chart Container */}
+            <div className="stock-chart-wrapper">
+              {isLoadingChart && !chartData && (
+                <div
+                  className="stock-chart-loading-overlay"
+                  style={{
+                    background: "#f8f9fc",
+                    color: "#5e5e6e",
+                    border: "1px solid rgba(0, 0, 0, 0.08)",
+                  }}
+                >
+                  <RefreshCw size={24} className="spin-icon" style={{ color: "#9366FF" }} />
+                  <span style={{ color: "#5e5e6e", fontWeight: 600 }}>Fetching real-time market data...</span>
+                </div>
+              )}
+
+              {chartError && !chartData ? (
+                <div className="stock-chart-error-banner">
+                  <p>{chartError}</p>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => fetchChart(selectedPeriod, false)}
+                    style={{ marginTop: "8px", padding: "4px 12px", fontSize: "12px" }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <svg
+                  ref={svgRef}
+                  viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                  className="stock-svg-chart"
+                  onMouseMove={handleChartMouseMove}
+                  onMouseLeave={handleChartMouseLeave}
+                  onTouchMove={(e) => {
+                    if (e.touches[0] && svgRef.current) {
+                      const rect = svgRef.current.getBoundingClientRect();
+                      const relX = Math.max(0, Math.min(rect.width, e.touches[0].clientX - rect.left));
+                      const ratio = relX / rect.width;
+                      const idx = Math.min(coordinates.length - 1, Math.max(0, Math.round(ratio * (coordinates.length - 1))));
+                      const match = coordinates[idx];
+                      if (match) {
+                        setHoveredPoint(match.point);
+                        setHoverPosition({ x: match.x, y: match.y });
+                      }
+                    }
+                  }}
+                  onTouchEnd={handleChartMouseLeave}
+                >
+                  <defs>
+                    <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={strokeColor} stopOpacity="0.32" />
+                      <stop offset="85%" stopColor={strokeColor} stopOpacity="0.02" />
+                      <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Chart Gradient Area */}
+                  {areaD && <path d={areaD} fill={`url(#${gradientId})`} />}
+
+                  {/* Chart Line Path */}
+                  {pathD && (
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke={strokeColor}
+                      strokeWidth="2.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+
+                  {/* Interactive Crosshair & Cursor Point */}
+                  {hoverPosition && (
+                    <g>
+                      <line
+                        x1={hoverPosition.x}
+                        y1={0}
+                        x2={hoverPosition.x}
+                        y2={chartHeight}
+                        stroke="var(--foreground-muted)"
+                        strokeWidth="1.2"
+                        strokeDasharray="3 3"
+                        opacity={0.6}
+                      />
+                      <circle
+                        cx={hoverPosition.x}
+                        cy={hoverPosition.y}
+                        r={7}
+                        fill={strokeColor}
+                        opacity={0.25}
+                      />
+                      <circle
+                        cx={hoverPosition.x}
+                        cy={hoverPosition.y}
+                        r={4}
+                        fill={strokeColor}
+                        stroke="#ffffff"
+                        strokeWidth={2}
+                      />
+                    </g>
+                  )}
+                </svg>
+              )}
+
+              {/* Chart Period Date Range Footnote */}
+              {points.length > 0 && (
+                <div className="stock-chart-dates-footer">
+                  <span>{points[0].date}</span>
+                  <span>{points[points.length - 1].date}</span>
                 </div>
               )}
             </div>
           </div>
-        )}
 
-        {/* Mutual Fund Intelligence Card (from AMFI API response) */}
-        {viewingAsset.category === "Mutual Funds" && (
-          <div className="stock-bento-section">
-            <h3 className="stock-bento-title">
-              <Landmark size={15} /> Mutual Fund Scheme Profile
-            </h3>
-            <div className="stock-bento-grid">
-              <div className="stock-bento-card span-2">
-                <span className="bento-label">Fund House / AMC</span>
-                <strong className="bento-value" style={{ fontSize: "14px" }}>
-                  {chartData?.fundHouse || "AMFI Recognized Fund House"}
-                </strong>
-                <span className="bento-subtext">Asset Management Company</span>
-              </div>
-              <div className="stock-bento-card">
-                <span className="bento-label">Scheme Category</span>
-                <strong className="bento-value" style={{ fontSize: "13px" }}>
-                  {chartData?.schemeCategory || "Growth / Equity"}
-                </strong>
-                <span className="bento-subtext">{chartData?.schemeType || "Open Ended"}</span>
-              </div>
-              <div className="stock-bento-card">
-                <span className="bento-label">AMFI Scheme Code</span>
-                <strong className="bento-value" style={{ fontSize: "13px" }}>
-                  {chartData?.schemeCode || "Registered"}
-                </strong>
-                <span className="bento-subtext">{chartData?.isin || "Growth Option"}</span>
-              </div>
-            </div>
-          </div>
-        )}
+          {/* Right Column: Holdings & Key Market Statistics */}
+          <div className="stock-modal-stats-col">
+            {/* If owned: Position Bento */}
+            {isOwnedInPortfolio ? (
+              <div className="stock-bento-section">
+                <h3 className="stock-bento-title">
+                  <Wallet size={15} /> Your Investment Position
+                </h3>
 
-        {/* Equity / Stock Market Exchange Profile */}
-        {viewingAsset.category !== "Mutual Funds" && chartData?.exchange && (
-          <div className="stock-bento-section">
-            <h3 className="stock-bento-title">
-              <Building2 size={15} /> Exchange & Security Profile
-            </h3>
-            <div className="stock-bento-grid">
-              <div className="stock-bento-card">
-                <span className="bento-label">Exchange</span>
-                <strong className="bento-value" style={{ fontSize: "14px" }}>
-                  {chartData.exchange}
-                </strong>
-                <span className="bento-subtext">Primary Listing</span>
-              </div>
-              <div className="stock-bento-card">
-                <span className="bento-label">Ticker Symbol</span>
-                <strong className="bento-value" style={{ fontSize: "14px" }}>
-                  {chartData.symbol || ticker}
-                </strong>
-                <span className="bento-subtext">{viewingAsset.category}</span>
-              </div>
-              <div className="stock-bento-card span-2">
-                <span className="bento-label">Trading Session</span>
-                <strong className="bento-value" style={{ fontSize: "14px" }}>
-                  {chartData.marketState || "Regular Hours"}
-                </strong>
-                <span className="bento-subtext">Session Status</span>
-              </div>
-            </div>
-          </div>
-        )}
+                <div className="stock-bento-grid">
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Holdings Quantity</span>
+                    <strong className="bento-value">
+                      {totalQuantity.toFixed(totalQuantity % 1 === 0 ? 0 : 4)}{" "}
+                      <span className="bento-unit">{viewingAsset.category === "Mutual Funds" ? "units" : "shares"}</span>
+                    </strong>
+                    <span className="bento-subtext">Registered in portfolio</span>
+                  </div>
 
-        {/* Market Key Statistics & Ranges */}
-        <div className="stock-market-stats-section">
-          <h3 className="stock-bento-title">
-            <Activity size={15} /> Key Market Statistics
-          </h3>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Average Buy Price</span>
+                    <strong className="bento-value">
+                      {viewingAsset.currency === "USD" ? "$" : "₹"}
+                      {avgBuyPrice.toFixed(2)}
+                    </strong>
+                    <span className="bento-subtext">Cost basis per unit</span>
+                  </div>
 
-          <div className="stock-range-bars-container">
-            {/* Day's High / Low Range Bar */}
-            <div className="stock-range-card">
-              <div className="range-title-row">
-                <span>Day Range</span>
-                <span className="range-current">
-                  CMP: {viewingAsset.currency === "USD" ? "$" : "₹"}
-                  {activeCurrentPrice.toFixed(2)}
-                </span>
-              </div>
-              <div className="range-track-wrapper">
-                <div className="range-track">
-                  <div
-                    className="range-pin"
-                    style={{ left: `${daySliderPct}%` }}
-                    title={`Current: ${activeCurrentPrice}`}
-                  />
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Total Invested</span>
+                    <strong className="bento-value">{money(personalInvested, viewingAsset.currency)}</strong>
+                    <span className="bento-subtext">Principal committed</span>
+                  </div>
+
+                  <div className="stock-bento-card highlight">
+                    <span className="bento-label">Current Valuation</span>
+                    <strong className="bento-value">{money(personalCurrentVal, viewingAsset.currency)}</strong>
+                    {viewingAsset.currency === "USD" && showUsdInRupees ? (
+                      <span className="bento-subtext">${personalCurrentVal.toFixed(2)} USD</span>
+                    ) : (
+                      <span className="bento-subtext">Live value @ CMP</span>
+                    )}
+                  </div>
+
+                  <div className={`stock-bento-card span-2 ${isPersonalPositive ? "gain" : "loss"}`}>
+                    <div className="bento-pnl-header">
+                      <span className="bento-label">Total Net Return (P&L)</span>
+                      <span className={`bento-pnl-tag ${isPersonalPositive ? "positive" : "negative"}`}>
+                        {isPersonalPositive ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+                        {isPersonalPositive ? "+" : ""}
+                        {personalPnlPct.toFixed(2)}%
+                      </span>
+                    </div>
+                    <strong className="bento-value pnl">
+                      {isPersonalPositive ? "+" : ""}
+                      {money(personalPnl, viewingAsset.currency)}
+                    </strong>
+                    <span className="bento-subtext">
+                      Unrealized gain / loss across all {totalQuantity.toFixed(totalQuantity % 1 === 0 ? 0 : 4)} units
+                    </span>
+                  </div>
+
+                  {viewingAsset.isSip && (
+                    <div className="stock-bento-card span-2 sip-card">
+                      <div className="bento-pnl-header">
+                        <span className="bento-label">
+                          <Repeat size={13} /> Automated SIP Schedule
+                        </span>
+                        <span className={`apple-sip-pill ${viewingAsset.sipStatus === "paused" ? "paused" : "active"}`}>
+                          {viewingAsset.sipStatus === "paused" ? "Paused" : "Active Monthly SIP"}
+                        </span>
+                      </div>
+                      <div className="bento-sip-body">
+                        <div>
+                          <strong>{money(viewingAsset.sipAmount || 0, viewingAsset.currency)}</strong>
+                          <span> / month</span>
+                        </div>
+                        <div className="bento-sip-schedule-info">
+                          <span>Debit Day: <strong>{viewingAsset.sipDay || 5}th of month</strong></span>
+                          <span>Next Auto-Debit: <strong>{getNextSipDate(viewingAsset.sipDay || 5)}</strong></span>
+                          <span>Completed: <strong>{viewingAsset.sipInstallments || 1} installments</strong></span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="range-labels-row">
-                <span>L: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayLow.toFixed(2)}</span>
-                <span>H: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayHigh.toFixed(2)}</span>
+            ) : (
+              <div className="stock-discover-card">
+                <div className="stock-discover-content">
+                  <span className="stock-discover-badge">
+                    <Sparkles size={13} /> Discovered in Trending
+                  </span>
+                  <h4 className="stock-discover-title">Not in your portfolio yet</h4>
+                  <p className="stock-discover-desc">
+                    Track this stock by recording your units and buy price to monitor live daily P&L.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="apple-add-btn"
+                  onClick={() => {
+                    const toAdd = {
+                      name: chartData?.name || viewingAsset.name,
+                      category: viewingAsset.category,
+                      price: activeCurrentPrice,
+                      currency: viewingAsset.currency,
+                    };
+                    setViewingAsset(null);
+                    openAddModalWithPrefill(toAdd);
+                  }}
+                  style={{ flexShrink: 0 }}
+                >
+                  <Plus size={14} />
+                  <span>Add Position</span>
+                </button>
+              </div>
+            )}
+
+            {/* Market Key Statistics & Ranges (Day Range and 52-Week Range) */}
+            <div className="stock-market-stats-section">
+              <h3 className="stock-bento-title">
+                <Activity size={15} /> Key Market Statistics
+              </h3>
+
+              <div className="stock-range-bars-container">
+                <div className="stock-range-card">
+                  <div className="range-title-row">
+                    <span>Day Range</span>
+                    <span className="range-current">
+                      CMP: {viewingAsset.currency === "USD" ? "$" : "₹"}
+                      {activeCurrentPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="range-track-wrapper">
+                    <div className="range-track">
+                      <div
+                        className="range-pin"
+                        style={{ left: `${daySliderPct}%` }}
+                        title={`Current: ${activeCurrentPrice}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="range-labels-row">
+                    <span>L: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayLow.toFixed(2)}</span>
+                    <span>H: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayHigh.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="stock-range-card">
+                  <div className="range-title-row">
+                    <span>52-Week Range</span>
+                    <span className="range-current">
+                      Pos: {fiftyTwoSliderPct.toFixed(0)}% of 52W High
+                    </span>
+                  </div>
+                  <div className="range-track-wrapper">
+                    <div className="range-track">
+                      <div
+                        className="range-pin"
+                        style={{ left: `${fiftyTwoSliderPct}%` }}
+                        title={`Current: ${activeCurrentPrice}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="range-labels-row">
+                    <span>52W L: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoLow.toFixed(2)}</span>
+                    <span>52W H: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoHigh.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 52-Week High / Low Range Bar */}
-            <div className="stock-range-card">
-              <div className="range-title-row">
-                <span>52-Week Range</span>
-                <span className="range-current">
-                  Pos: {fiftyTwoSliderPct.toFixed(0)}% of 52W High
-                </span>
-              </div>
-              <div className="range-track-wrapper">
-                <div className="range-track">
-                  <div
-                    className="range-pin"
-                    style={{ left: `${fiftyTwoSliderPct}%` }}
-                    title={`Current: ${activeCurrentPrice}`}
-                  />
+            {/* Scheme / Exchange Profile */}
+            {viewingAsset.category === "Mutual Funds" ? (
+              <div className="stock-bento-section">
+                <h3 className="stock-bento-title">
+                  <Landmark size={15} /> Mutual Fund Scheme Profile
+                </h3>
+                <div className="stock-bento-grid">
+                  <div className="stock-bento-card span-2">
+                    <span className="bento-label">Fund House / AMC</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData?.fundHouse || "AMFI Recognized Fund House"}
+                    </strong>
+                    <span className="bento-subtext">Asset Management Company</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Scheme Category</span>
+                    <strong className="bento-value" style={{ fontSize: "13px" }}>
+                      {chartData?.schemeCategory || "Growth / Equity"}
+                    </strong>
+                    <span className="bento-subtext">{chartData?.schemeType || "Open Ended"}</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">AMFI Scheme Code</span>
+                    <strong className="bento-value" style={{ fontSize: "13px" }}>
+                      {chartData?.schemeCode || "Registered"}
+                    </strong>
+                    <span className="bento-subtext">{chartData?.isin || "Growth Option"}</span>
+                  </div>
                 </div>
               </div>
-              <div className="range-labels-row">
-                <span>52W L: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoLow.toFixed(2)}</span>
-                <span>52W H: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoHigh.toFixed(2)}</span>
+            ) : chartData?.exchange ? (
+              <div className="stock-bento-section">
+                <h3 className="stock-bento-title">
+                  <Building2 size={15} /> Exchange & Security Profile
+                </h3>
+                <div className="stock-bento-grid">
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Exchange</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData.exchange}
+                    </strong>
+                    <span className="bento-subtext">Primary Listing</span>
+                  </div>
+                  <div className="stock-bento-card">
+                    <span className="bento-label">Ticker Symbol</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData.symbol || ticker}
+                    </strong>
+                    <span className="bento-subtext">{viewingAsset.category}</span>
+                  </div>
+                  <div className="stock-bento-card span-2">
+                    <span className="bento-label">Trading Session</span>
+                    <strong className="bento-value" style={{ fontSize: "14px" }}>
+                      {chartData.marketState || "Regular Hours"}
+                    </strong>
+                    <span className="bento-subtext">Session Status</span>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
       </div>

@@ -12,35 +12,69 @@ interface ChartPoint {
   price: number;
 }
 
-function resolveSymbol(query: string, category: string): string {
+function isInvalidSymbolParam(sym?: string | null): boolean {
+  if (!sym) return true;
+  const s = sym.trim();
+  if (s.startsWith("temp-")) return true;
+  // UUID check: 8-4-4-4-12 hex characters or contains multiple hyphens like UUID
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  if (/^[0-9a-f-]{24,}$/i.test(s)) return true;
+  return false;
+}
+
+function resolveKnownSymbol(query: string, category: string): string | null {
   const lower = query.toLowerCase().trim();
+
   if (category === "US Stocks") {
-    if (lower.includes("apple")) return "AAPL";
-    if (lower.includes("google") || lower.includes("alphabet")) return "GOOGL";
-    if (lower.includes("microsoft")) return "MSFT";
-    if (lower.includes("amazon")) return "AMZN";
-    if (lower.includes("nvidia")) return "NVDA";
-    if (lower.includes("tesla")) return "TSLA";
-    return query.toUpperCase();
+    if (lower.includes("apple") || lower === "aapl") return "AAPL";
+    if (lower.includes("google") || lower.includes("alphabet") || lower === "googl" || lower === "goog") return "GOOGL";
+    if (lower.includes("microsoft") || lower === "msft") return "MSFT";
+    if (lower.includes("amazon") || lower === "amzn") return "AMZN";
+    if (lower.includes("nvidia") || lower === "nvda") return "NVDA";
+    if (lower.includes("tesla") || lower === "tsla") return "TSLA";
+    if (lower.includes("meta") || lower.includes("facebook")) return "META";
+    if (lower.includes("amd") || lower.includes("advanced micro")) return "AMD";
+    if (lower.includes("netflix") || lower === "nflx") return "NFLX";
+    if (lower.includes("coinbase") || lower === "coin") return "COIN";
+    if (lower.includes("intel") || lower === "intc") return "INTC";
+    if (lower.includes("palantir") || lower === "pltr") return "PLTR";
+    if (lower.includes("broadcom") || lower === "avgo") return "AVGO";
+    if (/^[A-Z]{1,6}$/.test(query.trim())) return query.trim();
+    return null;
   }
 
   if (category === "Indian Equities" || category === "Gold & Fixed Income") {
-    if (lower.includes("jio platforms") || lower === "jpl") return "JPL.NS";
-    if (lower.includes("jio financial") || lower === "jiofin") return "JIOFIN.NS";
+    if (lower.includes("jio platforms") || lower === "jpl" || lower === "jpl.ns") return "JPL.NS";
+    if (lower.includes("jio financial") || lower === "jiofin" || lower === "jiofin.ns") return "JIOFIN.NS";
     if (lower.includes("reliance") && !lower.includes("jio")) return "RELIANCE.NS";
-    if (lower.includes("tata motors")) return "TATAMOTORS.NS";
+    if (lower.includes("tata motors")) return "TMPV.NS";
     if (lower.includes("tcs") || lower.includes("tata consultancy")) return "TCS.NS";
     if (lower.includes("hdfc bank") || lower === "hdfc") return "HDFCBANK.NS";
+    if (lower.includes("icici bank") || lower === "icici") return "ICICIBANK.NS";
     if (lower.includes("sbi") || lower.includes("state bank")) return "SBIN.NS";
-    if (lower.includes("infosys")) return "INFY.NS";
+    if (lower.includes("infosys") || lower === "infy") return "INFY.NS";
+    if (lower.includes("itc")) return "ITC.NS";
+    if (lower.includes("larsen") || lower === "lt") return "LT.NS";
+    if (lower.includes("airtel") || lower.includes("bharti")) return "BHARTIARTL.NS";
+    if (lower.includes("maruti")) return "MARUTI.NS";
+    if (lower.includes("sun pharma")) return "SUNPHARMA.NS";
+    if (lower.includes("wipro")) return "WIPRO.NS";
+    if (lower.includes("titan")) return "TITAN.NS";
+    if (lower.includes("bajaj finance")) return "BAJFINANCE.NS";
+    if (lower.includes("hindustan unilever") || lower === "hul") return "HINDUNILVR.NS";
+    if (lower.includes("axis bank")) return "AXISBANK.NS";
+    if (lower.includes("kotak")) return "KOTAKBANK.NS";
+    if (lower.includes("adani ent")) return "ADANIENT.NS";
+    if (lower.includes("adani port")) return "ADANIPORTS.NS";
+    if (lower.includes("zomato")) return "ZOMATO.NS";
+    if (lower.includes("swiggy")) return "SWIGGY.NS";
     if (lower.includes("gold") || lower.includes("goldbees")) return "GOLDBEES.NS";
     if (lower.includes("nifty") || lower.includes("niftybees")) return "NIFTYBEES.NS";
+    if (lower.includes("silver") || lower.includes("silverbees")) return "SILVERBEES.NS";
 
-    let sym = query.toUpperCase();
-    if (!sym.endsWith(".NS") && !sym.endsWith(".BO")) {
-      sym += ".NS";
-    }
-    return sym;
+    if (/^[A-Z0-9.-]{1,12}\.(?:NS|BO)$/i.test(query.trim())) return query.trim().toUpperCase();
+    if (/^[A-Z0-9]{1,10}$/i.test(query.trim())) return `${query.trim().toUpperCase()}.NS`;
+    return null;
   }
 
   if (category === "Crypto") {
@@ -52,19 +86,55 @@ function resolveSymbol(query: string, category: string): string {
     return sym;
   }
 
-  return query;
+  return null;
+}
+
+async function searchYahooSymbol(query: string, category: string): Promise<string | null> {
+  try {
+    const clean = query
+      .replace(/\b(limited|ltd|corp|corporation|inc|incorporated|pvt|private|company|co|group|holdings)\b/gi, "")
+      .replace(/[^a-zA-Z0-9 ]/g, " ")
+      .trim();
+
+    const searchUrl = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(clean || query)}&quotesCount=8`;
+    const res = await fetch(searchUrl, { headers, cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const quotes = data?.quotes || [];
+
+    for (const q of quotes) {
+      const sym = q.symbol;
+      if (!sym) continue;
+      if (category === "Indian Equities" || category === "Gold & Fixed Income") {
+        if (sym.endsWith(".NS") || sym.endsWith(".BO")) return sym;
+      } else if (category === "US Stocks") {
+        if (!sym.includes(".") && (q.quoteType === "EQUITY" || q.quoteType === "ETF")) return sym;
+      } else if (category === "Crypto") {
+        if (sym.endsWith("-USD")) return sym;
+      } else {
+        return sym;
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("query")?.trim() || searchParams.get("symbol")?.trim();
-  const codeParam = searchParams.get("code")?.trim();
-  const symbolParam = searchParams.get("symbol")?.trim();
+  let codeParam = searchParams.get("code")?.trim() || "";
+  let symbolParam = searchParams.get("symbol")?.trim() || "";
   const category = searchParams.get("category") || "Indian Equities";
   const rawRange = (searchParams.get("range") || "1M").toUpperCase();
 
+  // Clean out invalid temp/uuid symbols
+  if (isInvalidSymbolParam(symbolParam)) symbolParam = "";
+  if (isInvalidSymbolParam(codeParam)) codeParam = "";
+
   if (!query && !codeParam && !symbolParam) {
-    return NextResponse.json({ success: false, error: "Missing query, code, or symbol parameter" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Missing query or symbol parameter" }, { status: 400 });
   }
 
   // 1. Dedicated Mutual Funds Handling via AMFI (mfapi.in)
@@ -101,7 +171,6 @@ export async function GET(req: NextRequest) {
           const rawData: Array<{ date: string; nav: string }> = navJson?.data || [];
           const schemeName = navJson?.meta?.scheme_name || query;
 
-          // Days mapping based on range
           let daysLimit = 30;
           if (rawRange === "1D") daysLimit = 2;
           else if (rawRange === "1W") daysLimit = 7;
@@ -110,14 +179,12 @@ export async function GET(req: NextRequest) {
           else if (rawRange === "1Y") daysLimit = 365;
           else if (rawRange === "ALL" || rawRange === "5Y") daysLimit = 1825;
 
-          // mfapi returns reverse chronological (latest first), so slice and reverse
           const sliced = rawData.slice(0, Math.min(daysLimit, rawData.length)).reverse();
           const points: ChartPoint[] = [];
 
           for (const item of sliced) {
             const price = Number(item.nav);
             if (!isNaN(price) && price > 0) {
-              // Date format in mfapi: DD-MM-YYYY
               const parts = item.date.split("-");
               let ts = Date.now();
               if (parts.length === 3) {
@@ -129,6 +196,14 @@ export async function GET(req: NextRequest) {
                 price: Number(price.toFixed(4)),
               });
             }
+          }
+
+          if (points.length === 1) {
+            points.push({
+              timestamp: points[0].timestamp + 86400,
+              date: points[0].date,
+              price: points[0].price,
+            });
           }
 
           if (points.length > 0) {
@@ -169,11 +244,43 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 2. Standard Equity / Stock / Crypto Chart via Yahoo Finance
-  const targetQuery = query || symbolParam || codeParam || "";
-  const symbol = symbolParam || resolveSymbol(targetQuery, category);
+  // 2. Intelligent Stock Symbol Resolution
+  // Prioritize known Indian / US ticker mappings
+  let resolvedSymbol = "";
 
-  // Map requested period to Yahoo Finance range & interval parameters
+  if (query) {
+    resolvedSymbol = resolveKnownSymbol(query, category) || "";
+  }
+  if (!resolvedSymbol && symbolParam) {
+    resolvedSymbol = resolveKnownSymbol(symbolParam, category) || "";
+  }
+
+  if (!resolvedSymbol && symbolParam) {
+    let cleanSym = symbolParam.toUpperCase().trim();
+    if ((category === "Indian Equities" || category === "Gold & Fixed Income") && !cleanSym.endsWith(".NS") && !cleanSym.endsWith(".BO")) {
+      cleanSym += ".NS";
+    }
+    resolvedSymbol = cleanSym;
+  }
+
+  if (!resolvedSymbol && query) {
+    resolvedSymbol = (await searchYahooSymbol(query, category)) || "";
+  }
+
+  if (!resolvedSymbol) {
+    const fallbackTarget = (query || symbolParam || "").toUpperCase().trim();
+    resolvedSymbol =
+      (category === "Indian Equities" || category === "Gold & Fixed Income") && !fallbackTarget.endsWith(".NS") && !fallbackTarget.endsWith(".BO")
+        ? `${fallbackTarget}.NS`
+        : fallbackTarget;
+  }
+
+  // Ensure Indian Equities have proper .NS extension if no dot exists
+  if ((category === "Indian Equities" || category === "Gold & Fixed Income") && !resolvedSymbol.includes(".")) {
+    resolvedSymbol += ".NS";
+  }
+
+  // Period to parameters mapping with resilient intervals
   let rangeParam = "1mo";
   let intervalParam = "1d";
 
@@ -196,12 +303,12 @@ export async function GET(req: NextRequest) {
       break;
     case "1Y":
       rangeParam = "1y";
-      intervalParam = "1wk";
+      intervalParam = "1d";
       break;
     case "ALL":
     case "5Y":
       rangeParam = "5y";
-      intervalParam = "1mo";
+      intervalParam = "1d";
       break;
     default:
       rangeParam = "1mo";
@@ -209,17 +316,45 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
-      symbol
+    let url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+      resolvedSymbol
     )}?range=${rangeParam}&interval=${intervalParam}`;
 
-    const res = await fetch(url, { headers, cache: "no-store" });
+    let res = await fetch(url, { headers, cache: "no-store" });
+
+    // Fallback: If not found or empty, try searching Yahoo Finance
+    if (!res.ok && query) {
+      const searchedSym = await searchYahooSymbol(query, category);
+      if (searchedSym && searchedSym !== resolvedSymbol) {
+        resolvedSymbol = searchedSym;
+        url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+          resolvedSymbol
+        )}?range=${rangeParam}&interval=${intervalParam}`;
+        res = await fetch(url, { headers, cache: "no-store" });
+      }
+    }
+
     if (!res.ok) {
       return NextResponse.json({ success: false, error: `Chart data not found (${res.status})` }, { status: 404 });
     }
 
-    const json = await res.json();
-    const result = json?.chart?.result?.[0];
+    let json = await res.json();
+    let result = json?.chart?.result?.[0];
+
+    // If result returned 0 timestamps, try fallback interval/range
+    if (!result?.timestamp || result.timestamp.length === 0) {
+      const fallbackUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+        resolvedSymbol
+      )}?range=5d&interval=15m`;
+      const fallbackRes = await fetch(fallbackUrl, { headers, cache: "no-store" });
+      if (fallbackRes.ok) {
+        const fallbackJson = await fallbackRes.json();
+        if (fallbackJson?.chart?.result?.[0]?.timestamp?.length) {
+          result = fallbackJson.chart.result[0];
+        }
+      }
+    }
+
     if (!result) {
       return NextResponse.json({ success: false, error: "Empty chart data" }, { status: 404 });
     }
@@ -250,17 +385,32 @@ export async function GET(req: NextRequest) {
 
     // Determine current and reference prices
     const latestMarketPrice = Number(meta.regularMarketPrice);
+    const baselinePrice =
+      Number(meta.chartPreviousClose) ||
+      Number(meta.previousClose) ||
+      (points.length > 0 ? points[0].price : latestMarketPrice || 0);
+
     const currentPrice =
       !isNaN(latestMarketPrice) && latestMarketPrice > 0
         ? Number(latestMarketPrice.toFixed(2))
         : points.length > 0
         ? points[points.length - 1].price
-        : 0;
+        : baselinePrice;
 
-    const baselinePrice =
-      Number(meta.chartPreviousClose) ||
-      Number(meta.previousClose) ||
-      (points.length > 0 ? points[0].price : currentPrice);
+    // Guaranteed point generation: If points is 0 or 1, generate clean baseline points so SVG chart draws properly
+    if (points.length === 0 && currentPrice > 0) {
+      const now = Math.floor(Date.now() / 1000);
+      points.push(
+        { timestamp: now - 3600, date: "Prev Close", price: Number(baselinePrice.toFixed(2)) },
+        { timestamp: now, date: "Live", price: Number(currentPrice.toFixed(2)) }
+      );
+    } else if (points.length === 1) {
+      points.push({
+        timestamp: points[0].timestamp + 60,
+        date: points[0].date,
+        price: points[0].price,
+      });
+    }
 
     const change = Number((currentPrice - baselinePrice).toFixed(2));
     const changePercent = baselinePrice > 0 ? Number(((change / baselinePrice) * 100).toFixed(2)) : 0;
@@ -273,7 +423,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      symbol: meta.symbol || symbol.replace(".NS", ""),
+      symbol: meta.symbol || resolvedSymbol.replace(".NS", "").replace(".BO", ""),
       name: meta.shortName || meta.longName || query,
       currency: meta.currency === "USD" ? "USD" : "INR",
       currentPrice,
@@ -294,4 +444,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, error: err.message || "Failed to fetch chart data" }, { status: 500 });
   }
 }
-

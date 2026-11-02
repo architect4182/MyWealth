@@ -275,6 +275,18 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   };
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.dataset.gender = userGender;
+    if (userGender === "female") {
+      document.body.classList.add("gender-female");
+      document.body.classList.remove("gender-male");
+    } else {
+      document.body.classList.add("gender-male");
+      document.body.classList.remove("gender-female");
+    }
+  }, [userGender]);
+
   // Body Scroll Lock: Prevent background page from scrolling while any modal is active
   const isAnyModalOpen = Boolean(
     modal || editingAsset || deletingAsset || dbModal || marketModal || viewingAsset

@@ -109,13 +109,11 @@ export function getStockTicker(name: string): string {
 const loadedLogosCache = new Set<string>();
 
 const AVATAR_PALETTES = [
-  { bg: "linear-gradient(135deg, rgba(0, 113, 227, 0.14) 0%, rgba(0, 113, 227, 0.05) 100%)", color: "#0071e3", border: "rgba(0, 113, 227, 0.22)" },
-  { bg: "linear-gradient(135deg, rgba(88, 86, 214, 0.14) 0%, rgba(88, 86, 214, 0.05) 100%)", color: "#5856d6", border: "rgba(88, 86, 214, 0.22)" },
-  { bg: "linear-gradient(135deg, rgba(175, 82, 222, 0.14) 0%, rgba(175, 82, 222, 0.05) 100%)", color: "#af52de", border: "rgba(175, 82, 222, 0.22)" },
-  { bg: "linear-gradient(135deg, rgba(52, 199, 89, 0.14) 0%, rgba(52, 199, 89, 0.05) 100%)", color: "#16a34a", border: "rgba(52, 199, 89, 0.22)" },
-  { bg: "linear-gradient(135deg, rgba(255, 149, 0, 0.14) 0%, rgba(255, 149, 0, 0.05) 100%)", color: "#d97706", border: "rgba(255, 149, 0, 0.22)" },
-  { bg: "linear-gradient(135deg, rgba(255, 45, 85, 0.14) 0%, rgba(255, 45, 85, 0.05) 100%)", color: "#e11d48", border: "rgba(255, 45, 85, 0.22)" },
-  { bg: "linear-gradient(135deg, rgba(0, 199, 190, 0.14) 0%, rgba(0, 199, 190, 0.05) 100%)", color: "#0d9488", border: "rgba(0, 199, 190, 0.22)" },
+  { bg: "#ede9fe", color: "#6d28d9", border: "transparent" },
+  { bg: "#f3e8ff", color: "#7e22ce", border: "transparent" },
+  { bg: "#e0e7ff", color: "#4338ca", border: "transparent" },
+  { bg: "#f5f3ff", color: "#5b21b6", border: "transparent" },
+  { bg: "#fae8ff", color: "#a21caf", border: "transparent" },
 ];
 
 export function getCompanyMonogram(name: string, ticker: string = ""): string {
@@ -220,7 +218,7 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
         position: "relative",
         width: "100%",
         height: "100%",
-        borderRadius: "8px",
+        borderRadius: "inherit",
         overflow: "hidden",
       }}
     >
@@ -230,17 +228,16 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
         style={{
           position: "absolute",
           inset: 0,
-          borderRadius: "8px",
+          borderRadius: "inherit",
           background: palette.bg,
           color: palette.color,
-          border: `1px solid ${palette.border}`,
+          border: "none",
           display: "grid",
           placeItems: "center",
           fontWeight: 700,
           fontSize: monogram.length > 2 ? "10px" : "11.5px",
           letterSpacing: "-0.01em",
           userSelect: "none",
-          boxShadow: "inset 0 1px 0.5px rgba(255, 255, 255, 0.7)",
         }}
       >
         {monogram}
@@ -266,9 +263,9 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
             width: "100%",
             height: "100%",
             objectFit: "contain",
-            borderRadius: "8px",
+            borderRadius: "inherit",
             background: "#ffffff",
-            padding: "2px",
+            padding: "1px",
             opacity: isLoaded ? 1 : 0,
             transition: "opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
             display: "block",
