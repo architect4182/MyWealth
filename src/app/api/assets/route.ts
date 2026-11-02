@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
   const buyPrice = Number(body.buyPrice) || 0;
   const currentPrice = Number(body.currentPrice !== undefined ? body.currentPrice : body.buyPrice) || 0;
   const currency = (body.currency === "USD" ? "USD" : "INR") as "INR" | "USD";
+  const brokerApp = body.brokerApp ? String(body.brokerApp).trim() : (body.broker_app ? String(body.broker_app).trim() : null);
 
   const sipFields = isSip
     ? {
@@ -112,39 +113,41 @@ export async function POST(req: NextRequest) {
       canonicalUser = existingCheck.data.username;
     }
 
-    // 1. Try full insert with username and SIP fields
+    const basePayload: Record<string, any> = {
+      name: String(body.name).trim(),
+      category: body.category,
+      quantity,
+      buy_price: buyPrice,
+      current_price: currentPrice,
+      currency,
+      username: canonicalUser,
+    };
+    if (brokerApp) {
+      basePayload.broker_app = brokerApp;
+    }
+
+    // 1. Try full insert with username, broker_app, and SIP fields
     let insertRes = await supabase
       .from("assets")
-      .insert([
-        {
-          name: String(body.name).trim(),
-          category: body.category,
-          quantity,
-          buy_price: buyPrice,
-          current_price: currentPrice,
-          currency,
-          username: canonicalUser,
-          ...sipFields,
-        },
-      ])
+      .insert([{ ...basePayload, ...sipFields }])
       .select();
 
-    // 2. Fallback if SIP columns do not exist yet (code 42703)
-    if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("sip"))) {
+    // 2. Fallback if broker_app or SIP columns do not exist yet (code 42703)
+    if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
+      const payloadWithoutBroker = { ...basePayload };
+      delete payloadWithoutBroker.broker_app;
+
       insertRes = await supabase
         .from("assets")
-        .insert([
-          {
-            name: String(body.name).trim(),
-            category: body.category,
-            quantity,
-            buy_price: buyPrice,
-            current_price: currentPrice,
-            currency,
-            username: canonicalUser,
-          },
-        ])
+        .insert([{ ...payloadWithoutBroker, ...sipFields }])
         .select();
+
+      if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("sip"))) {
+        insertRes = await supabase
+          .from("assets")
+          .insert([payloadWithoutBroker])
+          .select();
+      }
     }
 
     // 3. Fallback if username column is named user_id (code 42703)
@@ -206,6 +209,9 @@ export async function PUT(req: NextRequest) {
     updates.current_price = Number(body.currentPrice !== undefined ? body.currentPrice : body.current_price);
   }
   if (body.currency !== undefined) updates.currency = body.currency;
+  if (body.brokerApp !== undefined || body.broker_app !== undefined) {
+    updates.broker_app = body.brokerApp !== undefined ? body.brokerApp : body.broker_app;
+  }
   if (body.isSip !== undefined) updates.is_sip = Boolean(body.isSip);
   if (body.sipAmount !== undefined) updates.sip_amount = body.sipAmount ? Number(body.sipAmount) : null;
   if (body.sipDay !== undefined) updates.sip_day = body.sipDay ? Number(body.sipDay) : null;
@@ -219,7 +225,18 @@ export async function PUT(req: NextRequest) {
     if (authUser) {
       query = query.ilike("username", authUser);
     }
-    const { data, error } = await query.select();
+    let { data, error } = await query.select();
+
+    if (error && (error.code === "42703" || error.message?.includes("broker_app"))) {
+      delete updates.broker_app;
+      let retryQuery = supabase.from("assets").update(updates).eq("id", id);
+      if (authUser) {
+        retryQuery = retryQuery.ilike("username", authUser);
+      }
+      const retryRes = await retryQuery.select();
+      data = retryRes.data;
+      error = retryRes.error;
+    }
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });

@@ -20,9 +20,11 @@ import {
   Building2,
   Tag,
   FileText,
+  ExternalLink,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { StockLogoAvatar, getStockTicker } from "@/components/Logos";
+import { StockLogoAvatar, getStockTicker, BrokerLogoAvatar } from "@/components/Logos";
+import { getBrokersForCategory } from "@/utils/brokers";
 import { MarketTimingBadge, getAssetMarketStatus } from "@/components/MarketBadge";
 import { getNextSipDate } from "@/utils/sip";
 
@@ -92,6 +94,10 @@ export function AssetDetailModal() {
 
   const ticker = useMemo(() => {
     return viewingAsset ? getStockTicker(viewingAsset.name) : "";
+  }, [viewingAsset]);
+
+  const categoryBrokers = useMemo(() => {
+    return viewingAsset ? getBrokersForCategory(viewingAsset.category) : [];
   }, [viewingAsset]);
 
   // Fetch chart data helper
@@ -387,24 +393,42 @@ export function AssetDetailModal() {
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                className="stock-header-btn add-pos"
-                onClick={() => {
-                  const toAdd = {
-                    name: chartData?.name || viewingAsset.name,
-                    category: viewingAsset.category,
-                    price: activeCurrentPrice,
-                    currency: viewingAsset.currency,
-                  };
-                  setViewingAsset(null);
-                  openAddModalWithPrefill(toAdd);
-                }}
-                title="Add to your portfolio"
-              >
-                <Plus size={13} />
-                <span>Add to Portfolio</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  className="stock-header-btn invest-now-btn"
+                  onClick={() => {
+                    const sec = document.getElementById("stock-invest-platforms-section");
+                    if (sec) {
+                      sec.scrollIntoView({ behavior: "smooth", block: "start" });
+                    } else if (categoryBrokers[0]) {
+                      window.open(categoryBrokers[0].getUrl(viewingAsset.name, ticker, viewingAsset.category), "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  title="Want to invest now"
+                >
+                  <ExternalLink size={13} />
+                  <span>Want to invest now</span>
+                </button>
+                <button
+                  type="button"
+                  className="stock-header-btn add-pos"
+                  onClick={() => {
+                    const toAdd = {
+                      name: chartData?.name || viewingAsset.name,
+                      category: viewingAsset.category,
+                      price: activeCurrentPrice,
+                      currency: viewingAsset.currency,
+                    };
+                    setViewingAsset(null);
+                    openAddModalWithPrefill(toAdd);
+                  }}
+                  title="Track in your portfolio"
+                >
+                  <Plus size={13} />
+                  <span>Track Holding</span>
+                </button>
+              </>
             )}
           </div>
 
@@ -614,6 +638,16 @@ export function AssetDetailModal() {
                 </h3>
 
                 <div className="stock-bento-grid">
+                  {viewingAsset.brokerApp && (
+                    <div className="stock-bento-card">
+                      <span className="bento-label">Invested via App</span>
+                      <strong className="bento-value" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                        <BrokerLogoAvatar brokerName={viewingAsset.brokerApp} size={18} />
+                        <span>{viewingAsset.brokerApp}</span>
+                      </strong>
+                      <span className="bento-subtext">Executing broker platform</span>
+                    </div>
+                  )}
                   <div className="stock-bento-card">
                     <span className="bento-label">Holdings Quantity</span>
                     <strong className="bento-value">
@@ -689,6 +723,82 @@ export function AssetDetailModal() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+
+            {/* Direct Investment Section when not owned */}
+            {!isOwnedInPortfolio && (
+              <div id="stock-invest-platforms-section" className="stock-bento-section stock-invest-now-section">
+                <div className="stock-invest-header">
+                  <div className="stock-invest-title-row">
+                    <h3 className="stock-bento-title" style={{ margin: 0 }}>
+                      <ExternalLink size={15} /> Want to invest now?
+                    </h3>
+                    <span className="stock-invest-badge">Direct Investment</span>
+                  </div>
+                  <p className="stock-invest-subtitle">
+                    Select a verified investment app to buy <strong>{ticker || viewingAsset.name}</strong> directly on their live platform:
+                  </p>
+                </div>
+
+                <div className="stock-invest-grid">
+                  {categoryBrokers.map((broker) => {
+                    const destUrl = broker.getUrl(viewingAsset.name, ticker, viewingAsset.category);
+                    return (
+                      <div
+                        key={broker.id}
+                        className="stock-invest-app-tile"
+                        onClick={() => window.open(destUrl, "_blank", "noopener,noreferrer")}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            window.open(destUrl, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                      >
+                        <div className="stock-invest-app-left">
+                          <BrokerLogoAvatar brokerName={broker.name} size={36} />
+                          <div className="stock-invest-app-info">
+                            <div className="stock-invest-name-row">
+                              <span className="stock-invest-app-name">{broker.name}</span>
+                              {broker.badge && (
+                                <span className="stock-invest-app-badge">{broker.badge}</span>
+                              )}
+                            </div>
+                            <span className="stock-invest-app-tagline">{broker.tagline}</span>
+                          </div>
+                        </div>
+
+                        <div className="stock-invest-app-cta">
+                          <span>Invest ↗</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="stock-invest-footer-note">
+                  <span>Already hold this asset?</span>
+                  <button
+                    type="button"
+                    className="stock-invest-record-link"
+                    onClick={() => {
+                      const toAdd = {
+                        name: chartData?.name || viewingAsset.name,
+                        category: viewingAsset.category,
+                        price: activeCurrentPrice,
+                        currency: viewingAsset.currency,
+                      };
+                      setViewingAsset(null);
+                      openAddModalWithPrefill(toAdd);
+                    }}
+                  >
+                    + Record in portfolio
+                  </button>
                 </div>
               </div>
             )}

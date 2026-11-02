@@ -276,3 +276,100 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
     </div>
   );
 });
+
+/**
+ * Clean, lightweight Broker/Investment App Logo Avatar
+ */
+export const BrokerLogoAvatar = React.memo(function BrokerLogoAvatar({
+  brokerName,
+  size = 28,
+}: {
+  brokerName: string;
+  size?: number;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const clean = (brokerName || "").toLowerCase().trim();
+  let domain = "groww.in";
+  if (clean.includes("groww")) domain = "groww.in";
+  else if (clean.includes("zerodha") || clean.includes("kite") || clean.includes("coin")) domain = "zerodha.com";
+  else if (clean.includes("angel")) domain = "angelone.in";
+  else if (clean.includes("upstox")) domain = "upstox.com";
+  else if (clean.includes("dhan")) domain = "dhan.co";
+  else if (clean.includes("indmoney")) domain = "indmoney.com";
+  else if (clean.includes("kuvera")) domain = "kuvera.in";
+  else if (clean.includes("vested")) domain = "vestedfinance.com";
+  else if (clean.includes("interactive")) domain = "interactivebrokers.com";
+  else if (clean.includes("schwab")) domain = "schwab.com";
+  else if (clean.includes("robinhood")) domain = "robinhood.com";
+  else if (clean.includes("hdfc")) domain = "hdfcsky.com";
+  else if (clean.includes("icici")) domain = "icicidirect.com";
+  else if (clean.includes("kotak")) domain = "kotaksecurities.com";
+  else if (clean.includes("coindcx")) domain = "coindcx.com";
+  else if (clean.includes("wazirx")) domain = "wazirx.com";
+
+  const initials = brokerName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() || "BR";
+
+  const logoUrl = `${COMPANY_LOGO_API}/${domain}`;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: "8px",
+        overflow: "hidden",
+        flexShrink: 0,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+        background: "#f4f0ff",
+        border: "1px solid rgba(147, 102, 255, 0.2)",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          placeItems: "center",
+          fontWeight: 800,
+          fontSize: `${Math.max(9, Math.round(size * 0.36))}px`,
+          color: "#9366FF",
+          userSelect: "none",
+        }}
+      >
+        {initials}
+      </div>
+
+      {!imgError && (
+        <img
+          src={logoUrl}
+          alt={brokerName}
+          width={size}
+          height={size}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setImgError(true)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            borderRadius: "inherit",
+            background: "#ffffff",
+            padding: "2px",
+            opacity: isLoaded ? 1 : 0,
+            transition: "opacity 0.2s ease-in-out",
+          }}
+        />
+      )}
+    </div>
+  );
+});

@@ -23,6 +23,7 @@ export interface AssetPosition {
   sipInstallments?: number;
   lastSipDate?: string;
   sipStatus?: "active" | "paused";
+  brokerApp?: string;
 }
 
 export interface EditAssetForm {
@@ -41,6 +42,7 @@ export interface EditAssetForm {
   sipInstallments?: string;
   lastSipDate?: string;
   sipStatus?: "active" | "paused";
+  brokerApp?: string;
 }
 
 export interface MarketTimingStatus {
@@ -60,5 +62,6 @@ export interface PrefillAssetData {
   category: AssetCategory;
   price: number;
   currency: "INR" | "USD";
+  brokerApp?: string;
 }
 

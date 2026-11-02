@@ -290,6 +290,11 @@ export function HoldingsTableAndCards({
                         status={item.category === "US Stocks" ? usStatus : inStatus}
                         compact
                       />
+                      {item.brokerApp && (
+                        <span className="apple-broker-pill" title={`Invested via ${item.brokerApp}`}>
+                          via {item.brokerApp}
+                        </span>
+                      )}
                     </div>
 
                     <div className="apple-asset-holdings-line">

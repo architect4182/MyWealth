@@ -14,6 +14,8 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate, formatLocalDate } from "@/utils/sip";
 import { AssetDetailModal } from "@/components/AssetDetailModal";
+import { getQuickBrokerOptions } from "@/utils/brokers";
+import { BrokerLogoAvatar } from "@/components/Logos";
 
 export function AddAssetModal() {
   const {
@@ -35,11 +37,14 @@ export function AddAssetModal() {
     defaultCategory === "US Stocks" ? "USD" : "INR"
   );
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
   const [isSip, setIsSip] = useState(false);
   const [sipAmount, setSipAmount] = useState("");
   const [sipDay, setSipDay] = useState("5");
   const [sipStartDate, setSipStartDate] = useState("");
   const [initialInstallmentDone, setInitialInstallmentDone] = useState(true);
+  const [brokerApp, setBrokerApp] = useState("Groww");
+  const [isCustomBroker, setIsCustomBroker] = useState(false);
 
   const autoPriceRequestRef = useRef(0);
   const skipNextAutoPriceLookupRef = useRef(false);
@@ -55,9 +60,20 @@ export function AddAssetModal() {
         setBuyPrice(String(prefillAsset.price));
         setCurrentPrice(String(prefillAsset.price));
         setCurrency(prefillAsset.currency);
+        if (prefillAsset.brokerApp) {
+          setBrokerApp(prefillAsset.brokerApp);
+          setIsCustomBroker(!getQuickBrokerOptions(prefillAsset.category).includes(prefillAsset.brokerApp));
+        } else {
+          const quicks = getQuickBrokerOptions(prefillAsset.category);
+          setBrokerApp(quicks[0] || "Groww");
+          setIsCustomBroker(false);
+        }
       } else {
         setCategory(defaultCategory);
         setCurrency(defaultCategory === "US Stocks" ? "USD" : "INR");
+        const quicks = getQuickBrokerOptions(defaultCategory);
+        setBrokerApp(quicks[0] || "Groww");
+        setIsCustomBroker(false);
       }
     } else {
       setName("");
@@ -182,6 +198,7 @@ export function AddAssetModal() {
         sipInstallments: installments,
         lastSipDate: lastDate,
         sipStatus: "active",
+        brokerApp: brokerApp.trim() || undefined,
       });
 
       setModal(false);
@@ -204,6 +221,7 @@ export function AddAssetModal() {
       currentPrice: cp,
       currency,
       isSip: false,
+      brokerApp: brokerApp.trim() || undefined,
     });
 
     setModal(false);
@@ -295,6 +313,69 @@ export function AddAssetModal() {
               <option value="USD">USD — US Dollar ($)</option>
             </select>
           </label>
+        </div>
+
+        {/* Investing via App / Broker Selection */}
+        <div className="apple-broker-input-section">
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "6px",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "var(--foreground-muted)",
+              }}
+            >
+              Investing via App / Broker
+            </span>
+            <span style={{ fontSize: "10.5px", color: "#9366FF", fontWeight: 600 }}>
+              Stored in DB
+            </span>
+          </div>
+
+          <div className="apple-broker-chips-container">
+            {getQuickBrokerOptions(category).map((app) => (
+              <button
+                key={app}
+                type="button"
+                className={`apple-broker-chip ${brokerApp === app && !isCustomBroker ? "active" : ""}`}
+                onClick={() => {
+                  setBrokerApp(app);
+                  setIsCustomBroker(false);
+                }}
+              >
+                <BrokerLogoAvatar brokerName={app} size={15} />
+                <span>{app}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`apple-broker-chip ${isCustomBroker ? "active" : ""}`}
+              onClick={() => {
+                setIsCustomBroker(true);
+                if (getQuickBrokerOptions(category).includes(brokerApp)) {
+                  setBrokerApp("");
+                }
+              }}
+            >
+              <span>+ Custom / Other</span>
+            </button>
+          </div>
+
+          {isCustomBroker && (
+            <input
+              style={{ marginTop: "8px" }}
+              value={brokerApp}
+              onChange={(e) => setBrokerApp(e.target.value)}
+              placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities, ICICI Direct"
+            />
+          )}
         </div>
 
         {/* Authentic Apple iOS Switch for SIP Check */}
@@ -591,6 +672,7 @@ export function EditAssetModal() {
       sipInstallments: editingAsset.sipInstallments ? Number(editingAsset.sipInstallments) : undefined,
       lastSipDate: editingAsset.lastSipDate,
       sipStatus: editingAsset.sipStatus || (editingAsset.isSip ? "active" : undefined),
+      brokerApp: editingAsset.brokerApp?.trim() || undefined,
     });
 
     setEditingAsset(null);
