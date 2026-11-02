@@ -307,3 +307,4 @@ export function getBrokerDestinationUrl(
 
   return `https://www.google.com/search?q=invest+in+${encodeURIComponent(assetName)}+${encodeURIComponent(brokerName)}`;
 }
+
