@@ -1,4 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.cdnfonts.com/css/sf-pro-display');
+
+/* Apple SF Pro Complete Web & System Font Definition */
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro'), local('SF Pro Display'), local('SF Pro Text'), local('-apple-system'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYREGULAR.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro Medium'), local('SF Pro Display Medium'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYMEDIUM.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro Semibold'), local('SF Pro Display Semibold'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYSEMIBOLD.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro Bold'), local('SF Pro Display Bold'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYBOLD.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro Heavy'), local('SF Pro Display Heavy'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYHEAVY.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro';
+  src: local('SF Pro Black'), local('SF Pro Display Black'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYBLACK.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: local('SF Pro Text'), local('SF Pro'), local('SF Pro Display'), local('-apple-system'), url('https://fonts.cdnfonts.com/s/59278/SFPRODISPLAYREGULAR.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 @import "tailwindcss";
 
 /* ==========================================================================
@@ -72,59 +129,131 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   background-color: #ffffff;
+  overflow-x: clip;
 }
 
-html,
 body {
-  overscroll-behavior-y: none;
   background-color: #ffffff !important;
   background: #ffffff !important;
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", 'Plus Jakarta Sans', "Helvetica Neue", sans-serif;
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   position: relative;
-  overflow-x: hidden;
-  max-width: 100vw;
+  overflow-x: clip;
+  overflow-y: auto;
   width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
-body[data-gender], body.gender-female, body.gender-male {
+/* ==========================================================================
+   Universal Apple SF Pro Font Rule - The Only Font Used Across Site
+   ========================================================================== */
+*,
+*::before,
+*::after,
+html,
+body,
+button,
+input,
+select,
+textarea,
+optgroup,
+option,
+table,
+th,
+td,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+div,
+label,
+strong,
+b,
+em,
+small,
+code,
+pre {
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apple SF Pro Tabular Numbers for Perfect Financial Alignment */
+.apple-val-primary,
+.apple-summary-val,
+.apple-currency-stat,
+.apple-trending-price,
+.stock-price-digits,
+.bento-value,
+.stat-number,
+.money-amount,
+.table-num,
+.apple-table-num,
+.apple-return-pill,
+.apple-cmp-sub,
+.apple-holdings-tag,
+.apple-cost-tag,
+.apple-inv-tag,
+.apple-ticker-pill {
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-feature-settings: "tnum" 1, "cv01" 1, "cv02" 1 !important;
+}
+
+
+body[data-gender],
+body.gender-female,
+body.gender-male {
   background: #ffffff !important;
 }
-body::before, body[data-gender]::before, body.gender-female::before, body.gender-male::before {
+
+body::before,
+body[data-gender]::before,
+body.gender-female::before,
+body.gender-male::before {
   display: none !important;
 }
 
-/* Clean Minimal Purple Frosted Scrollbar (Desktop Only) */
-@media (min-width: 769px) and (pointer: fine) {
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(147, 102, 255, 0.22);
-    border-radius: 9999px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(147, 102, 255, 0.45);
-  }
+/* Clean Minimal Purple Frosted Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-/* Stop showing scroll in mobile devices & touch screens */
-@media (max-width: 768px), (pointer: coarse) {
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(147, 102, 255, 0.22);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(147, 102, 255, 0.45);
+}
+
+/* Hide visible scrollbars on mobile screens while preserving native touch scrolling */
+@media (max-width: 768px) {
+
+  *,
   html,
   body,
-  * {
+  .apple-portfolio-app,
+  .apple-canvas,
+  .modal-overlay,
+  .investment-modal,
+  .stock-detail-modal,
+  .stock-chart-wrapper {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
   }
@@ -134,6 +263,7 @@ body::before, body[data-gender]::before, body.gender-female::before, body.gender
     display: none !important;
     width: 0 !important;
     height: 0 !important;
+    background: transparent !important;
   }
 }
 
@@ -1468,7 +1598,7 @@ tr:hover .apple-table-chevron-circle {
 
 .apple-cmp-sub {
   font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--muted);
   font-weight: 500;
 }
@@ -1552,7 +1682,7 @@ tr:hover .apple-table-chevron-circle {
 
 .apple-ticker-pill {
   font-size: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 600;
   color: var(--foreground-muted);
   background: rgba(255, 255, 255, 0.05);
@@ -1629,7 +1759,7 @@ tr:hover .apple-table-chevron-circle {
 
 .apple-val-usd-pill {
   font-size: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 600;
   color: var(--apple-blue);
   background: rgba(147, 102, 255, 0.12);
@@ -1742,15 +1872,15 @@ table {
 }
 
 th {
-  padding: 14px 20px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
-  color: var(--muted);
-  border-bottom: 1px solid rgba(147, 102, 255, 0.14);
-  background: rgba(20, 20, 28, 0.95);
-  user-select: none;
+  padding: 14px 20px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.7px !important;
+  text-transform: uppercase !important;
+  color: #5e5e6e !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: #f8f9fc !important;
+  user-select: none !important;
 }
 
 .sortable-th {
@@ -1783,10 +1913,12 @@ th {
 }
 
 td {
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(147, 102, 255, 0.1);
-  font-size: 13px;
-  transition: background-color 0.15s ease;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  font-size: 13px !important;
+  background: #ffffff !important;
+  color: #111116 !important;
+  transition: background-color 0.15s ease !important;
 }
 
 tbody tr:last-child td {
@@ -1794,7 +1926,8 @@ tbody tr:last-child td {
 }
 
 tbody tr:hover td {
-  background: rgba(32, 32, 46, 0.65);
+  background: #f8f7ff !important;
+  color: #111116 !important;
 }
 
 /* ==========================================================================
@@ -2083,19 +2216,18 @@ tbody tr:hover td {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(28, 28, 38, 0.85);
-  border: 1px solid rgba(147, 102, 255, 0.16);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-  color: var(--foreground-muted);
+  background: #f4f5f9 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  color: #5e5e6e !important;
   transition: all 0.15s ease;
   cursor: pointer;
 }
 
 .icon-button:hover {
-  background: rgba(36, 36, 50, 0.95);
-  color: var(--foreground);
-  border-color: rgba(147, 102, 255, 0.35);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: #ebeef5 !important;
+  color: #111116 !important;
+  border-color: rgba(147, 102, 255, 0.3) !important;
 }
 
 .form-row {
@@ -2377,14 +2509,15 @@ select:focus {
 }
 
 .apple-market-timing-card {
-  border-radius: 18px;
-  background: rgba(24, 24, 34, 0.85);
-  border: 1px solid rgba(147, 102, 255, 0.16);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 18px !important;
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  color: #111116 !important;
 }
 
 /* ==========================================================================
@@ -2826,18 +2959,19 @@ select:focus {
 }
 
 .apple-trending-card-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  flex-shrink: 0;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
 }
 
 .apple-trending-price {
   font-size: 14px;
   font-weight: 800;
   color: var(--foreground);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: -0.2px;
 }
 
@@ -3072,17 +3206,25 @@ select:focus {
 
   .apple-portfolio-app,
   .apple-canvas {
-    padding: 8px 12px 60px;
+    padding: 0 12px 60px !important;
   }
 
-  /* Compact Floating Header: 2-Row Layout */
+  /* Pinned Capsule Header: 2-Row Layout */
   .apple-island-header {
-    border-radius: 22px;
-    padding: 10px 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-    min-height: auto;
-    top: 8px;
+    border-radius: 0 0 18px 18px !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    min-height: auto !important;
+    top: 0 !important;
+    position: sticky !important;
+    z-index: 100 !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    margin-top: 0 !important;
+    margin-bottom: 16px !important;
+    border-top: none !important;
   }
 
   .apple-header-left {
@@ -3290,17 +3432,6 @@ select:focus {
     gap: 10px !important;
   }
 
-  .apple-card-valuation-group {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-    gap: 10px !important;
-    order: 1 !important;
-  }
-
   .apple-card-val-primary-col {
     display: flex !important;
     flex-direction: column !important;
@@ -3323,13 +3454,21 @@ select:focus {
     white-space: nowrap !important;
   }
 
-  .apple-card-valuation-group .apple-return-pill {
+  .apple-card-valuation-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
     margin-left: auto !important;
     flex-shrink: 0 !important;
   }
 
+  .apple-card-valuation-group .apple-return-pill {
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+  }
+
   .apple-card-chevron-circle {
-    order: 2 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -3338,7 +3477,7 @@ select:focus {
     min-width: 26px !important;
     border-radius: 50% !important;
     flex-shrink: 0 !important;
-    margin-left: 4px !important;
+    margin-left: 2px !important;
   }
 
   /* Trending cards mobile polish */
@@ -3470,6 +3609,7 @@ select:focus {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+
   .modal-overlay::-webkit-scrollbar {
     display: none;
   }
@@ -3485,6 +3625,7 @@ select:focus {
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
   }
+
   .investment-modal::-webkit-scrollbar {
     display: none;
   }
@@ -4078,22 +4219,23 @@ select:focus {
 
 /* Authentic Apple iOS Switch Row for SIP Check */
 .apple-ios-sip-toggle-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: rgba(28, 28, 38, 0.7);
-  border: 1px solid rgba(147, 102, 255, 0.16);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin: 10px 0 12px 0;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 12px 14px !important;
+  margin: 10px 0 12px 0 !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  color: #111116 !important;
 }
 
 .apple-ios-sip-toggle-card.active {
-  background: linear-gradient(135deg, rgba(147, 102, 255, 0.14) 0%, rgba(120, 68, 235, 0.05) 100%);
-  border-color: rgba(147, 102, 255, 0.35);
-  box-shadow: 0 2px 10px rgba(147, 102, 255, 0.12);
+  background: #f4f0ff !important;
+  border-color: rgba(147, 102, 255, 0.35) !important;
+  box-shadow: 0 2px 10px rgba(147, 102, 255, 0.12) !important;
 }
 
 .apple-ios-sip-info {
@@ -4548,10 +4690,11 @@ button.ios-switch {
   position: relative;
   width: 100%;
   border-radius: 16px;
-  background: rgba(16, 16, 22, 0.65);
-  padding: 8px 4px 4px;
-  border: 1px solid rgba(147, 102, 255, 0.18);
+  background: #f8f9fc !important;
+  padding: 8px 6px 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
   user-select: none;
+  overflow: hidden !important;
 }
 
 .stock-svg-chart {
@@ -4559,7 +4702,7 @@ button.ios-switch {
   height: 180px;
   display: block;
   cursor: crosshair;
-  overflow: visible;
+  overflow: hidden !important;
 }
 
 .stock-chart-loading-overlay {
@@ -4569,14 +4712,15 @@ button.ios-switch {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: rgba(17, 17, 22, 0.85);
-  backdrop-filter: blur(4px);
+  gap: 10px;
+  background: #f8f9fc !important;
+  backdrop-filter: none;
   border-radius: inherit;
   z-index: 5;
-  color: var(--foreground-muted);
+  color: #5e5e6e !important;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 .spin-icon {
@@ -4877,7 +5021,9 @@ button.ios-switch {
 /* ==========================================================================
    Global Plain White Theme & Full Width Expanded Page Overrides
    ========================================================================== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -5558,6 +5704,7 @@ select:focus {
     border-radius: 20px;
     margin-top: 36px;
   }
+
   .apple-footer-grid {
     grid-template-columns: 1fr;
     gap: 24px;
@@ -5735,10 +5882,10 @@ select:focus {
    Horizontal Panoramic Modal Layout & Light Theme Loading Styles
    ========================================================================== */
 .stock-detail-modal {
-  max-width: 1140px !important;
-  width: min(94vw, 1140px) !important;
+  max-width: 1280px !important;
+  width: min(96vw, 1280px) !important;
   max-height: 92vh !important;
-  overflow-y: auto !important;
+  overflow-y: auto;
   overflow-x: hidden !important;
   padding: 24px 28px !important;
   gap: 16px !important;
@@ -5854,7 +6001,7 @@ select:focus {
     border-radius: 20px !important;
     margin: 0 !important;
     overflow-x: hidden !important;
-    overflow-y: auto !important;
+    overflow-y: auto;
     box-sizing: border-box !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
@@ -6162,14 +6309,14 @@ select:focus {
    ========================================================================== */
 .apple-trending-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 12px !important;
   width: 100% !important;
 }
 
-@media (min-width: 1400px) {
+@media (max-width: 1080px) {
   .apple-trending-grid {
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
@@ -6186,7 +6333,7 @@ select:focus {
   align-items: center !important;
   padding: 12px 14px !important;
   gap: 12px !important;
-  min-height: 64px !important;
+  min-height: 68px !important;
   box-sizing: border-box !important;
   width: 100% !important;
   background: #ffffff !important;
@@ -6214,7 +6361,7 @@ select:focus {
 .apple-trending-info {
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 3px !important;
   min-width: 0 !important;
   flex: 1 1 auto !important;
 }
@@ -6225,8 +6372,13 @@ select:focus {
   font-weight: 700 !important;
   color: #111116 !important;
   letter-spacing: -0.2px !important;
-  line-height: 1.3 !important;
-  white-space: nowrap !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
@@ -6290,24 +6442,155 @@ select:focus {
     padding: 10px 10px !important;
     gap: 8px !important;
   }
+
   .apple-trending-card-left {
     gap: 7px !important;
   }
+
   .apple-trending-name {
     font-size: 12.5px !important;
   }
+
   .apple-trending-price {
     font-size: 13px !important;
   }
+
   .apple-trending-card-right {
     gap: 6px !important;
   }
+
   .apple-trending-card-right .apple-return-pill {
     font-size: 10px !important;
     padding: 1px 5px !important;
   }
+
   .apple-trending-chevron {
     width: 22px !important;
     height: 22px !important;
   }
+}
+
+/* ==========================================================================
+   Complete Pure White Apple Theme Color Overrides
+   ========================================================================== */
+
+/* Market Timing Cards in Market Hours Modal */
+.apple-market-timing-card {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03) !important;
+  color: #111116 !important;
+}
+
+.apple-market-timing-card strong {
+  color: #111116 !important;
+}
+
+.apple-market-timing-card span {
+  color: #5e5e6e !important;
+}
+
+.apple-market-timing-card div {
+  color: #111116 !important;
+}
+
+/* SIP Toggle Card & Description in Add/Edit Asset Modal */
+.apple-ios-sip-toggle-card {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #111116 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
+}
+
+.apple-ios-sip-toggle-card.active {
+  background: #f4f0ff !important;
+  border-color: rgba(147, 102, 255, 0.35) !important;
+  box-shadow: 0 2px 10px rgba(147, 102, 255, 0.12) !important;
+}
+
+.apple-ios-sip-title {
+  color: #111116 !important;
+  font-weight: 700 !important;
+}
+
+.apple-ios-sip-desc {
+  color: #64748b !important;
+}
+
+.apple-ios-sip-calendar-card,
+.apple-sip-stat-card {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: #111116 !important;
+}
+
+.apple-sip-schedule-banner {
+  background: #f4f0ff !important;
+  border: 1px solid rgba(147, 102, 255, 0.25) !important;
+  color: #111116 !important;
+}
+
+.apple-sip-schedule-left strong {
+  color: #111116 !important;
+}
+
+.apple-sip-schedule-left p {
+  color: #5e5e6e !important;
+}
+
+/* Table Panel, Headers, Rows and Hover States */
+.apple-table-panel {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.apple-table-panel::before {
+  display: none !important;
+}
+
+th {
+  background: #f8f9fc !important;
+  color: #5e5e6e !important;
+  font-weight: 700 !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.sortable-th:hover {
+  color: #9366FF !important;
+}
+
+td {
+  background: #ffffff !important;
+  color: #111116 !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+tbody tr:hover td {
+  background: #f8f7ff !important;
+  color: #111116 !important;
+}
+
+tbody tr.flash-pulse td {
+  background: rgba(147, 102, 255, 0.1) !important;
+}
+
+/* Dynamic Island Live Prices / SIP Pill */
+.apple-dynamic-island {
+  background: #ffffff !important;
+  border: 1px solid rgba(147, 102, 255, 0.25) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  color: #111116 !important;
+}
+
+.apple-dynamic-island strong {
+  color: #111116 !important;
+}
+
+.apple-dynamic-island p {
+  color: #5e5e6e !important;
+}
+
+.apple-dynamic-island::before {
+  display: none !important;
 }

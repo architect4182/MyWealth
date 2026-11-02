@@ -181,10 +181,15 @@ export const Header = React.memo(function Header({
         {currentUserId ? (
           <div
             className="apple-user-combo-pill"
-            title={`Signed in as ${currentUserId.toUpperCase()}`}
+            title={`Signed in as ${currentUserId.toUpperCase()} (Click to sign out)`}
             suppressHydrationWarning
           >
-            <div className="apple-combo-user-part">
+            <div
+              className="apple-combo-user-part"
+              onClick={() => handleLogout()}
+              style={{ cursor: "pointer" }}
+              title="Click to sign out"
+            >
               <User size={13} strokeWidth={2.2} />
               <span className="apple-user-label" suppressHydrationWarning>
                 {currentUserId.toUpperCase()}
@@ -195,7 +200,10 @@ export const Header = React.memo(function Header({
               type="button"
               className="apple-combo-signout-btn"
               title={isLoggingOut ? "Signing out…" : `Sign Out (${currentUserId.toUpperCase()})`}
-              onClick={() => handleLogout()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLogout();
+              }}
               disabled={isLoggingOut}
               aria-label="Sign out"
               suppressHydrationWarning

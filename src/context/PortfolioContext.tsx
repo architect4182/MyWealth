@@ -296,18 +296,18 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     if (typeof document === "undefined") return;
     if (isAnyModalOpen) {
       const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-      const prevOverflow = document.body.style.overflow;
-      const prevPaddingRight = document.body.style.paddingRight;
-
       document.body.style.overflow = "hidden";
       if (scrollBarWidth > 0) {
         document.body.style.paddingRight = `${scrollBarWidth}px`;
       }
 
       return () => {
-        document.body.style.overflow = prevOverflow;
-        document.body.style.paddingRight = prevPaddingRight;
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
       };
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
     }
   }, [isAnyModalOpen]);
 
@@ -1366,14 +1366,28 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.clear();
       } catch {}
 
-      // 5. Expire server session cookie via POST
+      // 5. Expire client cookies explicitly
       try {
-        await fetch("/api/auth/logout", { method: "POST" });
+        if (typeof document !== "undefined") {
+          document.cookie = "mywealth_auth_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0; SameSite=Lax";
+        }
       } catch {}
 
-      // 6. Seamless direct client-side redirect to /login (with optional reason)
+      // 6. Expire server session cookie via POST with timeout guarantee
+      try {
+        await Promise.race([
+          fetch("/api/auth/logout", { method: "POST" }),
+          new Promise((resolve) => setTimeout(resolve, 800)),
+        ]);
+      } catch {}
+
+      // 7. Hard document navigation to /login (wipes in-memory JS state, caches & listeners)
       const targetUrl = typeof reason === "string" && reason ? `/login?reason=${encodeURIComponent(reason)}` : "/login";
-      router.replace(targetUrl);
+      if (typeof window !== "undefined") {
+        window.location.href = targetUrl;
+      } else {
+        router.replace(targetUrl);
+      }
     } finally {
       setIsLoggingOut(false);
     }

@@ -203,15 +203,7 @@ export function AssetDetailModal() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [viewingAsset, setViewingAsset]);
 
-  // Lock body scroll while detail modal is open
-  useEffect(() => {
-    if (!viewingAsset) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [viewingAsset]);
+
 
   // SVG Chart Geometry dimensions
   const chartWidth = 560;
@@ -411,7 +403,7 @@ export function AssetDetailModal() {
                 title="Add to your portfolio"
               >
                 <Plus size={13} />
-                <span>+ Add to Portfolio</span>
+                <span>Add to Portfolio</span>
               </button>
             )}
           </div>
@@ -488,14 +480,22 @@ export function AssetDetailModal() {
             </div>
 
             {/* Interactive SVG Chart Container */}
-            <div className="stock-chart-wrapper">
+            <div
+              className="stock-chart-wrapper"
+              style={{
+                background: "#f8f9fc",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                overflow: "hidden",
+                minHeight: "200px",
+              }}
+            >
               {isLoadingChart && !chartData && (
                 <div
                   className="stock-chart-loading-overlay"
                   style={{
                     background: "#f8f9fc",
                     color: "#5e5e6e",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
+                    border: "none",
                   }}
                 >
                   <RefreshCw size={24} className="spin-icon" style={{ color: "#9366FF" }} />
@@ -520,6 +520,7 @@ export function AssetDetailModal() {
                   ref={svgRef}
                   viewBox={`0 0 ${chartWidth} ${chartHeight}`}
                   className="stock-svg-chart"
+                  style={{ overflow: "hidden", display: "block", width: "100%" }}
                   onMouseMove={handleChartMouseMove}
                   onMouseLeave={handleChartMouseLeave}
                   onTouchMove={(e) => {
@@ -717,7 +718,7 @@ export function AssetDetailModal() {
                   style={{ flexShrink: 0 }}
                 >
                   <Plus size={14} />
-                  <span>Add Position</span>
+                  <span>Invest</span>
                 </button>
               </div>
             )}
