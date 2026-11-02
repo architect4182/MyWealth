@@ -607,7 +607,7 @@ export function AssetDetailModal() {
           {/* Right Column: Holdings & Key Market Statistics */}
           <div className="stock-modal-stats-col">
             {/* If owned: Position Bento */}
-            {isOwnedInPortfolio ? (
+            {isOwnedInPortfolio && (
               <div className="stock-bento-section">
                 <h3 className="stock-bento-title">
                   <Wallet size={15} /> Your Investment Position
@@ -690,36 +690,6 @@ export function AssetDetailModal() {
                     </div>
                   )}
                 </div>
-              </div>
-            ) : (
-              <div className="stock-discover-card">
-                <div className="stock-discover-content">
-                  <span className="stock-discover-badge">
-                    <Sparkles size={13} /> Discovered in Trending
-                  </span>
-                  <h4 className="stock-discover-title">Not in your portfolio yet</h4>
-                  <p className="stock-discover-desc">
-                    Track this stock by recording your units and buy price to monitor live daily P&L.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="apple-add-btn"
-                  onClick={() => {
-                    const toAdd = {
-                      name: chartData?.name || viewingAsset.name,
-                      category: viewingAsset.category,
-                      price: activeCurrentPrice,
-                      currency: viewingAsset.currency,
-                    };
-                    setViewingAsset(null);
-                    openAddModalWithPrefill(toAdd);
-                  }}
-                  style={{ flexShrink: 0 }}
-                >
-                  <Plus size={14} />
-                  <span>Invest</span>
-                </button>
               </div>
             )}
 
