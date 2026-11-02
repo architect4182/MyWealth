@@ -626,9 +626,63 @@ export function AssetDetailModal() {
                 </div>
               )}
             </div>
+
+            {/* Market Key Statistics & Ranges (Moved to Left Side under Chart) */}
+            <div className="stock-market-stats-section" style={{ marginTop: "8px" }}>
+              <h3 className="stock-bento-title">
+                <Activity size={15} /> Key Market Statistics
+              </h3>
+
+              <div className="stock-range-bars-container">
+                <div className="stock-range-card">
+                  <div className="range-title-row">
+                    <span>Day Range</span>
+                    <span className="range-current">
+                      CMP: {viewingAsset.currency === "USD" ? "$" : "₹"}
+                      {activeCurrentPrice.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="range-track-wrapper">
+                    <div className="range-track">
+                      <div
+                        className="range-pin"
+                        style={{ left: `${daySliderPct}%` }}
+                        title={`Current: ${activeCurrentPrice}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="range-labels-row">
+                    <span>L: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayLow.toFixed(2)}</span>
+                    <span>H: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayHigh.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="stock-range-card">
+                  <div className="range-title-row">
+                    <span>52-Week Range</span>
+                    <span className="range-current">
+                      Pos: {fiftyTwoSliderPct.toFixed(0)}% of 52W High
+                    </span>
+                  </div>
+                  <div className="range-track-wrapper">
+                    <div className="range-track">
+                      <div
+                        className="range-pin"
+                        style={{ left: `${fiftyTwoSliderPct}%` }}
+                        title={`Current: ${activeCurrentPrice}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="range-labels-row">
+                    <span>52W L: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoLow.toFixed(2)}</span>
+                    <span>52W H: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoHigh.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column: Holdings & Key Market Statistics */}
+          {/* Right Column: Holdings / Investment Platforms & Profile */}
           <div className="stock-modal-stats-col">
             {/* If owned: Position Bento */}
             {isOwnedInPortfolio && (
@@ -803,59 +857,7 @@ export function AssetDetailModal() {
               </div>
             )}
 
-            {/* Market Key Statistics & Ranges (Day Range and 52-Week Range) */}
-            <div className="stock-market-stats-section">
-              <h3 className="stock-bento-title">
-                <Activity size={15} /> Key Market Statistics
-              </h3>
 
-              <div className="stock-range-bars-container">
-                <div className="stock-range-card">
-                  <div className="range-title-row">
-                    <span>Day Range</span>
-                    <span className="range-current">
-                      CMP: {viewingAsset.currency === "USD" ? "$" : "₹"}
-                      {activeCurrentPrice.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="range-track-wrapper">
-                    <div className="range-track">
-                      <div
-                        className="range-pin"
-                        style={{ left: `${daySliderPct}%` }}
-                        title={`Current: ${activeCurrentPrice}`}
-                      />
-                    </div>
-                  </div>
-                  <div className="range-labels-row">
-                    <span>L: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayLow.toFixed(2)}</span>
-                    <span>H: {viewingAsset.currency === "USD" ? "$" : "₹"}{dayHigh.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                <div className="stock-range-card">
-                  <div className="range-title-row">
-                    <span>52-Week Range</span>
-                    <span className="range-current">
-                      Pos: {fiftyTwoSliderPct.toFixed(0)}% of 52W High
-                    </span>
-                  </div>
-                  <div className="range-track-wrapper">
-                    <div className="range-track">
-                      <div
-                        className="range-pin"
-                        style={{ left: `${fiftyTwoSliderPct}%` }}
-                        title={`Current: ${activeCurrentPrice}`}
-                      />
-                    </div>
-                  </div>
-                  <div className="range-labels-row">
-                    <span>52W L: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoLow.toFixed(2)}</span>
-                    <span>52W H: {viewingAsset.currency === "USD" ? "$" : "₹"}{fiftyTwoHigh.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Scheme / Exchange Profile */}
             {viewingAsset.category === "Mutual Funds" ? (

@@ -315,65 +315,37 @@ export function AddAssetModal() {
           </label>
         </div>
 
-        {/* Investing via App / Broker Selection */}
-        <div className="apple-broker-input-section">
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "6px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "var(--foreground-muted)",
-              }}
-            >
-              Investing via App / Broker
-            </span>
-            <span style={{ fontSize: "10.5px", color: "#9366FF", fontWeight: 600 }}>
-              Stored in DB
-            </span>
-          </div>
-
-          <div className="apple-broker-chips-container">
-            {getQuickBrokerOptions(category).map((app) => (
-              <button
-                key={app}
-                type="button"
-                className={`apple-broker-chip ${brokerApp === app && !isCustomBroker ? "active" : ""}`}
-                onClick={() => {
-                  setBrokerApp(app);
-                  setIsCustomBroker(false);
-                }}
-              >
-                <BrokerLogoAvatar brokerName={app} size={15} />
-                <span>{app}</span>
-              </button>
-            ))}
-            <button
-              type="button"
-              className={`apple-broker-chip ${isCustomBroker ? "active" : ""}`}
-              onClick={() => {
-                setIsCustomBroker(true);
-                if (getQuickBrokerOptions(category).includes(brokerApp)) {
+        <div>
+          <label>
+            Investing via App / Broker
+            <select
+              value={isCustomBroker ? "__custom__" : (brokerApp || getQuickBrokerOptions(category)[0] || "Groww")}
+              onChange={(e) => {
+                if (e.target.value === "__custom__") {
+                  setIsCustomBroker(true);
                   setBrokerApp("");
+                } else {
+                  setIsCustomBroker(false);
+                  setBrokerApp(e.target.value);
                 }
               }}
             >
-              <span>+ Custom / Other</span>
-            </button>
-          </div>
-
+              {getQuickBrokerOptions(category).map((app) => (
+                <option key={app} value={app}>
+                  {app}
+                </option>
+              ))}
+              <option value="__custom__">Other / Custom Broker…</option>
+            </select>
+          </label>
           {isCustomBroker && (
             <input
               style={{ marginTop: "8px" }}
+              required
               value={brokerApp}
               onChange={(e) => setBrokerApp(e.target.value)}
               placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities, ICICI Direct"
+              autoFocus
             />
           )}
         </div>
@@ -598,6 +570,7 @@ export function AddAssetModal() {
 export function EditAssetModal() {
   const { editingAsset, setEditingAsset, updateAsset } = usePortfolio();
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
 
   if (!editingAsset) return null;
 
@@ -779,6 +752,63 @@ export function EditAssetModal() {
               <option value="USD">USD — US Dollar ($)</option>
             </select>
           </label>
+        </div>
+
+        <div>
+          <label>
+            Investing via App / Broker
+            <select
+              value={
+                isEditCustomBroker ||
+                (editingAsset.brokerApp &&
+                  !getQuickBrokerOptions(editingAsset.category).includes(
+                    editingAsset.brokerApp
+                  ))
+                  ? "__custom__"
+                  : (editingAsset.brokerApp ||
+                    getQuickBrokerOptions(editingAsset.category)[0] ||
+                    "Groww")
+              }
+              onChange={(e) => {
+                if (e.target.value === "__custom__") {
+                  setIsEditCustomBroker(true);
+                  setEditingAsset({ ...editingAsset, brokerApp: "" });
+                } else {
+                  setIsEditCustomBroker(false);
+                  setEditingAsset({
+                    ...editingAsset,
+                    brokerApp: e.target.value,
+                  });
+                }
+              }}
+            >
+              {getQuickBrokerOptions(editingAsset.category).map((app) => (
+                <option key={app} value={app}>
+                  {app}
+                </option>
+              ))}
+              <option value="__custom__">Other / Custom Broker…</option>
+            </select>
+          </label>
+          {(isEditCustomBroker ||
+            (editingAsset.brokerApp &&
+              !getQuickBrokerOptions(editingAsset.category).includes(
+                editingAsset.brokerApp
+              ))) && (
+            <input
+              style={{ marginTop: "8px" }}
+              required
+              value={editingAsset.brokerApp || ""}
+              onChange={(e) =>
+                setEditingAsset({
+                  ...editingAsset,
+                  brokerApp: e.target.value,
+                })
+              }
+              placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities, ICICI Direct"
+              autoFocus
+            />
+          )}
         </div>
 
         <div className="form-row">
