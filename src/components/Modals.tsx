@@ -17,6 +17,14 @@ import { AssetDetailModal } from "@/components/AssetDetailModal";
 import { getQuickBrokerOptions } from "@/utils/brokers";
 import { BrokerLogoAvatar } from "@/components/Logos";
 
+function calculateHoldings(investedAmount: string, buyPrice: string): number {
+  const invested = Number(investedAmount);
+  const price = Number(buyPrice);
+  return Number.isFinite(invested) && invested > 0 && Number.isFinite(price) && price > 0
+    ? invested / price
+    : 0;
+}
+
 export function AddAssetModal() {
   const {
     modal,
@@ -90,12 +98,7 @@ export function AddAssetModal() {
     }
   }, [modal, defaultCategory, prefillAsset, setPrefillAsset]);
 
-  const computedAddHoldings =
-    Number(currentValue) > 0 && Number(currentPrice) > 0
-      ? Number(currentValue) / Number(currentPrice)
-      : Number(investedAmount) > 0 && Number(buyPrice) > 0
-        ? Number(investedAmount) / Number(buyPrice)
-        : 0;
+  const computedAddHoldings = calculateHoldings(investedAmount, buyPrice);
 
   async function handleFetchLivePrice(
     stockQuery: string,
@@ -119,8 +122,9 @@ export function AddAssetModal() {
       if (data.success && data.price) {
         setBuyPrice(String(data.price));
         setCurrentPrice(String(data.price));
-        if (computedAddHoldings > 0) {
-          setCurrentValue((data.price * computedAddHoldings).toFixed(2));
+        const holdingsAtQuote = calculateHoldings(investedAmount, String(data.price));
+        if (holdingsAtQuote > 0) {
+          setCurrentValue((data.price * holdingsAtQuote).toFixed(2));
         } else if (Number(investedAmount) > 0) {
           setCurrentValue(Number(investedAmount).toFixed(2));
         }
@@ -466,7 +470,14 @@ export function AddAssetModal() {
                 min="0.01"
                 step="any"
                 value={investedAmount}
-                onChange={(e) => setInvestedAmount(e.target.value)}
+                onChange={(e) => {
+                  const amount = e.target.value;
+                  const holdings = calculateHoldings(amount, buyPrice);
+                  setInvestedAmount(amount);
+                  if (holdings > 0 && Number(currentPrice) > 0) {
+                    setCurrentValue((holdings * Number(currentPrice)).toFixed(2));
+                  }
+                }}
                 placeholder="e.g. 50000"
               />
             </label>
@@ -479,7 +490,14 @@ export function AddAssetModal() {
                 min="0.0001"
                 step="any"
                 value={buyPrice}
-                onChange={(e) => setBuyPrice(e.target.value)}
+                onChange={(e) => {
+                  const price = e.target.value;
+                  const holdings = calculateHoldings(investedAmount, price);
+                  setBuyPrice(price);
+                  if (holdings > 0 && Number(currentPrice) > 0) {
+                    setCurrentValue((holdings * Number(currentPrice)).toFixed(2));
+                  }
+                }}
                 placeholder="e.g. 1165"
               />
             </label>
@@ -521,7 +539,14 @@ export function AddAssetModal() {
                 min="0.01"
                 step="any"
                 value={currentValue}
-                onChange={(e) => setCurrentValue(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const holdings = computedAddHoldings;
+                  setCurrentValue(value);
+                  if (Number(value) > 0 && holdings > 0) {
+                    setCurrentPrice((Number(value) / holdings).toFixed(2));
+                  }
+                }}
                 placeholder={
                   computedAddHoldings > 0
                     ? (computedAddHoldings * (Number(buyPrice) || 1)).toFixed(2)
@@ -540,7 +565,7 @@ export function AddAssetModal() {
                 onChange={(e) => {
                   const p = e.target.value;
                   setCurrentPrice(p);
-                  if (Number(p) > 0 && computedAddHoldings > 0 && !currentValue) {
+                  if (Number(p) > 0 && computedAddHoldings > 0) {
                     setCurrentValue((Number(p) * computedAddHoldings).toFixed(2));
                   }
                 }}
@@ -589,13 +614,10 @@ export function EditAssetModal() {
 
   if (!editingAsset) return null;
 
-  const computedEditHoldings =
-    Number(editingAsset.currentValue) > 0 && Number(editingAsset.currentPrice) > 0
-      ? Number(editingAsset.currentValue) / Number(editingAsset.currentPrice)
-      : Number(editingAsset.investedAmount) > 0 &&
-        Number(editingAsset.buyPrice) > 0
-        ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
-        : 0;
+  const computedEditHoldings = calculateHoldings(
+    editingAsset.investedAmount,
+    editingAsset.buyPrice
+  );
 
   async function handleRefreshQuote() {
     if (!editingAsset?.name.trim()) return;
@@ -840,12 +862,18 @@ export function EditAssetModal() {
               min="0.01"
               step="any"
               value={editingAsset.investedAmount}
-              onChange={(e) =>
+              onChange={(e) => {
+                const investedAmount = e.target.value;
+                const holdings = calculateHoldings(investedAmount, editingAsset.buyPrice);
                 setEditingAsset({
                   ...editingAsset,
-                  investedAmount: e.target.value,
-                })
-              }
+                  investedAmount,
+                  currentValue:
+                    holdings > 0 && Number(editingAsset.currentPrice) > 0
+                      ? (holdings * Number(editingAsset.currentPrice)).toFixed(2)
+                      : editingAsset.currentValue,
+                });
+              }}
             />
           </label>
 
@@ -857,12 +885,18 @@ export function EditAssetModal() {
               min="0.0001"
               step="any"
               value={editingAsset.buyPrice}
-              onChange={(e) =>
+              onChange={(e) => {
+                const buyPrice = e.target.value;
+                const holdings = calculateHoldings(editingAsset.investedAmount, buyPrice);
                 setEditingAsset({
                   ...editingAsset,
-                  buyPrice: e.target.value,
-                })
-              }
+                  buyPrice,
+                  currentValue:
+                    holdings > 0 && Number(editingAsset.currentPrice) > 0
+                      ? (holdings * Number(editingAsset.currentPrice)).toFixed(2)
+                      : editingAsset.currentValue,
+                });
+              }}
             />
           </label>
         </div>
