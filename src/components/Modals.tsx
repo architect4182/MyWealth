@@ -1072,12 +1072,13 @@ export function EditAssetModal() {
 
     try {
       if (draft.isSip) {
-        const amount = Number(draft.sipAmount) || Number(draft.investedAmount);
-        const cp = Number(draft.currentPrice) || Number(draft.buyPrice);
-        const bp = cp > 0 ? cp : 1;
-        const q = Number(draft.quantity) > 0 ? Number(draft.quantity) : (amount > 0 && cp > 0 ? amount / cp : 0);
+        const amount = Number(draft.sipAmount) || 0;
+        const userInv = Number(draft.investedAmount);
+        const finalSipInvested = Number.isFinite(userInv) && userInv > 0 ? userInv : amount;
+        const cp = Number(draft.currentPrice) || Number(draft.buyPrice) || 1;
+        const q = Number(draft.quantity) > 0 ? Number(draft.quantity) : (finalSipInvested > 0 && cp > 0 ? finalSipInvested / cp : 0);
+        const bp = q > 0 && finalSipInvested > 0 ? (finalSipInvested / q) : cp;
 
-        const finalSipInvested = (Number(draft.sipInstallments) || 1) * amount;
         const assetToUpdate: AssetPosition = {
           id: draft.id,
           name: trimmedName,
@@ -1100,27 +1101,17 @@ export function EditAssetModal() {
 
         await updateAsset(assetToUpdate);
       } else {
-        const userQuantity = Number(draft.quantity);
-        const inv = Number(draft.investedAmount);
-        let bp = Number(draft.buyPrice);
-        if (!bp && userQuantity > 0 && inv > 0) {
-          bp = inv / userQuantity;
-        }
-        const userCp = Number(draft.currentPrice);
-        const cp = userCp > 0 ? userCp : (bp > 0 ? bp : 0);
+        const userQuantity = Number(draft.quantity) || 0;
+        const userInv = Number(draft.investedAmount) || 0;
+        const userCp = Number(draft.currentPrice) || 0;
 
-        let q = 1;
-        if (Number.isFinite(userQuantity) && userQuantity > 0) {
-          q = userQuantity;
-        } else if (inv > 0 && bp > 0) {
-          q = inv / bp;
+        let q = userQuantity;
+        if (q <= 0 && userInv > 0 && userCp > 0) {
+          q = userInv / userCp;
         }
 
-        if (Math.abs(q - Math.round(q)) < 0.00001) {
-          q = Math.round(q);
-        }
-
-        const finalInvested = inv > 0 ? inv : (q * bp);
+        const finalInvested = userInv > 0 ? userInv : (q * userCp);
+        const finalBp = q > 0 && finalInvested > 0 ? (finalInvested / q) : (userCp || 0);
 
         const assetToUpdate: AssetPosition = {
           id: draft.id,
@@ -1128,8 +1119,8 @@ export function EditAssetModal() {
           category: draft.category,
           quantity: q,
           investedAmount: finalInvested,
-          buyPrice: bp > 0 ? bp : cp,
-          currentPrice: cp > 0 ? cp : bp,
+          buyPrice: finalBp,
+          currentPrice: userCp > 0 ? userCp : finalBp,
           currency: draft.currency,
           date: formatLocalDate(),
           isSip: false,
@@ -1545,12 +1536,10 @@ export function EditAssetModal() {
                   onChange={(e) => {
                     const q = e.target.value;
                     const numQ = Number(q);
-                    const bp = Number(editingAsset.buyPrice);
                     const cp = Number(editingAsset.currentPrice);
                     setEditingAsset({
                       ...editingAsset,
                       quantity: q,
-                      investedAmount: numQ > 0 && bp > 0 ? (numQ * bp).toFixed(2) : editingAsset.investedAmount,
                       currentValue: numQ > 0 && cp > 0 ? (numQ * cp).toFixed(2) : editingAsset.currentValue,
                     });
                   }}
@@ -1559,40 +1548,50 @@ export function EditAssetModal() {
               </label>
 
               <label>
-                Buy Price per unit ({editingAsset.currency === "USD" ? "$" : "₹"})
+                Total Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
                 <input
                   required
                   type="number"
-                  min="0.0001"
+                  min="0.01"
                   step="any"
-                  value={editingAsset.buyPrice}
-                  onChange={(e) => {
-                    const price = e.target.value;
-                    const numBp = Number(price);
-                    const q = Number(editingAsset.quantity);
-                    let newInv = editingAsset.investedAmount;
-                    let newQ = editingAsset.quantity;
-                    if (numBp > 0) {
-                      if (q > 0) {
-                        newInv = (q * numBp).toFixed(2);
-                      } else if (Number(editingAsset.investedAmount) > 0) {
-                        const calcQ = Number(editingAsset.investedAmount) / numBp;
-                        newQ = calcQ.toFixed(calcQ % 1 === 0 ? 0 : 4);
-                      }
-                    }
+                  value={editingAsset.investedAmount}
+                  onChange={(e) =>
                     setEditingAsset({
                       ...editingAsset,
-                      buyPrice: price,
-                      investedAmount: newInv,
-                      quantity: newQ,
-                    });
-                  }}
-                  placeholder="e.g. 1165"
+                      investedAmount: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. 5000"
                 />
               </label>
             </div>
 
             <div className="form-row">
+              <label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Avg Buy Price ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Invested ÷ Units
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  step="any"
+                  value={
+                    Number(editingAsset.quantity) > 0 && Number(editingAsset.investedAmount) > 0
+                      ? (Number(editingAsset.investedAmount) / Number(editingAsset.quantity)).toFixed(2)
+                      : (editingAsset.buyPrice || "")
+                  }
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
+                  }}
+                />
+              </label>
+
               <label>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>Market Price (CMP / NAV) ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
@@ -1615,8 +1614,10 @@ export function EditAssetModal() {
                   placeholder="Live quote auto-fills"
                 />
               </label>
+            </div>
 
-              <label>
+            <div className="form-row">
+              <label style={{ width: "100%" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>Current Valuation ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
                   <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
@@ -1640,40 +1641,6 @@ export function EditAssetModal() {
                     cursor: "not-allowed",
                   }}
                   placeholder="0.00"
-                />
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label>
-                Total Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
-                <input
-                  required
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  value={editingAsset.investedAmount}
-                  onChange={(e) => {
-                    const inv = e.target.value;
-                    const numInv = Number(inv);
-                    const bp = Number(editingAsset.buyPrice);
-                    const cp = Number(editingAsset.currentPrice);
-                    let newQ = editingAsset.quantity;
-                    let newCv = editingAsset.currentValue;
-                    if (numInv > 0 && bp > 0) {
-                      const calcQ = numInv / bp;
-                      newQ = calcQ.toFixed(calcQ % 1 === 0 ? 0 : 4);
-                      if (cp > 0) {
-                        newCv = (calcQ * cp).toFixed(2);
-                      }
-                    }
-                    setEditingAsset({
-                      ...editingAsset,
-                      investedAmount: inv,
-                      quantity: newQ,
-                      currentValue: newCv,
-                    });
-                  }}
                 />
               </label>
             </div>
