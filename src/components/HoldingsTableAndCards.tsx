@@ -84,7 +84,7 @@ export function HoldingsTableAndCards({
       list = list.filter(
         (a) =>
           a.name.toLowerCase().includes(q) ||
-          getStockTicker(a.name).toLowerCase().includes(q) ||
+          getStockTicker(a.name, a.category).toLowerCase().includes(q) ||
           a.category.toLowerCase().includes(q)
       );
     }
@@ -100,17 +100,17 @@ export function HoldingsTableAndCards({
         valA = a.currentPrice;
         valB = b.currentPrice;
       } else if (sortField === "invested") {
-        valA = a.quantity * a.buyPrice;
-        valB = b.quantity * b.buyPrice;
+        valA = a.investedAmount !== undefined && a.investedAmount > 0 ? a.investedAmount : a.quantity * a.buyPrice;
+        valB = b.investedAmount !== undefined && b.investedAmount > 0 ? b.investedAmount : b.quantity * b.buyPrice;
       } else if (sortField === "value") {
         valA = a.quantity * a.currentPrice;
         valB = b.quantity * b.currentPrice;
       } else if (sortField === "pnl") {
-        const invA = a.quantity * a.buyPrice;
+        const invA = a.investedAmount !== undefined && a.investedAmount > 0 ? a.investedAmount : a.quantity * a.buyPrice;
         const curA = a.quantity * a.currentPrice;
         valA = curA - invA;
 
-        const invB = b.quantity * b.buyPrice;
+        const invB = b.investedAmount !== undefined && b.investedAmount > 0 ? b.investedAmount : b.quantity * b.buyPrice;
         const curB = b.quantity * b.currentPrice;
         valB = curB - invB;
       }
@@ -228,10 +228,12 @@ export function HoldingsTableAndCards({
         /* APPLE STOCKS GLASS CARDS STACK */
         <div className="apple-card-stack">
           {displayedAssets.map((item) => {
-            const ticker = getStockTicker(item.name);
+            const ticker = getStockTicker(item.name, item.category);
             const isUnsaved = unsavedAssetIds.has(item.id);
             const isFlashed = flashAssetId === item.id;
-            const investedVal = item.quantity * item.buyPrice;
+            const investedVal = item.investedAmount !== undefined && item.investedAmount > 0
+              ? item.investedAmount
+              : (item.quantity * item.buyPrice);
             const currentVal = item.quantity * item.currentPrice;
             const pnl = currentVal - investedVal;
             const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
@@ -439,10 +441,12 @@ export function HoldingsTableAndCards({
               </thead>
               <tbody>
                 {displayedAssets.map((item) => {
-                  const ticker = getStockTicker(item.name);
+                  const ticker = getStockTicker(item.name, item.category);
                   const isUnsaved = unsavedAssetIds.has(item.id);
                   const isFlashed = flashAssetId === item.id;
-                  const investedVal = item.quantity * item.buyPrice;
+                  const investedVal = item.investedAmount !== undefined && item.investedAmount > 0
+              ? item.investedAmount
+              : (item.quantity * item.buyPrice);
                   const currentVal = item.quantity * item.currentPrice;
                   const pnl = currentVal - investedVal;
                   const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;

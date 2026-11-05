@@ -120,7 +120,7 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
     <div className="apple-trending-grid">
       {list.map((item) => {
         const isPos = item.changePercent >= 0;
-        const ticker = item.ticker || getStockTicker(item.name);
+        const ticker = item.ticker || getStockTicker(item.name, item.category);
         const absChange = Math.abs(item.change || 0);
         const isUsd = item.currency === "USD";
         const isConverted = isUsd && showUsdInRupees;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getStockTicker } from "@/utils/tickers";
 
 const headers = {
   "User-Agent":
@@ -25,59 +26,26 @@ function isInvalidSymbolParam(sym?: string | null): boolean {
 function resolveKnownSymbol(query: string, category: string): string | null {
   const lower = query.toLowerCase().trim();
 
+  // Unified lookup via getStockTicker
+  const mapped = getStockTicker(query, category);
+
   if (category === "US Stocks") {
-    if (lower.includes("apple") || lower === "aapl") return "AAPL";
-    if (lower.includes("google") || lower.includes("alphabet") || lower === "googl" || lower === "goog") return "GOOGL";
-    if (lower.includes("microsoft") || lower === "msft") return "MSFT";
-    if (lower.includes("amazon") || lower === "amzn") return "AMZN";
-    if (lower.includes("nvidia") || lower === "nvda") return "NVDA";
-    if (lower.includes("tesla") || lower === "tsla") return "TSLA";
-    if (lower.includes("meta") || lower.includes("facebook")) return "META";
-    if (lower.includes("amd") || lower.includes("advanced micro")) return "AMD";
-    if (lower.includes("netflix") || lower === "nflx") return "NFLX";
-    if (lower.includes("coinbase") || lower === "coin") return "COIN";
-    if (lower.includes("intel") || lower === "intc") return "INTC";
-    if (lower.includes("palantir") || lower === "pltr") return "PLTR";
-    if (lower.includes("broadcom") || lower === "avgo") return "AVGO";
+    if (mapped) return mapped;
     if (/^[A-Z]{1,6}$/.test(query.trim())) return query.trim();
     return null;
   }
 
   if (category === "Indian Equities" || category === "Gold & Fixed Income") {
-    if (lower.includes("jio platforms") || lower === "jpl" || lower === "jpl.ns") return "JPL.NS";
-    if (lower.includes("jio financial") || lower === "jiofin" || lower === "jiofin.ns") return "JIOFIN.NS";
-    if (lower.includes("reliance") && !lower.includes("jio")) return "RELIANCE.NS";
-    if (lower.includes("tata motors")) return "TMPV.NS";
-    if (lower.includes("tcs") || lower.includes("tata consultancy")) return "TCS.NS";
-    if (lower.includes("hdfc bank") || lower === "hdfc") return "HDFCBANK.NS";
-    if (lower.includes("icici bank") || lower === "icici") return "ICICIBANK.NS";
-    if (lower.includes("sbi") || lower.includes("state bank")) return "SBIN.NS";
-    if (lower.includes("infosys") || lower === "infy") return "INFY.NS";
-    if (lower.includes("itc")) return "ITC.NS";
-    if (lower.includes("larsen") || lower === "lt") return "LT.NS";
-    if (lower.includes("airtel") || lower.includes("bharti")) return "BHARTIARTL.NS";
-    if (lower.includes("maruti")) return "MARUTI.NS";
-    if (lower.includes("sun pharma")) return "SUNPHARMA.NS";
-    if (lower.includes("wipro")) return "WIPRO.NS";
-    if (lower.includes("titan")) return "TITAN.NS";
-    if (lower.includes("bajaj finance")) return "BAJFINANCE.NS";
-    if (lower.includes("hindustan unilever") || lower === "hul") return "HINDUNILVR.NS";
-    if (lower.includes("axis bank")) return "AXISBANK.NS";
-    if (lower.includes("kotak")) return "KOTAKBANK.NS";
-    if (lower.includes("adani ent")) return "ADANIENT.NS";
-    if (lower.includes("adani port")) return "ADANIPORTS.NS";
-    if (lower.includes("zomato")) return "ZOMATO.NS";
-    if (lower.includes("swiggy")) return "SWIGGY.NS";
-    if (lower.includes("gold") || lower.includes("goldbees")) return "GOLDBEES.NS";
-    if (lower.includes("nifty") || lower.includes("niftybees")) return "NIFTYBEES.NS";
-    if (lower.includes("silver") || lower.includes("silverbees")) return "SILVERBEES.NS";
-
+    if (mapped) {
+      return mapped.endsWith(".NS") || mapped.endsWith(".BO") ? mapped : `${mapped}.NS`;
+    }
     if (/^[A-Z0-9.-]{1,12}\.(?:NS|BO)$/i.test(query.trim())) return query.trim().toUpperCase();
     if (/^[A-Z0-9]{1,10}$/i.test(query.trim())) return `${query.trim().toUpperCase()}.NS`;
     return null;
   }
 
   if (category === "Crypto") {
+    if (mapped) return mapped.endsWith("-USD") ? mapped : `${mapped}-USD`;
     if (lower.includes("bitcoin") || lower === "btc") return "BTC-USD";
     if (lower.includes("ethereum") || lower === "eth") return "ETH-USD";
     if (lower.includes("solana") || lower === "sol") return "SOL-USD";
@@ -86,7 +54,7 @@ function resolveKnownSymbol(query: string, category: string): string | null {
     return sym;
   }
 
-  return null;
+  return mapped || null;
 }
 
 async function searchYahooSymbol(query: string, category: string): Promise<string | null> {

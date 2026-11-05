@@ -77,6 +77,9 @@ export async function POST(req: NextRequest) {
   const quantity = Number(body.quantity) || 0;
   const buyPrice = Number(body.buyPrice) || 0;
   const currentPrice = Number(body.currentPrice !== undefined ? body.currentPrice : body.buyPrice) || 0;
+  const investedAmount = body.investedAmount !== undefined
+    ? Number(body.investedAmount)
+    : (body.invested_amount !== undefined ? Number(body.invested_amount) : (quantity * buyPrice));
   const currency = (body.currency === "USD" ? "USD" : "INR") as "INR" | "USD";
   const brokerApp = body.brokerApp ? String(body.brokerApp).trim() : (body.broker_app ? String(body.broker_app).trim() : null);
 
@@ -101,51 +104,44 @@ export async function POST(req: NextRequest) {
       };
 
   try {
-    // Determine existing case for username in database to preserve consistency
-    let canonicalUser = username;
-    const existingCheck = await supabase
-      .from("assets")
-      .select("username")
-      .ilike("username", username)
-      .limit(1)
-      .maybeSingle();
-    if (existingCheck.data?.username) {
-      canonicalUser = existingCheck.data.username;
-    }
-
     const basePayload: Record<string, any> = {
       name: String(body.name).trim(),
       category: body.category,
       quantity,
+      invested_amount: investedAmount,
       buy_price: buyPrice,
       current_price: currentPrice,
       currency,
-      username: canonicalUser,
+      username: username.trim(),
     };
     if (brokerApp) {
       basePayload.broker_app = brokerApp;
     }
 
-    // 1. Try full insert with username, broker_app, and SIP fields
+    // 1. Try full insert with username, broker_app, invested_amount, and SIP fields
     let insertRes = await supabase
       .from("assets")
       .insert([{ ...basePayload, ...sipFields }])
       .select();
 
-    // 2. Fallback if broker_app or SIP columns do not exist yet (code 42703)
-    if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
-      const payloadWithoutBroker = { ...basePayload };
-      delete payloadWithoutBroker.broker_app;
+    // 2. Fallback if broker_app, invested_amount, or SIP columns do not exist yet (code 42703)
+    if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested") || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
+      const payloadFallback = { ...basePayload };
+      delete payloadFallback.broker_app;
+      if (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested")) {
+        delete payloadFallback.invested_amount;
+      }
 
       insertRes = await supabase
         .from("assets")
-        .insert([{ ...payloadWithoutBroker, ...sipFields }])
+        .insert([{ ...payloadFallback, ...sipFields }])
         .select();
 
-      if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("sip"))) {
+      if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("sip") || insertRes.error.message?.includes("invested"))) {
+        delete payloadFallback.invested_amount;
         insertRes = await supabase
           .from("assets")
-          .insert([payloadWithoutBroker])
+          .insert([payloadFallback])
           .select();
       }
     }
@@ -162,7 +158,7 @@ export async function POST(req: NextRequest) {
             buy_price: buyPrice,
             current_price: currentPrice,
             currency,
-            user_id: canonicalUser,
+            user_id: username.trim(),
           },
         ])
         .select();
@@ -174,7 +170,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!insertRes.data || !insertRes.data[0]) {
-      return NextResponse.json({ success: false, error: "Asset could not be created" }, { status: 500 });
+      return NextResponse.json({ success: false, error: "Asset could not be created in database" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, asset: insertRes.data[0] }, { status: 201 });
@@ -202,6 +198,9 @@ export async function PUT(req: NextRequest) {
   if (body.name !== undefined) updates.name = String(body.name).trim();
   if (body.category !== undefined) updates.category = body.category;
   if (body.quantity !== undefined) updates.quantity = Number(body.quantity);
+  if (body.investedAmount !== undefined || body.invested_amount !== undefined) {
+    updates.invested_amount = Number(body.investedAmount !== undefined ? body.investedAmount : body.invested_amount);
+  }
   if (body.buyPrice !== undefined || body.buy_price !== undefined) {
     updates.buy_price = Number(body.buyPrice !== undefined ? body.buyPrice : body.buy_price);
   }
@@ -221,28 +220,25 @@ export async function PUT(req: NextRequest) {
   if (body.sipStatus !== undefined) updates.sip_status = body.sipStatus;
 
   try {
-    let query = supabase.from("assets").update(updates).eq("id", id);
-    if (authUser) {
-      query = query.ilike("username", authUser);
-    }
-    let { data, error } = await query.select();
+    let updateRes = await supabase.from("assets").update(updates).eq("id", id).select();
 
-    if (error && (error.code === "42703" || error.message?.includes("broker_app"))) {
-      delete updates.broker_app;
-      let retryQuery = supabase.from("assets").update(updates).eq("id", id);
-      if (authUser) {
-        retryQuery = retryQuery.ilike("username", authUser);
+    if (updateRes.error && (updateRes.error.code === "42703" || updateRes.error.message?.includes("invested") || updateRes.error.message?.includes("broker_app"))) {
+      if (updateRes.error.code === "42703" || updateRes.error.message?.includes("invested")) {
+        delete updates.invested_amount;
       }
-      const retryRes = await retryQuery.select();
-      data = retryRes.data;
-      error = retryRes.error;
+      delete updates.broker_app;
+      updateRes = await supabase.from("assets").update(updates).eq("id", id).select();
     }
 
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    if (updateRes.error) {
+      return NextResponse.json({ success: false, error: updateRes.error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true, asset: data?.[0] });
+    if (!updateRes.data || updateRes.data.length === 0) {
+      return NextResponse.json({ success: false, error: "Holding not found in database to update" }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true, asset: updateRes.data[0] });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message || "Failed to update asset" }, { status: 500 });
   }
@@ -254,7 +250,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: "Supabase is not configured" }, { status: 503 });
   }
 
-  const authUser = await getAuthUser(req);
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
@@ -263,11 +258,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    let query = supabase.from("assets").delete().eq("id", id);
-    if (authUser) {
-      query = query.ilike("username", authUser);
-    }
-    const { error } = await query;
+    const { error } = await supabase.from("assets").delete().eq("id", id);
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 });

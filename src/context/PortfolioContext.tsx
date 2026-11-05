@@ -2,10 +2,11 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData, AssetSaveNotification } from "@/types/portfolio";
+import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData, AssetSaveNotification, OperationResult, ProcessingState } from "@/types/portfolio";
 import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { calculateSipCatchup, formatLocalDate } from "@/utils/sip";
+import { getStockTicker } from "@/utils/tickers";
 
 // Pre-cached high performance number formatters (zero C++ constructor allocations per render)
 const inrIntFormatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -99,6 +100,7 @@ interface PortfolioContextType {
     name: string;
     category: AssetCategory;
     quantity: number;
+    investedAmount?: number;
     buyPrice: number;
     currentPrice: number;
     currency: "INR" | "USD";
@@ -119,6 +121,11 @@ interface PortfolioContextType {
   clearSipNotice: () => void;
   assetSaveNotification: AssetSaveNotification | null;
   setAssetSaveNotification: (v: AssetSaveNotification | null) => void;
+  operationResult: OperationResult | null;
+  setOperationResult: (v: OperationResult | null) => void;
+  closeOperationResult: () => void;
+  processingState: ProcessingState | null;
+  setProcessingState: (v: ProcessingState | null) => void;
   modal: boolean;
   setModal: (v: boolean) => void;
   editingAsset: EditAssetForm | null;
@@ -165,6 +172,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [sipNotice, setSipNotice] = useState<string | null>(null);
   const clearSipNotice = useCallback(() => setSipNotice(null), []);
   const [assetSaveNotification, setAssetSaveNotification] = useState<AssetSaveNotification | null>(null);
+  const [operationResult, setOperationResult] = useState<OperationResult | null>(null);
+  const closeOperationResult = useCallback(() => setOperationResult(null), []);
+  const [processingState, setProcessingState] = useState<ProcessingState | null>(null);
   const assetNotificationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sipCatchupExecutedRef = useRef<Set<string>>(new Set());
 
@@ -417,26 +427,37 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (!error && data && isMounted) {
-          const formatted: AssetPosition[] = data.map((row: any) => ({
-            id: String(row.id),
-            username: row.username || row.user_id || uid,
-            userId: row.username || row.user_id || uid,
-            name: row.name,
-            category: row.category as AssetCategory,
-            quantity: Number(row.quantity),
-            buyPrice: Number(row.buy_price),
-            currentPrice: Number(row.current_price),
-            currency: row.currency as "INR" | "USD",
-            date: row.created_at ? row.created_at.split("T")[0] : formatLocalDate(),
-            isSip: Boolean(row.is_sip),
-            sipAmount: row.sip_amount ? Number(row.sip_amount) : undefined,
-            sipDay: row.sip_day ? Number(row.sip_day) : undefined,
-            sipStartDate: row.sip_start_date || undefined,
-            sipInstallments: row.sip_installments ? Number(row.sip_installments) : undefined,
-            lastSipDate: row.last_sip_date || undefined,
-            sipStatus: (row.sip_status as "active" | "paused") || (row.is_sip ? "active" : undefined),
-            brokerApp: row.broker_app || undefined,
-          }));
+          const formatted: AssetPosition[] = data.map((row: any) => {
+            const quantity = Number(row.quantity) || 0;
+            const investedAmount = row.invested_amount !== undefined && row.invested_amount !== null
+              ? Number(row.invested_amount)
+              : (quantity * Number(row.buy_price || 0));
+            const buyPrice = investedAmount > 0 && quantity > 0
+              ? (investedAmount / quantity)
+              : Number(row.buy_price || 0);
+
+            return {
+              id: String(row.id),
+              username: row.username || row.user_id || uid,
+              userId: row.username || row.user_id || uid,
+              name: row.name,
+              category: row.category as AssetCategory,
+              quantity,
+              investedAmount,
+              buyPrice,
+              currentPrice: Number(row.current_price !== undefined ? row.current_price : buyPrice),
+              currency: row.currency as "INR" | "USD",
+              date: row.created_at ? row.created_at.split("T")[0] : formatLocalDate(),
+              isSip: Boolean(row.is_sip),
+              sipAmount: row.sip_amount ? Number(row.sip_amount) : undefined,
+              sipDay: row.sip_day ? Number(row.sip_day) : undefined,
+              sipStartDate: row.sip_start_date || undefined,
+              sipInstallments: row.sip_installments ? Number(row.sip_installments) : undefined,
+              lastSipDate: row.last_sip_date || undefined,
+              sipStatus: (row.sip_status as "active" | "paused") || (row.is_sip ? "active" : undefined),
+              brokerApp: row.broker_app || undefined,
+            };
+          });
 
           // Merge local SIP metadata if Supabase schema columns are not yet provisioned
           try {
@@ -510,15 +531,24 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           const matches = rowUser === uid.toLowerCase();
           if (!matches) return;
 
+          const quantity = Number(row.quantity) || 0;
+          const investedAmount = row.invested_amount !== undefined && row.invested_amount !== null
+            ? Number(row.invested_amount)
+            : (quantity * Number(row.buy_price || 0));
+          const buyPrice = investedAmount > 0 && quantity > 0
+            ? (investedAmount / quantity)
+            : Number(row.buy_price || 0);
+
           const newPos: AssetPosition = {
             id: String(row.id),
             username: row.username || row.user_id || uid,
             userId: row.username || row.user_id || uid,
             name: row.name,
             category: row.category as AssetCategory,
-            quantity: Number(row.quantity),
-            buyPrice: Number(row.buy_price),
-            currentPrice: Number(row.currentPrice !== undefined ? row.currentPrice : row.current_price),
+            quantity,
+            investedAmount,
+            buyPrice,
+            currentPrice: Number(row.currentPrice !== undefined ? row.currentPrice : (row.current_price !== undefined ? row.current_price : buyPrice)),
             currency: row.currency as "INR" | "USD",
             date: row.created_at ? row.created_at.split("T")[0] : formatLocalDate(),
             isSip: Boolean(row.is_sip),
@@ -591,26 +621,34 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             return next;
           });
           setAssets((prev) => {
-            const next = prev.map((a) =>
-              a.id === updatedId
-                ? {
-                    ...a,
-                    name: row.name ?? a.name,
-                    category: (row.category as AssetCategory) ?? a.category,
-                    quantity: row.quantity !== undefined ? Number(row.quantity) : a.quantity,
-                    buyPrice: row.buy_price !== undefined ? Number(row.buy_price) : a.buyPrice,
-                    currentPrice: row.current_price !== undefined ? Number(row.current_price) : a.currentPrice,
-                    currency: (row.currency as "INR" | "USD") ?? a.currency,
-                    isSip: row.is_sip !== undefined ? Boolean(row.is_sip) : a.isSip,
-                    sipAmount: row.sip_amount !== undefined ? (row.sip_amount ? Number(row.sip_amount) : undefined) : a.sipAmount,
-                    sipDay: row.sip_day !== undefined ? (row.sip_day ? Number(row.sip_day) : undefined) : a.sipDay,
-                    sipStartDate: row.sip_start_date !== undefined ? (row.sip_start_date || undefined) : a.sipStartDate,
-                    sipInstallments: row.sip_installments !== undefined ? (row.sip_installments ? Number(row.sip_installments) : undefined) : a.sipInstallments,
-                    lastSipDate: row.last_sip_date !== undefined ? (row.last_sip_date || undefined) : a.lastSipDate,
-                    sipStatus: (row.sip_status as "active" | "paused") ?? a.sipStatus,
-                  }
-                : a
-            );
+            const next = prev.map((a) => {
+              if (a.id !== updatedId) return a;
+              const q = row.quantity !== undefined ? Number(row.quantity) : a.quantity;
+              const inv = row.invested_amount !== undefined && row.invested_amount !== null
+                ? Number(row.invested_amount)
+                : (row.buy_price !== undefined ? q * Number(row.buy_price) : a.investedAmount);
+              const bp = (inv !== undefined && q > 0)
+                ? (inv / q)
+                : (row.buy_price !== undefined ? Number(row.buy_price) : a.buyPrice);
+
+              return {
+                ...a,
+                name: row.name ?? a.name,
+                category: (row.category as AssetCategory) ?? a.category,
+                quantity: q,
+                investedAmount: inv,
+                buyPrice: bp,
+                currentPrice: row.current_price !== undefined ? Number(row.current_price) : a.currentPrice,
+                currency: (row.currency as "INR" | "USD") ?? a.currency,
+                isSip: row.is_sip !== undefined ? Boolean(row.is_sip) : a.isSip,
+                sipAmount: row.sip_amount !== undefined ? (row.sip_amount ? Number(row.sip_amount) : undefined) : a.sipAmount,
+                sipDay: row.sip_day !== undefined ? (row.sip_day ? Number(row.sip_day) : undefined) : a.sipDay,
+                sipStartDate: row.sip_start_date !== undefined ? (row.sip_start_date || undefined) : a.sipStartDate,
+                sipInstallments: row.sip_installments !== undefined ? (row.sip_installments ? Number(row.sip_installments) : undefined) : a.sipInstallments,
+                lastSipDate: row.last_sip_date !== undefined ? (row.last_sip_date || undefined) : a.lastSipDate,
+                sipStatus: (row.sip_status as "active" | "paused") ?? a.sipStatus,
+              };
+            });
             persistLocal(next, uid);
             return next;
           });
@@ -650,7 +688,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   // Metrics
   const totalInvestedINR = useMemo(() => {
     return assets.reduce((sum, item) => {
-      const cost = item.quantity * item.buyPrice;
+      const cost = item.investedAmount !== undefined && item.investedAmount > 0
+        ? item.investedAmount
+        : item.quantity * item.buyPrice;
       return sum + (item.currency === "USD" ? cost * usdInrRate : cost);
     }, 0);
   }, [assets, usdInrRate]);
@@ -673,7 +713,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   const stocksInvested = useMemo(() => {
     return equities.reduce(
-      (acc, a) => acc + (a.currency === "USD" ? a.quantity * a.buyPrice * usdInrRate : a.quantity * a.buyPrice),
+      (acc, a) => {
+        const cost = a.investedAmount !== undefined && a.investedAmount > 0
+          ? a.investedAmount
+          : a.quantity * a.buyPrice;
+        return acc + (a.currency === "USD" ? cost * usdInrRate : cost);
+      },
       0
     );
   }, [equities, usdInrRate]);
@@ -688,7 +733,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const stocksPnl = stocksCurrent - stocksInvested;
   const stocksPnlPct = stocksInvested > 0 ? (stocksPnl / stocksInvested) * 100 : 0;
 
-  const mfInvested = useMemo(() => mutualFunds.reduce((acc, a) => acc + a.quantity * a.buyPrice, 0), [mutualFunds]);
+  const mfInvested = useMemo(() => mutualFunds.reduce((acc, a) => {
+    const cost = a.investedAmount !== undefined && a.investedAmount > 0
+      ? a.investedAmount
+      : a.quantity * a.buyPrice;
+    return acc + (a.currency === "USD" ? cost * usdInrRate : cost);
+  }, 0), [mutualFunds, usdInrRate]);
   const mfCurrent = useMemo(() => mutualFunds.reduce((acc, a) => acc + a.quantity * a.currentPrice, 0), [mutualFunds]);
   const mfPnl = mfCurrent - mfInvested;
   const mfPnlPct = mfInvested > 0 ? (mfPnl / mfInvested) * 100 : 0;
@@ -846,46 +896,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         assets.map(async (asset) => {
           let ticker = "";
           let marketType = "";
-          const lower = asset.name.toLowerCase();
 
           if (asset.category === "US Stocks") {
             marketType = "US";
-            if (lower.includes("apple")) ticker = "AAPL";
-            else if (lower.includes("google") || lower.includes("alphabet")) ticker = "GOOGL";
-            else if (lower.includes("microsoft")) ticker = "MSFT";
-            else if (lower.includes("amazon")) ticker = "AMZN";
-            else if (lower.includes("nvidia")) ticker = "NVDA";
-            else if (lower.includes("tesla")) ticker = "TSLA";
-            else ticker = asset.name.toUpperCase();
+            ticker = getStockTicker(asset.name, "US Stocks");
           } else if (asset.category === "Indian Equities") {
             marketType = "INDIA";
-            if (lower.includes("icici")) ticker = "ICICIBANK";
-            else if (lower.includes("reliance") && !lower.includes("jio")) ticker = "RELIANCE";
-            else if (lower.includes("jio financial")) ticker = "JIOFIN";
-            else if (lower.includes("jio platforms") || lower.includes("jio") || lower === "jp") ticker = "JPL";
-            else if (lower.includes("tata motors")) ticker = "TATAMOTORS";
-            else if (lower.includes("tcs") || lower.includes("tata consultancy")) ticker = "TCS";
-            else if (lower.includes("hdfc")) ticker = "HDFCBANK";
-            else if (lower.includes("sbi") || lower.includes("state bank")) ticker = "SBIN";
-            else if (lower.includes("infosys") || lower === "infy") ticker = "INFY";
-            else if (lower.includes("airtel") || lower.includes("bharti")) ticker = "BHARTIARTL";
-            else if (lower.includes("kotak")) ticker = "KOTAKBANK";
-            else if (lower.includes("axis")) ticker = "AXISBANK";
-            else if (lower.includes("zomato")) ticker = "ZOMATO";
-            else if (lower.includes("itc")) ticker = "ITC";
-            else if (lower.includes("maruti")) ticker = "MARUTI";
-            else if (lower.includes("titan")) ticker = "TITAN";
-            else if (lower.includes("larsen") || lower === "lt") ticker = "LT";
-            else if (lower.includes("hindustan unilever") || lower === "hul") ticker = "HINDUNILVR";
-            else if (lower.includes("bajaj finance")) ticker = "BAJFINANCE";
-            else if (lower.includes("sun pharma")) ticker = "SUNPHARMA";
-            else if (lower.includes("wipro")) ticker = "WIPRO";
-            else {
-              const pMatch = asset.name.match(/\((?:NSE:|BSE:|NASDAQ:|NYSE:)?([A-Z0-9.-]+)\)/i);
-              ticker = pMatch ? pMatch[1].toUpperCase() : asset.name.toUpperCase();
-            }
+            ticker = getStockTicker(asset.name, "Indian Equities");
           } else if (asset.category === "Mutual Funds") {
             ticker = asset.name;
+          } else {
+            ticker = getStockTicker(asset.name, asset.category);
           }
 
           if (!ticker) return asset;
@@ -1024,6 +1045,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     name: string;
     category: AssetCategory;
     quantity: number;
+    investedAmount?: number;
     buyPrice: number;
     currentPrice: number;
     currency: "INR" | "USD";
@@ -1034,6 +1056,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     sipInstallments?: number;
     lastSipDate?: string;
     sipStatus?: "active" | "paused";
+    brokerApp?: string;
   }) => {
     const uid = (
       currentUserId ||
@@ -1065,12 +1088,16 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       message: `Adding ${item.name} to your portfolio…`,
     });
 
+    const inv = item.investedAmount !== undefined && item.investedAmount > 0
+      ? item.investedAmount
+      : (item.quantity * item.buyPrice);
     const tempId = `temp-${Date.now()}`;
     const newPos: AssetPosition = {
       id: tempId,
       username: uid,
       userId: uid,
       ...item,
+      investedAmount: inv,
       date: formatLocalDate(),
     };
 
@@ -1083,12 +1110,18 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setFlashAssetId(null), 2000);
 
     // 1. Primary path: Persist via secure, server-side /api/assets endpoint
+    setProcessingState({
+      active: true,
+      title: "Recording Holding…",
+      subtitle: `Adding ${item.name} to database`,
+    });
     try {
       const res = await fetch("/api/assets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...item,
+          investedAmount: inv,
           username: uid,
         }),
       });
@@ -1117,6 +1150,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 id: realId,
                 username: realRow.username || uid,
                 userId: realRow.username || uid,
+                investedAmount: realRow.invested_amount !== undefined && realRow.invested_amount !== null ? Number(realRow.invested_amount) : inv,
                 isSip: Boolean(realRow.is_sip !== undefined ? realRow.is_sip : a.isSip),
                 sipAmount:
                   realRow.sip_amount !== undefined && realRow.sip_amount !== null
@@ -1141,14 +1175,27 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         return dedupeAssets(updated);
       });
       setFlashAssetId(realId);
-      setAssetSaveNotification({
-        status: "success",
-        name: item.name,
-        message: `${item.name} recorded & synced with database!`,
+      setOperationResult({
+        isOpen: true,
+        type: "success",
+        action: "add",
+        title: "Asset Added Successfully!",
+        message: `${item.name} has been recorded and synced with the database.`,
+        assetName: item.name,
+        details: {
+          category: newPos.category,
+          quantity: newPos.quantity,
+          investedAmount: inv,
+          buyPrice: newPos.buyPrice,
+          currentPrice: newPos.currentPrice,
+          currentValue: (newPos.quantity * newPos.currentPrice).toFixed(2),
+          currency: newPos.currency,
+          brokerApp: newPos.brokerApp,
+          isSip: newPos.isSip,
+          sipAmount: newPos.sipAmount,
+        },
       });
-      assetNotificationTimerRef.current = setTimeout(() => {
-        setAssetSaveNotification(null);
-      }, 3500);
+      setAssetSaveNotification(null);
     } catch (err: any) {
       console.warn("[addAsset] API call failed, attempting direct Supabase fallback:", err);
 
@@ -1175,6 +1222,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 name: newPos.name,
                 category: newPos.category,
                 quantity: newPos.quantity,
+                invested_amount: inv,
                 buy_price: newPos.buyPrice,
                 current_price: newPos.currentPrice,
                 currency: newPos.currency,
@@ -1185,7 +1233,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             ])
             .select();
 
-          if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
+          if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested") || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
             insertRes = await supabase
               .from("assets")
               .insert([
@@ -1217,15 +1265,27 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      setAssetSaveNotification(null);
       if (directSaved) {
-        setAssetSaveNotification({
-          status: "success",
-          name: item.name,
-          message: `${item.name} recorded & synced with database!`,
+        setOperationResult({
+          isOpen: true,
+          type: "success",
+          action: "add",
+          title: "Asset Added Successfully!",
+          message: `${item.name} has been recorded and synced with the database.`,
+          assetName: item.name,
+          details: {
+            category: newPos.category,
+            quantity: newPos.quantity,
+            buyPrice: newPos.buyPrice,
+            currentPrice: newPos.currentPrice,
+            currentValue: (newPos.quantity * newPos.currentPrice).toFixed(2),
+            currency: newPos.currency,
+            brokerApp: newPos.brokerApp,
+            isSip: newPos.isSip,
+            sipAmount: newPos.sipAmount,
+          },
         });
-        assetNotificationTimerRef.current = setTimeout(() => {
-          setAssetSaveNotification(null);
-        }, 3500);
       } else {
         // Revert optimistic item so UI matches DB
         setAssets((prev) => {
@@ -1233,15 +1293,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           persistLocal(reverted, uid);
           return dedupeAssets(reverted);
         });
-        setAssetSaveNotification({
-          status: "error",
-          name: item.name,
-          message: `Failed to save ${item.name}: ${err?.message || "Connection error"}`,
+        setOperationResult({
+          isOpen: true,
+          type: "error",
+          action: "add",
+          title: "Failed to Add Asset",
+          message: `Unable to save ${item.name} to database: ${err?.message || "Connection error"}`,
+          assetName: item.name,
         });
-        assetNotificationTimerRef.current = setTimeout(() => {
-          setAssetSaveNotification(null);
-        }, 4500);
       }
+    } finally {
+      setProcessingState(null);
     }
   };
 
@@ -1263,41 +1325,143 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setFlashAssetId(null), 2000);
 
     if (!updated.id.startsWith("temp-")) {
+      setProcessingState({
+        active: true,
+        title: "Updating Holding…",
+        subtitle: `Saving changes for ${updated.name}`,
+      });
       try {
         const res = await fetch("/api/assets", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updated),
         });
-        if (!res.ok && isSupabaseConfigured && supabase) {
-          const sipRow = updated.isSip
-            ? {
-                is_sip: true,
-                sip_amount: updated.sipAmount,
-                sip_day: updated.sipDay,
-                sip_start_date: updated.sipStartDate,
-                sip_installments: updated.sipInstallments,
-                last_sip_date: updated.lastSipDate,
-                sip_status: updated.sipStatus || "active",
-              }
-            : { is_sip: false };
+        const resData = await res.json().catch(() => ({}));
 
-          await supabase
-            .from("assets")
-            .update({
-              name: updated.name,
+        if (!res.ok || !resData?.success) {
+          throw new Error(resData?.error || "Failed to update asset in database");
+        }
+
+        const inv = updated.investedAmount !== undefined && updated.investedAmount > 0
+          ? updated.investedAmount
+          : (updated.quantity * updated.buyPrice);
+
+        setOperationResult({
+          isOpen: true,
+          type: "success",
+          action: "update",
+          title: "Holding Updated Successfully!",
+          message: `${updated.name} has been updated and synced with database.`,
+          assetName: updated.name,
+          details: {
+            category: updated.category,
+            quantity: updated.quantity,
+            investedAmount: inv,
+            buyPrice: updated.buyPrice,
+            currentPrice: updated.currentPrice,
+            currentValue: (updated.quantity * updated.currentPrice).toFixed(2),
+            currency: updated.currency,
+            brokerApp: updated.brokerApp,
+            isSip: updated.isSip,
+            sipAmount: updated.sipAmount,
+          },
+        });
+      } catch (err: any) {
+        console.error("Asset update error:", err);
+        let directSaved = false;
+        if (isSupabaseConfigured && supabase) {
+          try {
+            const inv = updated.investedAmount !== undefined && updated.investedAmount > 0
+              ? updated.investedAmount
+              : (updated.quantity * updated.buyPrice);
+
+            const sipRow = updated.isSip
+              ? {
+                  is_sip: true,
+                  sip_amount: updated.sipAmount,
+                  sip_day: updated.sipDay,
+                  sip_start_date: updated.sipStartDate,
+                  sip_installments: updated.sipInstallments,
+                  last_sip_date: updated.lastSipDate,
+                  sip_status: updated.sipStatus || "active",
+                }
+              : { is_sip: false };
+
+            let sbRes = await supabase
+              .from("assets")
+              .update({
+                name: updated.name,
+                category: updated.category,
+                quantity: updated.quantity,
+                invested_amount: inv,
+                buy_price: updated.buyPrice,
+                current_price: updated.currentPrice,
+                currency: updated.currency,
+                broker_app: updated.brokerApp || null,
+                ...sipRow,
+              })
+              .eq("id", updated.id);
+
+            if (sbRes.error && (sbRes.error.code === "42703" || sbRes.error.message?.includes("invested") || sbRes.error.message?.includes("broker_app"))) {
+              sbRes = await supabase
+                .from("assets")
+                .update({
+                  name: updated.name,
+                  category: updated.category,
+                  quantity: updated.quantity,
+                  buy_price: updated.buyPrice,
+                  current_price: updated.currentPrice,
+                  currency: updated.currency,
+                })
+                .eq("id", updated.id);
+            }
+
+            if (!sbRes.error) {
+              directSaved = true;
+            }
+          } catch (sbErr) {
+            console.error("Direct Supabase update error:", sbErr);
+          }
+        }
+
+        setAssetSaveNotification(null);
+      if (directSaved) {
+          const inv = updated.investedAmount !== undefined && updated.investedAmount > 0
+            ? updated.investedAmount
+            : (updated.quantity * updated.buyPrice);
+
+          setOperationResult({
+            isOpen: true,
+            type: "success",
+            action: "update",
+            title: "Holding Updated Successfully!",
+            message: `${updated.name} has been updated and synced with database.`,
+            assetName: updated.name,
+            details: {
               category: updated.category,
               quantity: updated.quantity,
-              buy_price: updated.buyPrice,
-              current_price: updated.currentPrice,
+              investedAmount: inv,
+              buyPrice: updated.buyPrice,
+              currentPrice: updated.currentPrice,
+              currentValue: (updated.quantity * updated.currentPrice).toFixed(2),
               currency: updated.currency,
-              broker_app: updated.brokerApp || null,
-              ...sipRow,
-            })
-            .eq("id", updated.id);
+              brokerApp: updated.brokerApp,
+              isSip: updated.isSip,
+              sipAmount: updated.sipAmount,
+            },
+          });
+        } else {
+          setOperationResult({
+            isOpen: true,
+            type: "error",
+            action: "update",
+            title: "Failed to Update Holding",
+            message: `Could not save updates for ${updated.name}: ${err?.message || "Database connection error"}`,
+            assetName: updated.name,
+          });
         }
-      } catch (err) {
-        console.error("Asset update error:", err);
+      } finally {
+        setProcessingState(null);
       }
     }
   };
@@ -1309,6 +1473,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       ""
     ).trim();
 
+    const targetAsset = assets.find((a) => a.id === id);
+    const deletedName = targetAsset?.name || "Holding";
+
     setAssets((prev) => {
       const next = prev.filter((a) => a.id !== id);
       if (uid) persistLocal(next, uid);
@@ -1317,31 +1484,76 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     dbBaselinePricesRef.current.delete(id);
 
     if (!id.startsWith("temp-")) {
+      setProcessingState({
+        active: true,
+        title: "Removing Holding…",
+        subtitle: `Deleting ${deletedName} from database`,
+      });
       try {
         const res = await fetch(`/api/assets?id=${encodeURIComponent(id)}`, {
           method: "DELETE",
         });
-        if (!res.ok && isSupabaseConfigured && supabase) {
-          await supabase.from("assets").delete().eq("id", id);
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok || !resData?.success) {
+          throw new Error(resData?.error || "Failed to delete holding");
         }
-      } catch (err) {
+
+        setOperationResult({
+          isOpen: true,
+          type: "success",
+          action: "delete",
+          title: "Asset Removed",
+          message: `${deletedName} was permanently removed from your portfolio and database.`,
+          assetName: deletedName,
+        });
+      } catch (err: any) {
         console.error("Asset delete error:", err);
+        let directDeleted = false;
         if (isSupabaseConfigured && supabase) {
           try {
-            await supabase.from("assets").delete().eq("id", id);
+            const delRes = await supabase.from("assets").delete().eq("id", id);
+            if (!delRes.error) {
+              directDeleted = true;
+            }
           } catch {}
         }
+
+        if (directDeleted) {
+          setOperationResult({
+            isOpen: true,
+            type: "success",
+            action: "delete",
+            title: "Asset Removed",
+            message: `${deletedName} was permanently removed from your portfolio and database.`,
+            assetName: deletedName,
+          });
+        } else {
+          setOperationResult({
+            isOpen: true,
+            type: "error",
+            action: "delete",
+            title: "Failed to Delete Asset",
+            message: `Could not delete ${deletedName} from database: ${err?.message || "Connection error"}`,
+            assetName: deletedName,
+          });
+        }
+      } finally {
+        setProcessingState(null);
       }
     }
   };
 
   const startEditing = (asset: AssetPosition) => {
+    const inv = asset.investedAmount !== undefined && asset.investedAmount > 0
+      ? asset.investedAmount
+      : (asset.quantity * asset.buyPrice);
+
     setEditingAsset({
       id: asset.id,
       name: asset.name,
       category: asset.category,
       quantity: asset.quantity ? asset.quantity.toString() : "",
-      investedAmount: (asset.quantity * asset.buyPrice).toFixed(2),
+      investedAmount: inv.toFixed(2),
       buyPrice: asset.buyPrice.toString(),
       currentPrice: asset.currentPrice.toString(),
       currentValue: (asset.quantity * asset.currentPrice).toFixed(2),
@@ -1504,6 +1716,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       clearSipNotice,
       assetSaveNotification,
       setAssetSaveNotification,
+      operationResult,
+      setOperationResult,
+      closeOperationResult,
+      processingState,
+      setProcessingState,
       viewingAsset,
       setViewingAsset,
       openAssetDetail,
@@ -1559,6 +1776,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       activeSipCount,
       sipNotice,
       assetSaveNotification,
+      operationResult,
+      processingState,
       viewingAsset,
       setViewingAsset,
       openAssetDetail,

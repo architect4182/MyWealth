@@ -12,6 +12,7 @@ export interface AssetPosition {
   name: string;
   category: AssetCategory;
   quantity: number;
+  investedAmount?: number;
   buyPrice: number;
   currentPrice: number;
   currency: "INR" | "USD";
@@ -71,5 +72,34 @@ export interface AssetSaveNotification {
   name: string;
   message: string;
 }
+
+export interface OperationResult {
+  isOpen: boolean;
+  type: "success" | "error";
+  action: "add" | "update" | "delete";
+  title: string;
+  message: string;
+  assetName?: string;
+  details?: {
+    category?: string;
+    quantity?: number | string;
+    investedAmount?: number | string;
+    buyPrice?: number | string;
+    currentPrice?: number | string;
+    currentValue?: number | string;
+    currency?: string;
+    brokerApp?: string;
+    isSip?: boolean;
+    sipAmount?: number | string;
+  };
+  onRetry?: () => void;
+}
+
+export interface ProcessingState {
+  active: boolean;
+  title: string;
+  subtitle?: string;
+}
+
 
 

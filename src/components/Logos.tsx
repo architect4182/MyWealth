@@ -70,37 +70,9 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
 }
 
 /**
- * Dynamically extract ticker from company name
+ * Dynamically extract ticker / abbreviation from company or fund name
  */
-export function getStockTicker(name: string): string {
-  if (!name) return "";
-  const paren = name.match(/\((?:NSE:|BSE:|NASDAQ:|NYSE:)?([A-Z0-9.-]+)\)/i);
-  if (paren) return paren[1].toUpperCase();
-  if (/^[A-Z]{1,6}$/.test(name.trim())) return name.trim();
-
-  const lower = name.toLowerCase().trim();
-  if (lower.includes("jio platforms") || lower === "jpl") return "JPL";
-  if (lower.includes("jio financial") || lower === "jiofin") return "JIOFIN";
-  if (lower.includes("reliance") && !lower.includes("jio")) return "RELIANCE";
-  if (lower.includes("tata motors")) return "TATAMOTORS";
-  if (lower.includes("tcs") || lower.includes("tata consultancy")) return "TCS";
-  if (lower.includes("hdfc bank") || lower === "hdfc") return "HDFCBANK";
-
-  const clean = name
-    .replace(
-      /\b(limited|ltd|corporation|corp|incorporated|inc|holdings|company|co|group|plc|pvt|private)\b/gi,
-      ""
-    )
-    .trim();
-  const words = clean.split(/\s+/).filter(Boolean);
-  if (words.length === 1) return words[0].slice(0, 5).toUpperCase();
-  if (words.length > 1) {
-    const acronym = words.map((w) => w[0]).join("").toUpperCase();
-    if (acronym.length >= 2 && acronym.length <= 5) return acronym;
-    return words[0].slice(0, 5).toUpperCase();
-  }
-  return name.slice(0, 4).toUpperCase();
-}
+export { getStockTicker } from "@/utils/tickers";
 
 /**
  * In-memory cache for successfully loaded logo domains

@@ -18,8 +18,9 @@ create table if not exists public.assets (
   name text not null,
   category text not null,
   quantity numeric not null default 0,
-  buy_price numeric not null default 0,
-  current_price numeric not null default 0,
+  invested_amount numeric default 0,
+  buy_price numeric default 0,
+  current_price numeric default 0,
   currency text not null default 'INR',
   broker_app text,
   is_sip boolean default false,
@@ -42,6 +43,12 @@ alter table if exists public.assets add column if not exists sip_amount numeric 
 alter table if exists public.assets add column if not exists sip_day integer default 5;
 alter table if exists public.assets add column if not exists last_sip_date text;
 alter table if exists public.assets add column if not exists sip_status text default 'active';
+alter table if exists public.assets add column if not exists invested_amount numeric;
+
+-- Backfill invested_amount for existing rows from quantity * buy_price
+update public.assets
+set invested_amount = round(coalesce(quantity * buy_price, 0), 2)
+where invested_amount is null;
 
 -- 5. Enable Row Level Security (RLS)
 alter table public.users enable row level security;

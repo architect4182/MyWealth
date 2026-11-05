@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getStockTicker } from "@/utils/tickers";
 
 interface SearchQuote {
   symbol?: string;
@@ -269,6 +270,25 @@ export async function GET(req: NextRequest) {
           name: directQuote.name,
           price: directQuote.price,
           currency: directQuote.currency,
+        });
+      }
+    }
+
+    // 3. Known company / ticker resolution via unified mapping
+    const mapped = getStockTicker(query, category);
+    if (mapped && mapped !== query.toUpperCase()) {
+      let mappedSymbol = mapped.toUpperCase();
+      if (category === "Indian Equities" && !mappedSymbol.endsWith(".NS") && !mappedSymbol.endsWith(".BO")) {
+        mappedSymbol += ".NS";
+      }
+      const mappedQuote = await getMarketQuote(mappedSymbol).catch(() => null);
+      if (mappedQuote && validateMarketQuote(mappedQuote, category)) {
+        return NextResponse.json({
+          success: true,
+          symbol: mappedQuote.symbol,
+          name: mappedQuote.name,
+          price: mappedQuote.price,
+          currency: mappedQuote.currency,
         });
       }
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { INDIA_STOCKS_POOL, US_STOCKS_POOL, MF_POOL } from "@/data/trendingPool";
+import { getStockTicker } from "@/utils/tickers";
 
 export interface SearchResultItem {
   symbol: string;
@@ -212,10 +213,11 @@ export async function GET(req: NextRequest) {
                   seenSymbols.add(sym);
                   const isDirect = /direct/i.test(s.schemeName);
                   const isGrowth = /growth/i.test(s.schemeName);
+                  const mfTicker = getStockTicker(s.schemeName, "Mutual Funds") || `MF-${s.schemeCode}`;
                   results.push({
                     symbol: sym,
                     name: s.schemeName,
-                    ticker: `MF-${s.schemeCode}`,
+                    ticker: mfTicker,
                     category: "Mutual Funds",
                     currency: "INR",
                     subtext: `AMFI Scheme • ${isDirect ? "Direct" : "Regular"} ${isGrowth ? "Growth" : ""}`.trim(),

@@ -8,8 +8,10 @@ import {
   Clock,
   Repeat,
   CalendarClock,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
-import { AssetCategory } from "@/types/portfolio";
+import { AssetCategory, AssetPosition } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate, formatLocalDate } from "@/utils/sip";
@@ -61,6 +63,7 @@ export function AddAssetModal() {
   const [initialInstallmentDone, setInitialInstallmentDone] = useState(true);
   const [brokerApp, setBrokerApp] = useState("");
   const [isCustomBroker, setIsCustomBroker] = useState(false);
+  const [isStockSelected, setIsStockSelected] = useState(false);
 
   // Search / Relatable words state
   const [suggestions, setSuggestions] = useState<SearchResultItem[]>([]);
@@ -84,6 +87,7 @@ export function AddAssetModal() {
       setHighlightIndex(-1);
 
       if (prefillAsset) {
+        setIsStockSelected(true);
         setName(prefillAsset.name);
         setCategory(prefillAsset.category);
         const at: "stock" | "mf" = prefillAsset.category === "Mutual Funds" ? "mf" : "stock";
@@ -112,6 +116,7 @@ export function AddAssetModal() {
         setIsCustomBroker(false);
       }
     } else {
+      setIsStockSelected(false);
       setName("");
       setQuantity("");
       setInvestedAmount("");
@@ -132,6 +137,7 @@ export function AddAssetModal() {
   }, [modal, defaultCategory, prefillAsset, setPrefillAsset]);
 
   const handleSelectAssetType = (type: "stock" | "mf") => {
+    setIsStockSelected(false);
     setAssetType(type);
     setName("");
     setQuantity("");
@@ -214,6 +220,7 @@ export function AddAssetModal() {
 
   const handleSelectSuggestion = (item: SearchResultItem) => {
     skipNextAutoPriceLookupRef.current = true;
+    setIsStockSelected(true);
     setName(item.name);
     setShowSuggestions(false);
     setSuggestions([]);
@@ -367,11 +374,13 @@ export function AddAssetModal() {
         ? sipStartDate || formatLocalDate()
         : undefined;
 
+      const finalSipInvested = initialInstallmentDone ? amount : 0;
       try {
         await addAsset({
           name: trimmedName,
           category,
           quantity: q,
+          investedAmount: finalSipInvested,
           buyPrice: bp,
           currentPrice: cp,
           currency,
@@ -418,12 +427,14 @@ export function AddAssetModal() {
 
     const userCp = Number(currentPrice);
     const cp = userCp > 0 ? userCp : bp;
+    const finalInvested = inv > 0 ? inv : (q * bp);
 
     try {
       await addAsset({
         name: trimmedName,
         category,
         quantity: q,
+        investedAmount: finalInvested,
         buyPrice: bp,
         currentPrice: cp,
         currency,
@@ -521,42 +532,93 @@ export function AddAssetModal() {
               marginBottom: "6px",
             }}
           >
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "var(--foreground-muted)",
-              }}
-            >
-              {assetType === "stock"
-                ? "Stock / Company Name"
-                : "Mutual Fund Scheme"}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "var(--foreground-muted)",
+                }}
+              >
+                {assetType === "stock"
+                  ? "Stock / Company Name"
+                  : "Mutual Fund Scheme"}
+              </span>
+              {isStockSelected && (
+                <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                  🔒 Prefilled
+                </span>
+              )}
+            </div>
             <span className="fetch-price-status">
               <Sparkles size={11} />
               {isFetchingPrice
                 ? "Fetching live price…"
                 : isSearching
                 ? "Finding relatable matches…"
+                : isStockSelected
+                ? "Market CMP locked"
                 : "Auto-fills price @ CMP/NAV"}
             </span>
           </div>
 
-          <input
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onFocus={() => {
-              if (suggestions.length > 0) setShowSuggestions(true);
-            }}
-            onKeyDown={handleSearchKeyDown}
-            placeholder={
-              assetType === "stock"
-                ? "Search stocks: e.g. Tata Motors, ICICI Bank, Apple, Reliance..."
-                : "Search mutual funds: e.g. Parag Parikh, Quant Small Cap, Mirae Asset..."
-            }
-            autoComplete="off"
-          />
+          <div style={{ position: "relative" }}>
+            <input
+              required
+              value={name}
+              readOnly={isStockSelected}
+              disabled={isStockSelected}
+              style={
+                isStockSelected
+                  ? {
+                      background: "rgba(0, 0, 0, 0.04)",
+                      cursor: "not-allowed",
+                      paddingRight: "80px",
+                      fontWeight: 600,
+                    }
+                  : undefined
+              }
+              onChange={(e) => setName(e.target.value)}
+              onFocus={() => {
+                if (!isStockSelected && suggestions.length > 0) setShowSuggestions(true);
+              }}
+              onKeyDown={handleSearchKeyDown}
+              placeholder={
+                assetType === "stock"
+                  ? "Search stocks: e.g. Tata Motors, ICICI Bank, Apple, Reliance..."
+                  : "Search mutual funds: e.g. Parag Parikh, Quant Small Cap, Mirae Asset..."
+              }
+              autoComplete="off"
+            />
+            {isStockSelected && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsStockSelected(false);
+                  setName("");
+                  setBuyPrice("");
+                  setCurrentPrice("");
+                  setCurrentValue("");
+                }}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "rgba(147, 102, 255, 0.12)",
+                  color: "#9366FF",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "4px 8px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Change
+              </button>
+            )}
+          </div>
 
           {/* Relatable Words / Search Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
@@ -592,9 +654,18 @@ export function AddAssetModal() {
 
         <div className="form-row">
           <label>
-            Category
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Category</span>
+              {isStockSelected && (
+                <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                  🔒 Prefilled
+                </span>
+              )}
+            </div>
             <select
               value={category}
+              disabled={isStockSelected}
+              style={isStockSelected ? { background: "rgba(0, 0, 0, 0.04)", cursor: "not-allowed" } : undefined}
               onChange={(e) => {
                 const c = e.target.value as AssetCategory;
                 setCategory(c);
@@ -618,9 +689,18 @@ export function AddAssetModal() {
           </label>
 
           <label>
-            Currency
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Currency</span>
+              {isStockSelected && (
+                <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                  🔒 Prefilled
+                </span>
+              )}
+            </div>
             <select
               value={currency}
+              disabled={isStockSelected}
+              style={isStockSelected ? { background: "rgba(0, 0, 0, 0.04)", cursor: "not-allowed" } : undefined}
               onChange={(e) => setCurrency(e.target.value as "INR" | "USD")}
             >
               <option value="INR">INR — Indian Rupee (₹)</option>
@@ -737,16 +817,24 @@ export function AddAssetModal() {
               </label>
 
               <label>
-                Current Price / NAV ({currency === "USD" ? "$" : "₹"})
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Current Price / NAV ({currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Live AMFI / Exchange NAV
+                  </span>
+                </div>
                 <input
                   required
                   type="number"
                   min="0.0001"
                   step="any"
                   value={currentPrice || buyPrice}
-                  onChange={(e) => {
-                    setCurrentPrice(e.target.value);
-                    setBuyPrice(e.target.value);
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
                   }}
                   placeholder="e.g. 85.50"
                 />
@@ -830,43 +918,50 @@ export function AddAssetModal() {
 
             <div className="form-row">
               <label>
-                Market Price (CMP / NAV) ({currency === "USD" ? "$" : "₹"})
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Market Price (CMP / NAV) ({currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Live Market CMP
+                  </span>
+                </div>
                 <input
                   type="number"
                   min="0.0001"
                   step="any"
                   value={currentPrice}
-                  onChange={(e) => {
-                    const p = e.target.value;
-                    setCurrentPrice(p);
-                    const numCp = Number(p);
-                    if (numCp > 0 && Number(quantity) > 0) {
-                      setCurrentValue((Number(quantity) * numCp).toFixed(2));
-                    }
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
                   }}
-                  placeholder={buyPrice ? buyPrice : "e.g. 1165"}
+                  placeholder={buyPrice ? buyPrice : "Live CMP auto-fills on select"}
                 />
               </label>
 
               <label>
-                Current Valuation ({currency === "USD" ? "$" : "₹"})
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Current Valuation ({currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Units × CMP
+                  </span>
+                </div>
                 <input
                   type="number"
                   min="0.01"
                   step="any"
-                  value={currentValue}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setCurrentValue(value);
-                    const numCv = Number(value);
-                    const cp = Number(currentPrice) || Number(buyPrice);
-                    if (numCv > 0 && cp > 0) {
-                      const newQ = numCv / cp;
-                      setQuantity(newQ.toFixed(newQ % 1 === 0 ? 0 : 4));
-                      if (Number(buyPrice) > 0) {
-                        setInvestedAmount((newQ * Number(buyPrice)).toFixed(2));
-                      }
-                    }
+                  value={
+                    Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
+                      ? (Number(quantity) * Number(currentPrice || buyPrice)).toFixed(2)
+                      : currentValue
+                  }
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
                   }}
                   placeholder={
                     Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
@@ -946,11 +1041,10 @@ export function AddAssetModal() {
 
 export function EditAssetModal() {
   const { editingAsset, setEditingAsset, updateAsset } = usePortfolio();
-  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
 
-  // Synchronize purchased app name when opening or changing holding to edit
+  // Synchronize state when opening or changing holding to edit
   useEffect(() => {
     if (editingAsset) {
       setIsSubmitting(false);
@@ -964,106 +1058,99 @@ export function EditAssetModal() {
     }
   }, [editingAsset?.id]);
 
-  if (!editingAsset) return null;
-
-  const computedEditHoldings = calculateHoldings(
-    editingAsset.investedAmount,
-    editingAsset.buyPrice
-  );
-
-  async function handleRefreshQuote() {
-    if (!editingAsset?.name.trim()) return;
-    setIsFetchingPrice(true);
-    try {
-      const res = await fetch(
-        `/api/stock-price?query=${encodeURIComponent(
-          editingAsset.name.trim()
-        )}&category=${encodeURIComponent(editingAsset.category)}`
-      );
-      const data = await res.json();
-      if (data.success && data.price) {
-        const newCp = String(data.price);
-        const holdings =
-          Number(editingAsset.quantity) > 0
-            ? Number(editingAsset.quantity)
-            : Number(editingAsset.investedAmount) > 0 && Number(editingAsset.buyPrice) > 0
-            ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
-            : 0;
-        setEditingAsset({
-          ...editingAsset,
-          currentPrice: newCp,
-          currentValue:
-            holdings > 0
-              ? (data.price * holdings).toFixed(2)
-              : editingAsset.currentValue,
-          currency: (data.currency as "INR" | "USD") || editingAsset.currency,
-        });
-      }
-    } catch (err) {
-      console.error("Live price lookup error:", err);
-    } finally {
-      setIsFetchingPrice(false);
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editingAsset || isSubmitting) return;
 
-    const userQuantity = Number(editingAsset.quantity);
-    const inv = Number(editingAsset.investedAmount);
-    let bp = Number(editingAsset.buyPrice);
-    if (!bp && userQuantity > 0 && inv > 0) {
-      bp = inv / userQuantity;
-    }
-    if (!bp || bp <= 0) return;
+    const trimmedName = editingAsset.name.trim();
+    if (!trimmedName) return;
 
-    let q = 0;
-    if (Number.isFinite(userQuantity) && userQuantity > 0) {
-      q = userQuantity;
-    } else if (inv > 0 && bp > 0) {
-      q = inv / bp;
-    }
-    if (q <= 0) return;
-
-    if (Math.abs(q - Math.round(q)) < 0.00001) {
-      q = Math.round(q);
-    }
-
-    const userCp = Number(editingAsset.currentPrice);
-    const cp = userCp > 0 ? userCp : bp;
-
-    const assetToUpdate = {
-      id: editingAsset.id,
-      name: editingAsset.name.trim(),
-      category: editingAsset.category,
-      quantity: q,
-      buyPrice: bp,
-      currentPrice: cp,
-      currency: editingAsset.currency,
-      date: formatLocalDate(),
-      isSip: editingAsset.isSip,
-      sipAmount: editingAsset.sipAmount ? Number(editingAsset.sipAmount) : undefined,
-      sipDay: editingAsset.sipDay ? Number(editingAsset.sipDay) : undefined,
-      sipStartDate: editingAsset.sipStartDate,
-      sipInstallments: editingAsset.sipInstallments ? Number(editingAsset.sipInstallments) : undefined,
-      lastSipDate: editingAsset.lastSipDate,
-      sipStatus: editingAsset.sipStatus || (editingAsset.isSip ? "active" : undefined),
-      brokerApp: editingAsset.brokerApp?.trim() || undefined,
-    };
-
-    // Close popup immediately to prevent double submissions!
+    // Immediately dismiss popup (0ms) to prevent double clicks / multiple db calls!
     setIsSubmitting(true);
+    const draft = { ...editingAsset };
     setEditingAsset(null);
 
     try {
-      await updateAsset(assetToUpdate);
+      if (draft.isSip) {
+        const amount = Number(draft.sipAmount) || Number(draft.investedAmount);
+        const cp = Number(draft.currentPrice) || Number(draft.buyPrice);
+        const bp = cp > 0 ? cp : 1;
+        const q = Number(draft.quantity) > 0 ? Number(draft.quantity) : (amount > 0 && cp > 0 ? amount / cp : 0);
+
+        const finalSipInvested = (Number(draft.sipInstallments) || 1) * amount;
+        const assetToUpdate: AssetPosition = {
+          id: draft.id,
+          name: trimmedName,
+          category: draft.category,
+          quantity: q,
+          investedAmount: finalSipInvested,
+          buyPrice: bp,
+          currentPrice: cp > 0 ? cp : bp,
+          currency: draft.currency,
+          date: formatLocalDate(),
+          isSip: true,
+          sipAmount: amount > 0 ? amount : undefined,
+          sipDay: Number(draft.sipDay) || 5,
+          sipStartDate: draft.sipStartDate,
+          sipInstallments: draft.sipInstallments ? Number(draft.sipInstallments) : undefined,
+          lastSipDate: draft.lastSipDate,
+          sipStatus: draft.sipStatus || "active",
+          brokerApp: draft.brokerApp?.trim() || undefined,
+        };
+
+        await updateAsset(assetToUpdate);
+      } else {
+        const userQuantity = Number(draft.quantity);
+        const inv = Number(draft.investedAmount);
+        let bp = Number(draft.buyPrice);
+        if (!bp && userQuantity > 0 && inv > 0) {
+          bp = inv / userQuantity;
+        }
+        const userCp = Number(draft.currentPrice);
+        const cp = userCp > 0 ? userCp : (bp > 0 ? bp : 0);
+
+        let q = 1;
+        if (Number.isFinite(userQuantity) && userQuantity > 0) {
+          q = userQuantity;
+        } else if (inv > 0 && bp > 0) {
+          q = inv / bp;
+        }
+
+        if (Math.abs(q - Math.round(q)) < 0.00001) {
+          q = Math.round(q);
+        }
+
+        const finalInvested = inv > 0 ? inv : (q * bp);
+
+        const assetToUpdate: AssetPosition = {
+          id: draft.id,
+          name: trimmedName,
+          category: draft.category,
+          quantity: q,
+          investedAmount: finalInvested,
+          buyPrice: bp > 0 ? bp : cp,
+          currentPrice: cp > 0 ? cp : bp,
+          currency: draft.currency,
+          date: formatLocalDate(),
+          isSip: false,
+          brokerApp: draft.brokerApp?.trim() || undefined,
+        };
+
+        await updateAsset(assetToUpdate);
+      }
     } catch (err) {
       console.error("Update asset error:", err);
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  if (!editingAsset) return null;
+
+  const computedEditHoldings = calculateHoldings(
+    editingAsset.investedAmount,
+    editingAsset.buyPrice
+  );
 
   return (
     <div className="modal-overlay" onClick={() => setEditingAsset(null)}>
@@ -1074,8 +1161,8 @@ export function EditAssetModal() {
       >
         <div className="modal-heading">
           <div>
-            <h2>Edit holding</h2>
-            <p>Update valuation, units, or CMP in portfolio.</p>
+            <h2>Edit investment</h2>
+            <p>Update your holding units, cost basis, and broker app.</p>
           </div>
           <button
             type="button"
@@ -1086,6 +1173,51 @@ export function EditAssetModal() {
           </button>
         </div>
 
+        {/* Holding Identity Card (Type, Market, Category Locked) */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "rgba(0, 0, 0, 0.025)",
+            border: "1px solid rgba(0, 0, 0, 0.07)",
+            borderRadius: "14px",
+            padding: "10px 14px",
+            fontSize: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "18px" }}>
+              {editingAsset.category === "Mutual Funds" ? "🏦" : "📈"}
+            </span>
+            <div>
+              <strong style={{ display: "block", color: "var(--foreground)", fontSize: "13px" }}>
+                {editingAsset.category}
+              </strong>
+              <span style={{ color: "var(--foreground-muted)", fontSize: "11px" }}>
+                {editingAsset.currency === "USD" ? "US Market (USD $)" : "Indian Market (INR ₹)"}
+                {editingAsset.isSip ? " • Recurring SIP" : " • Standard Position"}
+              </span>
+            </div>
+          </div>
+          <span
+            style={{
+              fontSize: "10.5px",
+              fontWeight: 600,
+              padding: "3px 8px",
+              borderRadius: "6px",
+              background: "rgba(0, 0, 0, 0.05)",
+              color: "var(--foreground-muted)",
+              display: "flex",
+              alignItems: "center",
+              gap: "3px",
+            }}
+          >
+            🔒 Holding Locked
+          </span>
+        </div>
+
+        {/* Asset / Fund Name (Locked for Market Integrity) */}
         <div>
           <div
             style={{
@@ -1095,72 +1227,89 @@ export function EditAssetModal() {
               marginBottom: "6px",
             }}
           >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "var(--foreground-muted)",
+                }}
+              >
+                {editingAsset.category === "Mutual Funds"
+                  ? "Mutual Fund Scheme"
+                  : "Stock / Company Name"}
+              </span>
+              <span
+                style={{
+                  fontSize: "10px",
+                  color: "var(--foreground-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "2px",
+                }}
+              >
+                🔒 Prefilled Stock
+              </span>
+            </div>
             <span
               style={{
                 fontSize: "11px",
-                fontWeight: 700,
                 color: "var(--foreground-muted)",
+                display: "flex",
+                alignItems: "center",
+                gap: "3px",
               }}
             >
-              Asset Name
+              🔒 Market Value Protected
             </span>
-            <button
-              type="button"
-              style={{
-                background: "none",
-                border: "none",
-                padding: 0,
-                cursor: "pointer",
-              }}
-              className="fetch-price-status"
-              onClick={handleRefreshQuote}
-              disabled={isFetchingPrice}
-            >
-              <Sparkles size={11} />
-              {isFetchingPrice ? "Fetching live quote…" : "Refresh price"}
-            </button>
           </div>
+
           <input
             required
             value={editingAsset.name}
-            onChange={(e) =>
-              setEditingAsset({ ...editingAsset, name: e.target.value })
-            }
+            readOnly
+            disabled
+            style={{
+              background: "rgba(0, 0, 0, 0.04)",
+              color: "var(--foreground)",
+              cursor: "not-allowed",
+              fontWeight: 600,
+            }}
           />
         </div>
 
         <div className="form-row">
           <label>
-            Category
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Category</span>
+              <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                🔒 Prefilled
+              </span>
+            </div>
             <select
               value={editingAsset.category}
-              onChange={(e) => {
-                const c = e.target.value as AssetCategory;
-                setEditingAsset({
-                  ...editingAsset,
-                  category: c,
-                  currency: c === "US Stocks" ? "USD" : "INR",
-                });
-              }}
+              disabled
+              style={{ background: "rgba(0, 0, 0, 0.04)", cursor: "not-allowed" }}
             >
-              <option value="Indian Equities">Indian Equities</option>
-              <option value="US Stocks">US Stocks</option>
-              <option value="Mutual Funds">Mutual Funds</option>
+              <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
+              <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
+              <option value="Mutual Funds">Mutual Funds (AMFI)</option>
               <option value="Gold & Fixed Income">Gold & Fixed Income</option>
               <option value="Crypto">Crypto</option>
             </select>
           </label>
 
           <label>
-            Currency
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Currency</span>
+              <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                🔒 Prefilled
+              </span>
+            </div>
             <select
               value={editingAsset.currency}
-              onChange={(e) =>
-                setEditingAsset({
-                  ...editingAsset,
-                  currency: e.target.value as "INR" | "USD",
-                })
-              }
+              disabled
+              style={{ background: "rgba(0, 0, 0, 0.04)", cursor: "not-allowed" }}
             >
               <option value="INR">INR — Indian Rupee (₹)</option>
               <option value="USD">USD — US Dollar ($)</option>
@@ -1224,161 +1373,6 @@ export function EditAssetModal() {
           )}
         </div>
 
-        <div className="form-row">
-          <label>
-            Quantity (Shares / Units)
-            <input
-              required
-              type="number"
-              min="0.0001"
-              step="any"
-              value={editingAsset.quantity || ""}
-              onChange={(e) => {
-                const q = e.target.value;
-                const numQ = Number(q);
-                const bp = Number(editingAsset.buyPrice);
-                const cp = Number(editingAsset.currentPrice);
-                setEditingAsset({
-                  ...editingAsset,
-                  quantity: q,
-                  investedAmount: numQ > 0 && bp > 0 ? (numQ * bp).toFixed(2) : editingAsset.investedAmount,
-                  currentValue: numQ > 0 && cp > 0 ? (numQ * cp).toFixed(2) : editingAsset.currentValue,
-                });
-              }}
-              placeholder="e.g. 10"
-            />
-          </label>
-
-          <label>
-            Buy Price per unit ({editingAsset.currency === "USD" ? "$" : "₹"})
-            <input
-              required
-              type="number"
-              min="0.0001"
-              step="any"
-              value={editingAsset.buyPrice}
-              onChange={(e) => {
-                const bp = e.target.value;
-                const numBp = Number(bp);
-                const q = Number(editingAsset.quantity);
-                setEditingAsset({
-                  ...editingAsset,
-                  buyPrice: bp,
-                  investedAmount: numBp > 0 && q > 0 ? (q * numBp).toFixed(2) : editingAsset.investedAmount,
-                });
-              }}
-            />
-          </label>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Market Price (CMP / NAV) ({editingAsset.currency === "USD" ? "$" : "₹"})
-            <input
-              type="number"
-              min="0.0001"
-              step="any"
-              value={editingAsset.currentPrice}
-              onChange={(e) => {
-                const cp = e.target.value;
-                const numCp = Number(cp);
-                const q = Number(editingAsset.quantity) || computedEditHoldings;
-                setEditingAsset({
-                  ...editingAsset,
-                  currentPrice: cp,
-                  currentValue: numCp > 0 && q > 0 ? (numCp * q).toFixed(2) : editingAsset.currentValue,
-                });
-              }}
-            />
-          </label>
-
-          <label>
-            Current Valuation ({editingAsset.currency === "USD" ? "$" : "₹"})
-            <input
-              type="number"
-              min="0.01"
-              step="any"
-              value={editingAsset.currentValue}
-              onChange={(e) => {
-                const cv = e.target.value;
-                const numCv = Number(cv);
-                const cp = Number(editingAsset.currentPrice);
-                const bp = Number(editingAsset.buyPrice);
-                let newQ = editingAsset.quantity;
-                let newInv = editingAsset.investedAmount;
-                if (numCv > 0 && cp > 0) {
-                  const calculatedQ = numCv / cp;
-                  newQ = calculatedQ.toFixed(calculatedQ % 1 === 0 ? 0 : 4);
-                  if (bp > 0) {
-                    newInv = (calculatedQ * bp).toFixed(2);
-                  }
-                }
-                setEditingAsset({
-                  ...editingAsset,
-                  currentValue: cv,
-                  quantity: newQ,
-                  investedAmount: newInv,
-                });
-              }}
-              placeholder={
-                (Number(editingAsset.quantity) || computedEditHoldings) > 0 && Number(editingAsset.currentPrice || editingAsset.buyPrice) > 0
-                  ? ((Number(editingAsset.quantity) || computedEditHoldings) * Number(editingAsset.currentPrice || editingAsset.buyPrice)).toFixed(2)
-                  : "0.00"
-              }
-            />
-          </label>
-        </div>
-
-        <div className="form-row">
-          <label>
-            Total Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
-            <input
-              required
-              type="number"
-              min="0.01"
-              step="any"
-              value={editingAsset.investedAmount}
-              onChange={(e) => {
-                const inv = e.target.value;
-                const numInv = Number(inv);
-                const bp = Number(editingAsset.buyPrice);
-                const cp = Number(editingAsset.currentPrice);
-                let newQ = editingAsset.quantity;
-                let newCv = editingAsset.currentValue;
-                if (numInv > 0 && bp > 0) {
-                  const calculatedQ = numInv / bp;
-                  newQ = calculatedQ.toFixed(calculatedQ % 1 === 0 ? 0 : 4);
-                  if (cp > 0) {
-                    newCv = (calculatedQ * cp).toFixed(2);
-                  }
-                }
-                setEditingAsset({
-                  ...editingAsset,
-                  investedAmount: inv,
-                  quantity: newQ,
-                  currentValue: newCv,
-                });
-              }}
-            />
-          </label>
-        </div>
-
-        {((Number(editingAsset.quantity) || computedEditHoldings) > 0) && (
-          <div className="holdings-preview-banner">
-            <Sparkles
-              size={14}
-              style={{ color: "var(--apple-blue)", flexShrink: 0 }}
-            />
-            <span>
-              Holdings: <strong>{(Number(editingAsset.quantity) || computedEditHoldings).toFixed((Number(editingAsset.quantity) || computedEditHoldings) % 1 === 0 ? 0 : 4)} units</strong>
-              <span style={{ opacity: 0.85, marginLeft: "8px", fontSize: "11px" }}>
-                • Exact Live Valuation: {editingAsset.currency === "USD" ? "$" : "₹"}
-                {((Number(editingAsset.quantity) || computedEditHoldings) * (Number(editingAsset.currentPrice) || Number(editingAsset.buyPrice) || 0)).toFixed(2)}
-              </span>
-            </span>
-          </div>
-        )}
-
         {/* Authentic Apple iOS Switch for SIP Check */}
         <div className={`apple-ios-sip-toggle-card ${editingAsset.isSip ? "active" : ""}`}>
           <div className="apple-ios-sip-info">
@@ -1400,7 +1394,7 @@ export function EditAssetModal() {
               setEditingAsset({
                 ...editingAsset,
                 isSip: next,
-                sipAmount: next && !editingAsset.sipAmount ? editingAsset.investedAmount : editingAsset.sipAmount,
+                sipAmount: next && !editingAsset.sipAmount ? (editingAsset.investedAmount || "") : editingAsset.sipAmount,
               });
             }}
             role="switch"
@@ -1411,7 +1405,7 @@ export function EditAssetModal() {
           </button>
         </div>
 
-        {editingAsset.isSip && (
+        {editingAsset.isSip ? (
           <>
             <div className="form-row">
               <label>
@@ -1450,7 +1444,7 @@ export function EditAssetModal() {
 
             <div className="form-row">
               <label>
-                Payment / Debit Day of Month
+                Payment / Debit Date of Month
                 <select
                   value={editingAsset.sipDay || "5"}
                   onChange={(e) =>
@@ -1484,6 +1478,221 @@ export function EditAssetModal() {
                 </select>
               </label>
             </div>
+
+            <div className="form-row">
+              <label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Current Price / NAV ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Live AMFI / Market NAV
+                  </span>
+                </div>
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={editingAsset.currentPrice || editingAsset.buyPrice}
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
+                  }}
+                  placeholder="e.g. 85.50"
+                />
+              </label>
+
+              <label>
+                Total Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={editingAsset.investedAmount}
+                  onChange={(e) =>
+                    setEditingAsset({
+                      ...editingAsset,
+                      investedAmount: e.target.value,
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="apple-sip-schedule-banner">
+              <div className="apple-sip-schedule-left">
+                <CalendarClock size={16} style={{ color: "#34c759", flexShrink: 0 }} />
+                <div>
+                  <strong>Next scheduled payment: {getNextSipDate(Number(editingAsset.sipDay) || 5)}</strong>
+                  <p>On this day each month, MyWealth will automatically add this installment and update your returns.</p>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="form-row">
+              <label>
+                Quantity (Shares / Units)
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={editingAsset.quantity || ""}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    const numQ = Number(q);
+                    const bp = Number(editingAsset.buyPrice);
+                    const cp = Number(editingAsset.currentPrice);
+                    setEditingAsset({
+                      ...editingAsset,
+                      quantity: q,
+                      investedAmount: numQ > 0 && bp > 0 ? (numQ * bp).toFixed(2) : editingAsset.investedAmount,
+                      currentValue: numQ > 0 && cp > 0 ? (numQ * cp).toFixed(2) : editingAsset.currentValue,
+                    });
+                  }}
+                  placeholder="e.g. 10"
+                />
+              </label>
+
+              <label>
+                Buy Price per unit ({editingAsset.currency === "USD" ? "$" : "₹"})
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={editingAsset.buyPrice}
+                  onChange={(e) => {
+                    const price = e.target.value;
+                    const numBp = Number(price);
+                    const q = Number(editingAsset.quantity);
+                    let newInv = editingAsset.investedAmount;
+                    let newQ = editingAsset.quantity;
+                    if (numBp > 0) {
+                      if (q > 0) {
+                        newInv = (q * numBp).toFixed(2);
+                      } else if (Number(editingAsset.investedAmount) > 0) {
+                        const calcQ = Number(editingAsset.investedAmount) / numBp;
+                        newQ = calcQ.toFixed(calcQ % 1 === 0 ? 0 : 4);
+                      }
+                    }
+                    setEditingAsset({
+                      ...editingAsset,
+                      buyPrice: price,
+                      investedAmount: newInv,
+                      quantity: newQ,
+                    });
+                  }}
+                  placeholder="e.g. 1165"
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Market Price (CMP / NAV) ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Live Market CMP
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={editingAsset.currentPrice}
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
+                  }}
+                  placeholder="Live quote auto-fills"
+                />
+              </label>
+
+              <label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Current Valuation ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                    🔒 Units × CMP
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={
+                    (Number(editingAsset.quantity) || computedEditHoldings) > 0 && Number(editingAsset.currentPrice || editingAsset.buyPrice) > 0
+                      ? ((Number(editingAsset.quantity) || computedEditHoldings) * Number(editingAsset.currentPrice || editingAsset.buyPrice)).toFixed(2)
+                      : editingAsset.currentValue
+                  }
+                  readOnly
+                  disabled
+                  style={{
+                    background: "rgba(0, 0, 0, 0.04)",
+                    color: "var(--foreground)",
+                    cursor: "not-allowed",
+                  }}
+                  placeholder="0.00"
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                Total Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
+                <input
+                  required
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={editingAsset.investedAmount}
+                  onChange={(e) => {
+                    const inv = e.target.value;
+                    const numInv = Number(inv);
+                    const bp = Number(editingAsset.buyPrice);
+                    const cp = Number(editingAsset.currentPrice);
+                    let newQ = editingAsset.quantity;
+                    let newCv = editingAsset.currentValue;
+                    if (numInv > 0 && bp > 0) {
+                      const calcQ = numInv / bp;
+                      newQ = calcQ.toFixed(calcQ % 1 === 0 ? 0 : 4);
+                      if (cp > 0) {
+                        newCv = (calcQ * cp).toFixed(2);
+                      }
+                    }
+                    setEditingAsset({
+                      ...editingAsset,
+                      investedAmount: inv,
+                      quantity: newQ,
+                      currentValue: newCv,
+                    });
+                  }}
+                />
+              </label>
+            </div>
+
+            {((Number(editingAsset.quantity) || computedEditHoldings) > 0) && (
+              <div className="holdings-preview-banner">
+                <Sparkles
+                  size={14}
+                  style={{ color: "var(--apple-blue)", flexShrink: 0 }}
+                />
+                <span>
+                  Holdings: <strong>{(Number(editingAsset.quantity) || computedEditHoldings).toFixed((Number(editingAsset.quantity) || computedEditHoldings) % 1 === 0 ? 0 : 4)} units</strong>
+                  <span style={{ opacity: 0.85, marginLeft: "8px", fontSize: "11px" }}>
+                    • Exact Live Valuation: {editingAsset.currency === "USD" ? "$" : "₹"}
+                    {((Number(editingAsset.quantity) || computedEditHoldings) * (Number(editingAsset.currentPrice) || Number(editingAsset.buyPrice) || 0)).toFixed(2)}
+                  </span>
+                </span>
+              </div>
+            )}
           </>
         )}
 
@@ -1936,6 +2145,247 @@ export function MarketSessionsModal() {
   );
 }
 
+export function OperationResultModal() {
+  const { operationResult, closeOperationResult } = usePortfolio();
+
+  if (!operationResult || !operationResult.isOpen) return null;
+
+  const isSuccess = operationResult.type === "success";
+
+  return (
+    <div className="modal-overlay" onClick={closeOperationResult}>
+      <div
+        className="investment-modal"
+        style={{
+          width: "min(100%, 450px)",
+          textAlign: "center",
+          padding: "26px 22px 22px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "14px",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Status Icon Squircle */}
+        <div
+          style={{
+            width: "56px",
+            height: "56px",
+            borderRadius: "18px",
+            display: "grid",
+            placeItems: "center",
+            background: isSuccess ? "rgba(34, 197, 94, 0.12)" : "rgba(239, 68, 68, 0.12)",
+            color: isSuccess ? "#16a34a" : "#dc2626",
+            boxShadow: isSuccess
+              ? "0 4px 16px rgba(34, 197, 94, 0.25)"
+              : "0 4px 16px rgba(239, 68, 68, 0.25)",
+            border: isSuccess
+              ? "1px solid rgba(34, 197, 94, 0.25)"
+              : "1px solid rgba(239, 68, 68, 0.25)",
+          }}
+        >
+          {isSuccess ? <CheckCircle2 size={30} /> : <AlertTriangle size={28} />}
+        </div>
+
+        {/* Title & Message */}
+        <div>
+          <h2 style={{ fontSize: "19px", fontWeight: 700, margin: 0, color: "var(--foreground)" }}>
+            {operationResult.title}
+          </h2>
+          <p
+            style={{
+              fontSize: "13px",
+              color: "var(--foreground-muted)",
+              marginTop: "6px",
+              lineHeight: "1.5",
+            }}
+          >
+            {operationResult.message}
+          </p>
+        </div>
+
+        {/* Details Card if available */}
+        {operationResult.details && (
+          <div
+            style={{
+              width: "100%",
+              background: "#f8f9fc",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              borderRadius: "14px",
+              padding: "12px 14px",
+              textAlign: "left",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <strong style={{ fontSize: "14px", color: "var(--foreground)" }}>
+                {operationResult.assetName}
+              </strong>
+              {operationResult.details.category && (
+                <span
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 600,
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                    background: "rgba(147, 102, 255, 0.12)",
+                    color: "#9366FF",
+                  }}
+                >
+                  {operationResult.details.category}
+                </span>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "8px",
+                fontSize: "12px",
+                borderTop: "1px solid rgba(0, 0, 0, 0.06)",
+                paddingTop: "8px",
+              }}
+            >
+              {operationResult.details.quantity !== undefined && (
+                <div>
+                  <span style={{ color: "var(--foreground-muted)", fontSize: "11px" }}>Quantity:</span>
+                  <div style={{ fontWeight: 600 }}>{operationResult.details.quantity} units</div>
+                </div>
+              )}
+              {operationResult.details.currentPrice !== undefined && (
+                <div>
+                  <span style={{ color: "var(--foreground-muted)", fontSize: "11px" }}>Market Price:</span>
+                  <div style={{ fontWeight: 600 }}>
+                    {operationResult.details.currency === "USD" ? "$" : "₹"}
+                    {operationResult.details.currentPrice}
+                  </div>
+                </div>
+              )}
+              {operationResult.details.currentValue !== undefined && (
+                <div>
+                  <span style={{ color: "var(--foreground-muted)", fontSize: "11px" }}>Valuation:</span>
+                  <div style={{ fontWeight: 600, color: "#16a34a" }}>
+                    {operationResult.details.currency === "USD" ? "$" : "₹"}
+                    {operationResult.details.currentValue}
+                  </div>
+                </div>
+              )}
+              {operationResult.details.brokerApp && (
+                <div>
+                  <span style={{ color: "var(--foreground-muted)", fontSize: "11px" }}>Broker:</span>
+                  <div style={{ fontWeight: 600 }}>{operationResult.details.brokerApp}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Sync Status Badge */}
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "11px",
+            fontWeight: 600,
+            color: isSuccess ? "#16a34a" : "#dc2626",
+            background: isSuccess ? "rgba(34, 197, 94, 0.08)" : "rgba(239, 68, 68, 0.08)",
+            padding: "4px 12px",
+            borderRadius: "9999px",
+          }}
+        >
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              background: isSuccess ? "#22c55e" : "#ef4444",
+            }}
+          />
+          <span>{isSuccess ? "Database synced & verified" : "Action required"}</span>
+        </div>
+
+        {/* Modal Actions */}
+        <div style={{ display: "flex", gap: "10px", width: "100%", marginTop: "6px" }}>
+          {!isSuccess && operationResult.onRetry && (
+            <button
+              type="button"
+              className="secondary-button"
+              style={{ flex: 1 }}
+              onClick={() => {
+                const retryFn = operationResult.onRetry;
+                closeOperationResult();
+                retryFn?.();
+              }}
+            >
+              Try Again
+            </button>
+          )}
+          <button
+            type="button"
+            className="primary-button"
+            style={{ flex: 1, justifyContent: "center" }}
+            onClick={closeOperationResult}
+          >
+            {isSuccess ? "Done" : "Dismiss"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function IosLoaderModal() {
+  const { processingState } = usePortfolio();
+
+  if (!processingState || !processingState.active) return null;
+
+  return (
+    <div className="ios-loader-overlay">
+      <div className="ios-loader-hud">
+        {/* Authentic 12-blade Apple iOS Activity Spinner */}
+        <div
+          className="ios-spinner"
+          role="status"
+          aria-label="Loading"
+          style={{ transform: "scale(1.25)", margin: "4px 0" }}
+        >
+          <div /><div /><div /><div /><div /><div />
+          <div /><div /><div /><div /><div /><div />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", width: "100%" }}>
+          <strong
+            style={{
+              fontSize: "15px",
+              fontWeight: 700,
+              color: "var(--foreground)",
+              letterSpacing: "-0.2px",
+            }}
+          >
+            {processingState.title}
+          </strong>
+          {processingState.subtitle && (
+            <span
+              style={{
+                fontSize: "12px",
+                color: "var(--foreground-muted)",
+                lineHeight: "1.4",
+              }}
+            >
+              {processingState.subtitle}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PortfolioModals() {
   return (
     <>
@@ -1945,6 +2395,8 @@ export function PortfolioModals() {
       <DbConfigModal />
       <MarketSessionsModal />
       <AssetDetailModal />
+      <IosLoaderModal />
+      <OperationResultModal />
     </>
   );
 }

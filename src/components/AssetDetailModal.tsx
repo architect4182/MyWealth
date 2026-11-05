@@ -93,7 +93,7 @@ export function AssetDetailModal() {
   }, [viewingAsset, currentTime]);
 
   const ticker = useMemo(() => {
-    return viewingAsset ? getStockTicker(viewingAsset.name) : "";
+    return viewingAsset ? getStockTicker(viewingAsset.name, viewingAsset.category) : "";
   }, [viewingAsset]);
 
   const categoryBrokers = useMemo(() => {
@@ -133,7 +133,7 @@ export function AssetDetailModal() {
           }
         } else {
           // If viewingAsset has a clean ticker (e.g. AAPL, JPL, RELIANCE)
-          let sym = ticker || getStockTicker(viewingAsset.name);
+          let sym = ticker || getStockTicker(viewingAsset.name, viewingAsset.category);
           if (sym && sym !== viewingAsset.name && /^[A-Z0-9.^=-]{1,15}$/.test(sym)) {
             if (viewingAsset.category === "Indian Equities" && !sym.endsWith(".NS") && !sym.endsWith(".BO")) {
               sym += ".NS";
@@ -261,7 +261,9 @@ export function AssetDetailModal() {
   const isOwnedInPortfolio = viewingAsset.quantity > 0;
   const totalQuantity = viewingAsset.quantity;
   const avgBuyPrice = viewingAsset.buyPrice;
-  const personalInvested = totalQuantity * avgBuyPrice;
+  const personalInvested = viewingAsset.investedAmount !== undefined && viewingAsset.investedAmount > 0
+    ? viewingAsset.investedAmount
+    : (totalQuantity * avgBuyPrice);
   const personalCurrentVal = totalQuantity * activeCurrentPrice;
   const personalPnl = personalCurrentVal - personalInvested;
   const personalPnlPct = personalInvested > 0 ? (personalPnl / personalInvested) * 100 : 0;
