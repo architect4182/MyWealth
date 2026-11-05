@@ -27,23 +27,12 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // 1. Try querying with case-insensitive username match
-    let { data, error } = await supabase
+    // Query with case-insensitive username match
+    const { data, error } = await supabase
       .from("assets")
       .select("*")
       .ilike("username", username)
       .order("created_at", { ascending: false });
-
-    // 2. If username column does not exist (code 42703), fallback to user_id
-    if (error && (error.code === "42703" || error.message?.includes("username"))) {
-      const res = await supabase
-        .from("assets")
-        .select("*")
-        .ilike("user_id", username)
-        .order("created_at", { ascending: false });
-      data = res.data;
-      error = res.error;
-    }
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -124,44 +113,33 @@ export async function POST(req: NextRequest) {
       .insert([{ ...basePayload, ...sipFields }])
       .select();
 
-    // 2. Fallback if broker_app, invested_amount, or SIP columns do not exist yet (code 42703)
-    if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested") || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
-      const payloadFallback = { ...basePayload };
-      delete payloadFallback.broker_app;
-      if (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested")) {
-        delete payloadFallback.invested_amount;
-      }
+    // 2. Safe fallback: If broker_app, invested_amount, or SIP columns fail
+    if (insertRes.error) {
+      console.warn("[POST /api/assets] Full insert failed, retrying safe standard payload:", insertRes.error.message);
+      const safePayload: Record<string, any> = {
+        name: basePayload.name,
+        category: basePayload.category,
+        quantity: basePayload.quantity,
+        invested_amount: basePayload.invested_amount,
+        buy_price: basePayload.buy_price,
+        current_price: basePayload.current_price,
+        currency: basePayload.currency,
+        username: basePayload.username,
+      };
 
       insertRes = await supabase
         .from("assets")
-        .insert([{ ...payloadFallback, ...sipFields }])
+        .insert([safePayload])
         .select();
 
-      if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("sip") || insertRes.error.message?.includes("invested"))) {
-        delete payloadFallback.invested_amount;
+      // 3. Fallback without invested_amount if invested_amount column does not exist
+      if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested"))) {
+        delete safePayload.invested_amount;
         insertRes = await supabase
           .from("assets")
-          .insert([payloadFallback])
+          .insert([safePayload])
           .select();
       }
-    }
-
-    // 3. Fallback if username column is named user_id (code 42703)
-    if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("username"))) {
-      insertRes = await supabase
-        .from("assets")
-        .insert([
-          {
-            name: String(body.name).trim(),
-            category: body.category,
-            quantity,
-            buy_price: buyPrice,
-            current_price: currentPrice,
-            currency,
-            user_id: username.trim(),
-          },
-        ])
-        .select();
     }
 
     if (insertRes.error) {

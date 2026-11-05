@@ -363,7 +363,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!currentUserId || !currentUserId.trim()) return;
     try {
-      const uid = currentUserId.toLowerCase().trim();
+      const uid = currentUserId.trim();
       const local = localStorage.getItem(`mywealth_positions_${uid}`);
       if (local && !isSupabaseConfigured) {
         const parsed = JSON.parse(local);
@@ -396,21 +396,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       setSyncStatus("connecting");
       setIsLoading(true);
       try {
-        // Query scheme/assets table with username column (with fallback to user_id)
+        // Query scheme/assets table with username column
         let query = supabase!.from("assets").select("*").ilike("username", uid);
         let { data, error } = await query.order("created_at", { ascending: false });
-
-        // If username column is not yet renamed in DB (code 42703), fallback to user_id
-        if (error && (error.code === "42703" || error.message?.includes("username"))) {
-          let fallbackQuery = supabase!.from("assets").select("*").ilike("user_id", uid);
-          const fbRes = await fallbackQuery.order("created_at", { ascending: false });
-          if (!fbRes.error && fbRes.data) {
-            data = fbRes.data;
-            error = null;
-          } else {
-            error = fbRes.error;
-          }
-        }
 
         // Resilient fallback: Query via dedicated server API endpoint
         if ((error || !data || data.length === 0) && isMounted) {
@@ -497,7 +485,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             return combined;
           });
           setSyncStatus("live");
-        } else if (error && (error.code === "42703" || error.message?.includes("user_id") || error.message?.includes("username"))) {
+        } else if (error && (error.code === "42703" || error.message?.includes("username"))) {
           if (isMounted) {
             const local = localStorage.getItem(`mywealth_positions_${uid}`);
             if (local) {

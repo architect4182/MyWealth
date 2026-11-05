@@ -42,7 +42,9 @@ export async function createSessionToken(username: string): Promise<string> {
   const secret = getAuthSecret();
   const key = await getHmacKey(secret);
   const timestamp = Math.floor(Date.now() / 1000);
-  const payload = `${username.trim().toLowerCase()}:${timestamp}`;
+  // Preserve original username casing so FK constraint matches the users table
+  const normalizedUsername = username.trim();
+  const payload = `${normalizedUsername}:${timestamp}`;
   const enc = new TextEncoder();
   const signature = await crypto.subtle.sign("HMAC", key, enc.encode(payload));
   const sigHex = bufferToHex(signature);
@@ -104,7 +106,22 @@ export async function verifySessionToken(
     );
 
     if (isValid) {
-      return { valid: true, username };
+      // Look up the real DB casing so FK inserts always match the users table
+      let resolvedUsername = username;
+      if (supabase) {
+        try {
+          const res = await supabase
+            .from("users")
+            .select("username")
+            .ilike("username", username)
+            .limit(1)
+            .maybeSingle();
+          if (!res.error && res.data?.username) {
+            resolvedUsername = res.data.username;
+          }
+        } catch {}
+      }
+      return { valid: true, username: resolvedUsername };
     }
   } catch (err) {
     console.error("Token verification error:", err);

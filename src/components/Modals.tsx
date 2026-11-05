@@ -300,7 +300,8 @@ export function AddAssetModal() {
           setInvestedAmount((qNum * (Number(buyPrice) || data.price)).toFixed(2));
         }
         if (data.currency) setCurrency(data.currency as "INR" | "USD");
-        if (data.name && name.trim().length <= 4) {
+        // Only overwrite name when explicitly triggered by a selection, not auto-typing
+        if (data.name && isStockSelected && name.trim().length <= 4) {
           skipNextAutoPriceLookupRef.current = true;
           setName(data.name);
         }
@@ -329,6 +330,15 @@ export function AddAssetModal() {
       return;
     }
 
+    // Only auto-fetch price when user has explicitly selected a stock from the dropdown
+    // While still typing, only show suggestions — never auto-fill price or name
+    if (!isStockSelected) {
+      const resetTimeoutId = window.setTimeout(() => {
+        if (autoPriceRequestRef.current === requestId) setIsFetchingPrice(false);
+      }, 0);
+      return () => window.clearTimeout(resetTimeoutId);
+    }
+
     if (!modal || query.length < 3) {
       const resetTimeoutId = window.setTimeout(() => {
         if (autoPriceRequestRef.current === requestId) setIsFetchingPrice(false);
@@ -341,7 +351,7 @@ export function AddAssetModal() {
     }, 700);
 
     return () => window.clearTimeout(timeoutId);
-  }, [modal, name, category]);
+  }, [modal, name, category, isStockSelected]);
 
   if (!modal) return null;
 
@@ -709,69 +719,71 @@ export function AddAssetModal() {
           </label>
         </div>
 
-        <div>
-          <label>
-            Investing via App / Broker
-            <select
-              value={isCustomBroker ? "__custom__" : (brokerApp || "")}
-              onChange={(e) => {
-                if (e.target.value === "__custom__") {
-                  setIsCustomBroker(true);
-                  setBrokerApp("");
-                } else {
-                  setIsCustomBroker(false);
-                  setBrokerApp(e.target.value);
-                }
-              }}
-            >
-              <option value="">-- Select Investing App / Broker (Optional) --</option>
-              {getQuickBrokerOptions(category).map((app) => (
-                <option key={app} value={app}>
-                  {app}
-                </option>
-              ))}
-              <option value="__custom__">Other / Custom Broker…</option>
-            </select>
-          </label>
-          {isCustomBroker && (
-            <input
-              style={{ marginTop: "8px" }}
-              required
-              value={brokerApp}
-              onChange={(e) => setBrokerApp(e.target.value)}
-              placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities, ICICI Direct"
-              autoFocus
-            />
-          )}
-        </div>
-
-        {/* Authentic Apple iOS Switch for SIP Check */}
-        <div className={`apple-ios-sip-toggle-card ${isSip ? "active" : ""}`}>
-          <div className="apple-ios-sip-info">
-            <div className="apple-ios-sip-label-row">
-              <Repeat size={14} style={{ color: isSip ? "#34c759" : "var(--foreground-muted)" }} />
-              <strong className="apple-ios-sip-title">Is this a SIP (Recurring Investment)?</strong>
-            </div>
-            <span className="apple-ios-sip-desc">
-              {isSip
-                ? "Auto-executes monthly on payment date & recalculates P/L"
-                : "Standard one-time lump sum investment"}
-            </span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", alignItems: "start" }}>
+          <div>
+            <label>
+              Investing via App / Broker
+              <select
+                value={isCustomBroker ? "__custom__" : (brokerApp || "")}
+                onChange={(e) => {
+                  if (e.target.value === "__custom__") {
+                    setIsCustomBroker(true);
+                    setBrokerApp("");
+                  } else {
+                    setIsCustomBroker(false);
+                    setBrokerApp(e.target.value);
+                  }
+                }}
+              >
+                <option value="">-- Select Broker (Optional) --</option>
+                {getQuickBrokerOptions(category).map((app) => (
+                  <option key={app} value={app}>
+                    {app}
+                  </option>
+                ))}
+                <option value="__custom__">Other / Custom Broker…</option>
+              </select>
+            </label>
+            {isCustomBroker && (
+              <input
+                style={{ marginTop: "8px" }}
+                required
+                value={brokerApp}
+                onChange={(e) => setBrokerApp(e.target.value)}
+                placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities"
+                autoFocus
+              />
+            )}
           </div>
-          <button
-            type="button"
-            className={`ios-switch ${isSip ? "active" : ""}`}
-            onClick={() => {
-              const next = !isSip;
-              setIsSip(next);
-              if (next && !sipAmount && investedAmount) setSipAmount(investedAmount);
-            }}
-            role="switch"
-            aria-checked={isSip}
-            aria-label="Toggle SIP"
-          >
-            <span className="ios-switch-knob" />
-          </button>
+
+          {/* Authentic Apple iOS Switch for SIP Check */}
+          <div className={`apple-ios-sip-toggle-card ${isSip ? "active" : ""}`}>
+            <div className="apple-ios-sip-info">
+              <div className="apple-ios-sip-label-row">
+                <Repeat size={14} style={{ color: isSip ? "#34c759" : "var(--foreground-muted)" }} />
+                <strong className="apple-ios-sip-title">Is this a SIP (Recurring Investment)?</strong>
+              </div>
+              <span className="apple-ios-sip-desc">
+                {isSip
+                  ? "Auto-executes monthly on payment date & recalculates P/L"
+                  : "Standard one-time lump sum investment"}
+              </span>
+            </div>
+            <button
+              type="button"
+              className={`ios-switch ${isSip ? "active" : ""}`}
+              onClick={() => {
+                const next = !isSip;
+                setIsSip(next);
+                if (next && !sipAmount && investedAmount) setSipAmount(investedAmount);
+              }}
+              role="switch"
+              aria-checked={isSip}
+              aria-label="Toggle SIP"
+            >
+              <span className="ios-switch-knob" />
+            </button>
+          </div>
         </div>
 
         {isSip ? (
@@ -972,7 +984,7 @@ export function AddAssetModal() {
               </label>
             </div>
 
-            <div className="form-row">
+            <div className="form-row-full">
               <label>
                 Total Amount Invested ({currency === "USD" ? "$" : "₹"})
                 <input
