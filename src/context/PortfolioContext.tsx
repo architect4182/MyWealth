@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData } from "@/types/portfolio";
+import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData, AssetSaveNotification } from "@/types/portfolio";
 import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { calculateSipCatchup, formatLocalDate } from "@/utils/sip";
@@ -117,6 +117,8 @@ interface PortfolioContextType {
   activeSipCount: number;
   sipNotice: string | null;
   clearSipNotice: () => void;
+  assetSaveNotification: AssetSaveNotification | null;
+  setAssetSaveNotification: (v: AssetSaveNotification | null) => void;
   modal: boolean;
   setModal: (v: boolean) => void;
   editingAsset: EditAssetForm | null;
@@ -151,6 +153,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [unsavedAssetIds, setUnsavedAssetIds] = useState<Set<string>>(new Set());
   const [isSavingPrices, setIsSavingPrices] = useState(false);
   const dbBaselinePricesRef = useRef<Map<string, number>>(new Map());
+  const recentAddsRef = useRef<Map<string, number>>(new Map());
 
   const [syncStatus, setSyncStatus] = useState<"live" | "connecting" | "offline">(
     isSupabaseConfigured ? "connecting" : "offline"
@@ -161,6 +164,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [flashAssetId, setFlashAssetId] = useState<string | null>(null);
   const [sipNotice, setSipNotice] = useState<string | null>(null);
   const clearSipNotice = useCallback(() => setSipNotice(null), []);
+  const [assetSaveNotification, setAssetSaveNotification] = useState<AssetSaveNotification | null>(null);
+  const assetNotificationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sipCatchupExecutedRef = useRef<Set<string>>(new Set());
 
   const [modal, setModal] = useState(false);
@@ -854,15 +859,31 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             else ticker = asset.name.toUpperCase();
           } else if (asset.category === "Indian Equities") {
             marketType = "INDIA";
-            if (lower.includes("reliance") && !lower.includes("jio")) ticker = "RELIANCE";
+            if (lower.includes("icici")) ticker = "ICICIBANK";
+            else if (lower.includes("reliance") && !lower.includes("jio")) ticker = "RELIANCE";
             else if (lower.includes("jio financial")) ticker = "JIOFIN";
             else if (lower.includes("jio platforms") || lower.includes("jio") || lower === "jp") ticker = "JPL";
             else if (lower.includes("tata motors")) ticker = "TATAMOTORS";
             else if (lower.includes("tcs") || lower.includes("tata consultancy")) ticker = "TCS";
             else if (lower.includes("hdfc")) ticker = "HDFCBANK";
             else if (lower.includes("sbi") || lower.includes("state bank")) ticker = "SBIN";
-            else if (lower.includes("infosys")) ticker = "INFY";
-            else ticker = asset.name.toUpperCase();
+            else if (lower.includes("infosys") || lower === "infy") ticker = "INFY";
+            else if (lower.includes("airtel") || lower.includes("bharti")) ticker = "BHARTIARTL";
+            else if (lower.includes("kotak")) ticker = "KOTAKBANK";
+            else if (lower.includes("axis")) ticker = "AXISBANK";
+            else if (lower.includes("zomato")) ticker = "ZOMATO";
+            else if (lower.includes("itc")) ticker = "ITC";
+            else if (lower.includes("maruti")) ticker = "MARUTI";
+            else if (lower.includes("titan")) ticker = "TITAN";
+            else if (lower.includes("larsen") || lower === "lt") ticker = "LT";
+            else if (lower.includes("hindustan unilever") || lower === "hul") ticker = "HINDUNILVR";
+            else if (lower.includes("bajaj finance")) ticker = "BAJFINANCE";
+            else if (lower.includes("sun pharma")) ticker = "SUNPHARMA";
+            else if (lower.includes("wipro")) ticker = "WIPRO";
+            else {
+              const pMatch = asset.name.match(/\((?:NSE:|BSE:|NASDAQ:|NYSE:)?([A-Z0-9.-]+)\)/i);
+              ticker = pMatch ? pMatch[1].toUpperCase() : asset.name.toUpperCase();
+            }
           } else if (asset.category === "Mutual Funds") {
             ticker = asset.name;
           }
@@ -1025,6 +1046,25 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Duplicate submission guard: prevent rapid multi-click duplicates in DB
+    const lockKey = `${uid}:${item.name.toLowerCase().trim()}:${item.category}`;
+    const now = Date.now();
+    const lastAdd = recentAddsRef.current.get(lockKey);
+    if (lastAdd && now - lastAdd < 2500) {
+      console.warn("Ignoring rapid duplicate asset submission for", item.name);
+      return;
+    }
+    recentAddsRef.current.set(lockKey, now);
+
+    if (assetNotificationTimerRef.current) {
+      clearTimeout(assetNotificationTimerRef.current);
+    }
+    setAssetSaveNotification({
+      status: "saving",
+      name: item.name,
+      message: `Adding ${item.name} to your portfolio…`,
+    });
+
     const tempId = `temp-${Date.now()}`;
     const newPos: AssetPosition = {
       id: tempId,
@@ -1101,6 +1141,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         return dedupeAssets(updated);
       });
       setFlashAssetId(realId);
+      setAssetSaveNotification({
+        status: "success",
+        name: item.name,
+        message: `${item.name} recorded & synced with database!`,
+      });
+      assetNotificationTimerRef.current = setTimeout(() => {
+        setAssetSaveNotification(null);
+      }, 3500);
     } catch (err: any) {
       console.warn("[addAsset] API call failed, attempting direct Supabase fallback:", err);
 
@@ -1169,14 +1217,30 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      if (!directSaved) {
+      if (directSaved) {
+        setAssetSaveNotification({
+          status: "success",
+          name: item.name,
+          message: `${item.name} recorded & synced with database!`,
+        });
+        assetNotificationTimerRef.current = setTimeout(() => {
+          setAssetSaveNotification(null);
+        }, 3500);
+      } else {
         // Revert optimistic item so UI matches DB
         setAssets((prev) => {
           const reverted = prev.filter((a) => a.id !== tempId);
           persistLocal(reverted, uid);
           return dedupeAssets(reverted);
         });
-        setSipNotice(`Failed to save asset: ${err.message || "Network error"}`);
+        setAssetSaveNotification({
+          status: "error",
+          name: item.name,
+          message: `Failed to save ${item.name}: ${err?.message || "Connection error"}`,
+        });
+        assetNotificationTimerRef.current = setTimeout(() => {
+          setAssetSaveNotification(null);
+        }, 4500);
       }
     }
   };
@@ -1276,6 +1340,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       id: asset.id,
       name: asset.name,
       category: asset.category,
+      quantity: asset.quantity ? asset.quantity.toString() : "",
       investedAmount: (asset.quantity * asset.buyPrice).toFixed(2),
       buyPrice: asset.buyPrice.toString(),
       currentPrice: asset.currentPrice.toString(),
@@ -1367,111 +1432,6 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // 1-Hour Inactivity Auto-Logout Tracker
-  useEffect(() => {
-    if (!currentUserId || typeof window === "undefined") return;
-
-    const INACTIVITY_LIMIT_MS = 60 * 60 * 1000; // 1 hour = 3,600,000 ms
-    const THROTTLE_WRITE_MS = 10 * 1000; // Throttle storage writes to once every 10s
-    const REFRESH_SESSION_MS = 15 * 60 * 1000; // Ping /api/auth/me every 15m to slide server token
-    const STORAGE_KEY = "mywealth_last_activity";
-
-    let lastRecordedActivity = Date.now();
-    let lastServerPing = Date.now();
-
-    // Initialize or load last activity timestamp
-    try {
-      const existing = localStorage.getItem(STORAGE_KEY);
-      if (!existing) {
-        localStorage.setItem(STORAGE_KEY, String(Date.now()));
-      } else {
-        const parsed = Number(existing);
-        if (!isNaN(parsed) && parsed > 0) {
-          lastRecordedActivity = parsed;
-        } else {
-          localStorage.setItem(STORAGE_KEY, String(Date.now()));
-        }
-      }
-    } catch {}
-
-    const recordActivity = () => {
-      const now = Date.now();
-      if (now - lastRecordedActivity >= THROTTLE_WRITE_MS) {
-        lastRecordedActivity = now;
-        try {
-          localStorage.setItem(STORAGE_KEY, String(now));
-        } catch {}
-
-        // If user has been actively using the app for > 15m since last server ping, refresh server session
-        if (now - lastServerPing >= REFRESH_SESSION_MS) {
-          lastServerPing = now;
-          fetch("/api/auth/me").catch(() => {});
-        }
-      }
-    };
-
-    const checkInactivity = () => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        const lastActive = stored ? Number(stored) : lastRecordedActivity;
-        const idleTime = Date.now() - lastActive;
-
-        if (idleTime >= INACTIVITY_LIMIT_MS) {
-          console.warn(`[MyWealth Auth] User inactive for ${Math.round(idleTime / 1000)}s (>= 1 hour). Auto-logging out.`);
-          handleLogout("inactivity");
-        }
-      } catch {}
-    };
-
-    // User interaction events that indicate active presence
-    const activityEvents = [
-      "mousedown",
-      "mousemove",
-      "keydown",
-      "scroll",
-      "touchstart",
-      "click",
-      "wheel",
-    ];
-
-    activityEvents.forEach((evt) => {
-      window.addEventListener(evt, recordActivity, { passive: true });
-    });
-
-    // Check inactivity periodically every 20 seconds
-    const intervalId = window.setInterval(checkInactivity, 20 * 1000);
-
-    // Check immediately when tab becomes visible or regains focus (e.g. computer woke from sleep)
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        checkInactivity();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("focus", handleVisibility);
-
-    // Cross-tab synchronization: If another tab records activity, update locally
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        const parsed = Number(e.newValue);
-        if (!isNaN(parsed) && parsed > 0) {
-          lastRecordedActivity = parsed;
-        }
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      activityEvents.forEach((evt) => {
-        window.removeEventListener(evt, recordActivity);
-      });
-      window.clearInterval(intervalId);
-      document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("focus", handleVisibility);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [currentUserId]);
-
   const safeAssets = useMemo(() => dedupeAssets(assets), [assets]);
 
   const contextValue = useMemo(
@@ -1542,6 +1502,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       activeSipCount,
       sipNotice,
       clearSipNotice,
+      assetSaveNotification,
+      setAssetSaveNotification,
       viewingAsset,
       setViewingAsset,
       openAssetDetail,
@@ -1596,6 +1558,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       totalMonthlySipINR,
       activeSipCount,
       sipNotice,
+      assetSaveNotification,
       viewingAsset,
       setViewingAsset,
       openAssetDetail,

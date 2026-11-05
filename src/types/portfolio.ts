@@ -30,6 +30,7 @@ export interface EditAssetForm {
   id: string;
   name: string;
   category: AssetCategory;
+  quantity?: string;
   investedAmount: string;
   buyPrice: string;
   currentPrice: string;
@@ -64,4 +65,11 @@ export interface PrefillAssetData {
   currency: "INR" | "USD";
   brokerApp?: string;
 }
+
+export interface AssetSaveNotification {
+  status: "saving" | "success" | "error";
+  name: string;
+  message: string;
+}
+
 

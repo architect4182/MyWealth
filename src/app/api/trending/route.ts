@@ -10,17 +10,17 @@ import {
 
 async function fetchStockBatch(pool: TrendingStockCandidate[], seed: number) {
   const shuffled = shuffleWithSeed(pool, seed);
-  const selected = shuffled.slice(0, 10);
+  const selected = shuffled.slice(0, 12);
 
-  return Promise.all(
-    selected.map(async (candidate, index) => {
+  const results = await Promise.all(
+    selected.map(async (candidate) => {
       try {
         const res = await fetch(
           `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(candidate.symbol)}`,
           {
             headers: { "User-Agent": "Mozilla/5.0" },
             cache: "no-store",
-            signal: AbortSignal.timeout(1800),
+            signal: AbortSignal.timeout(3000),
           }
         );
         if (res.ok) {
@@ -34,7 +34,6 @@ async function fetchStockBatch(pool: TrendingStockCandidate[], seed: number) {
             const changePct = prevClose ? (change / prevClose) * 100 : 0;
 
             return {
-              rank: index + 1,
               symbol: candidate.symbol,
               name: candidate.name,
               ticker: candidate.ticker,
@@ -47,29 +46,15 @@ async function fetchStockBatch(pool: TrendingStockCandidate[], seed: number) {
             };
           }
         }
-      } catch {
-        // Fallback to candidate default if Yahoo is throttled
-      }
-
-      // Slight dynamic variance per seed
-      const variance = ((seed % 17) - 8) * 0.15;
-      const changePercent = Number((1.25 + variance).toFixed(2));
-      const change = Number(((candidate.defaultPrice * changePercent) / 100).toFixed(2));
-
-      return {
-        rank: index + 1,
-        symbol: candidate.symbol,
-        name: candidate.name,
-        ticker: candidate.ticker,
-        category: candidate.category,
-        price: candidate.defaultPrice,
-        change,
-        changePercent,
-        currency: candidate.currency,
-        market: candidate.market,
-      };
+      } catch {}
+      return null;
     })
   );
+
+  return results
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .slice(0, 10)
+    .map((item, idx) => ({ ...item, rank: idx + 1 }));
 }
 
 export async function GET(req: NextRequest) {
@@ -112,14 +97,14 @@ export async function GET(req: NextRequest) {
 
   // Mutual Funds
   const shuffledMF = shuffleWithSeed(MF_POOL, seed);
-  const selectedMF = shuffledMF.slice(0, 10);
+  const selectedMF = shuffledMF.slice(0, 12);
 
-  const results = await Promise.all(
-    selectedMF.map(async (scheme, index) => {
+  const rawResults = await Promise.all(
+    selectedMF.map(async (scheme) => {
       try {
         const res = await fetch(`https://api.mfapi.in/mf/${scheme.code}`, {
           cache: "no-store",
-          signal: AbortSignal.timeout(1500),
+          signal: AbortSignal.timeout(3000),
         });
         if (res.ok) {
           const data = await res.json();
@@ -132,7 +117,6 @@ export async function GET(req: NextRequest) {
             const changePct = !isNaN(prevNav) && prevNav > 0 ? (change / prevNav) * 100 : 0;
 
             return {
-              rank: index + 1,
               code: scheme.code,
               name: scheme.name,
               ticker: scheme.ticker,
@@ -145,28 +129,15 @@ export async function GET(req: NextRequest) {
             };
           }
         }
-      } catch {
-        // Fallback
-      }
-
-      const variance = ((seed % 13) - 6) * 0.1;
-      const changePercent = Number((scheme.defaultChangePct + variance).toFixed(2));
-      const change = Number(((scheme.defaultPrice * changePercent) / 100).toFixed(2));
-
-      return {
-        rank: index + 1,
-        code: scheme.code,
-        name: scheme.name,
-        ticker: scheme.ticker,
-        subCategory: scheme.subCategory,
-        category: "Mutual Funds" as const,
-        price: scheme.defaultPrice,
-        change,
-        changePercent,
-        currency: "INR" as const,
-      };
+      } catch {}
+      return null;
     })
   );
+
+  const results = rawResults
+    .filter((r): r is NonNullable<typeof r> => r !== null)
+    .slice(0, 10)
+    .map((item, idx) => ({ ...item, rank: idx + 1 }));
 
   return NextResponse.json(
     {

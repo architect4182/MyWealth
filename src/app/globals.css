@@ -6859,3 +6859,227 @@ tbody tr.flash-pulse td {
   transform: translateY(-1.5px) !important;
   box-shadow: 0 4px 12px rgba(147, 102, 255, 0.12) !important;
 }
+
+/* =========================================================================
+   ASSET TYPE SELECTOR & LIVE AUTOCOMPLETE DROPDOWN
+   ========================================================================= */
+
+.add-asset-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.add-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--surface, #ffffff);
+  color: var(--foreground, #1c1c1e);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.add-type-btn:hover {
+  border-color: #9366ff;
+  background: rgba(147, 102, 255, 0.04);
+}
+
+.add-type-btn.active {
+  border-color: #9366ff;
+  background: rgba(147, 102, 255, 0.09);
+  box-shadow: 0 2px 8px rgba(147, 102, 255, 0.16);
+}
+
+.add-type-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.add-type-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.add-type-text strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--foreground, #1c1c1e);
+}
+
+.add-type-text span {
+  font-size: 11px;
+  color: var(--foreground-muted, #8e8e93);
+  margin-top: 1px;
+}
+
+.add-stock-market-pills {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.add-market-sub-pill {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--surface-secondary, rgba(0, 0, 0, 0.03));
+  color: var(--foreground, #1c1c1e);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.add-market-sub-pill.active {
+  background: #9366ff;
+  color: #ffffff;
+  border-color: #9366ff;
+}
+
+/* Autocomplete search container */
+.asset-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.asset-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1200;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  max-height: 250px;
+  overflow-y: auto;
+  backdrop-filter: blur(16px);
+  padding: 4px;
+}
+
+.asset-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.asset-search-item:hover,
+.asset-search-item.highlighted {
+  background: rgba(147, 102, 255, 0.1);
+}
+
+.asset-search-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.asset-search-item-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.asset-search-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground, #1c1c1e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asset-search-item-sub {
+  font-size: 11px;
+  color: var(--foreground-muted, #8e8e93);
+  margin-top: 1px;
+}
+
+.asset-search-item-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(147, 102, 255, 0.15);
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Asset Save Feedback & Realtime Sync Dynamic Island
+   ========================================================================== */
+.apple-dynamic-island.asset-save-island {
+  border-radius: 9999px !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(147, 102, 255, 0.25) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.apple-dynamic-island.asset-save-island.is-saving {
+  border-color: rgba(147, 102, 255, 0.35) !important;
+  box-shadow: 0 10px 30px rgba(147, 102, 255, 0.15) !important;
+}
+
+.apple-dynamic-island.asset-save-island.is-success {
+  border-color: rgba(34, 197, 94, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.16) !important;
+}
+
+.apple-dynamic-island.asset-save-island.is-error {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.16) !important;
+}
+
+.apple-island-sparkle-orb.saving-orb {
+  background: rgba(147, 102, 255, 0.14) !important;
+  border-color: rgba(147, 102, 255, 0.3) !important;
+  color: #9366ff !important;
+}
+
+.apple-island-sparkle-orb.success-orb {
+  background: rgba(34, 197, 94, 0.15) !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+  color: #16a34a !important;
+}
+
+.apple-island-sparkle-orb.error-orb {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: #dc2626 !important;
+}
+
+.apple-island-badge.saving-badge {
+  background: rgba(147, 102, 255, 0.14) !important;
+  color: #9366ff !important;
+  border-color: rgba(147, 102, 255, 0.28) !important;
+}
+
+.apple-island-badge.success-badge {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #16a34a !important;
+  border-color: rgba(34, 197, 94, 0.28) !important;
+}
+
+.apple-island-badge.error-badge {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #dc2626 !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+

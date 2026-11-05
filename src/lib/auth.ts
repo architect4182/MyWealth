@@ -2,8 +2,8 @@ import { supabase } from "./supabase";
 
 export const AUTH_COOKIE_NAME = "mywealth_auth_session";
 
-// 1 hour expiration for security & inactivity auto-logout
-export const SESSION_MAX_AGE_SECONDS = 60 * 60;
+// 30 days expiration for seamless persistent login
+export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60; // 30 days = 2,592,000 seconds
 
 function getAuthSecret(): string {
   return (

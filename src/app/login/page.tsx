@@ -116,11 +116,11 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Inactivity Notice Banner */}
+      {/* Session Expired / Logged Out Notice Banner */}
       {isInactiveReason && !error && (
         <div className="apple-auth-notice-banner" role="status">
           <span className="apple-auth-notice-dot" />
-          <span>You were automatically logged out due to 1 hour of inactivity.</span>
+          <span>Your session has ended. Please sign in to access your portfolio.</span>
         </div>
       )}
 

@@ -16,6 +16,7 @@ import { getNextSipDate, formatLocalDate } from "@/utils/sip";
 import { AssetDetailModal } from "@/components/AssetDetailModal";
 import { getQuickBrokerOptions } from "@/utils/brokers";
 import { BrokerLogoAvatar } from "@/components/Logos";
+import { SearchResultItem } from "@/app/api/search-assets/route";
 
 function calculateHoldings(investedAmount: string, buyPrice: string): number {
   const invested = Number(investedAmount);
@@ -35,8 +36,14 @@ export function AddAssetModal() {
     setPrefillAsset,
   } = usePortfolio();
 
+  // 1. Ask User First: "stock" | "mf"
+  const [assetType, setAssetType] = useState<"stock" | "mf">(() => {
+    return defaultCategory === "Mutual Funds" ? "mf" : "stock";
+  });
+
   const [name, setName] = useState("");
   const [category, setCategory] = useState<AssetCategory>(defaultCategory);
+  const [quantity, setQuantity] = useState("");
   const [investedAmount, setInvestedAmount] = useState("");
   const [buyPrice, setBuyPrice] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
@@ -45,14 +52,23 @@ export function AddAssetModal() {
     defaultCategory === "US Stocks" ? "USD" : "INR"
   );
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
-  const [isSip, setIsSip] = useState(false);
+  const [isSip, setIsSip] = useState(defaultCategory === "Mutual Funds");
   const [sipAmount, setSipAmount] = useState("");
-  const [sipDay, setSipDay] = useState("5");
+  const [sipDay, setSipDay] = useState("");
   const [sipStartDate, setSipStartDate] = useState("");
   const [initialInstallmentDone, setInitialInstallmentDone] = useState(true);
-  const [brokerApp, setBrokerApp] = useState("Groww");
+  const [brokerApp, setBrokerApp] = useState("");
   const [isCustomBroker, setIsCustomBroker] = useState(false);
+
+  // Search / Relatable words state
+  const [suggestions, setSuggestions] = useState<SearchResultItem[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchDebounceRef = useRef<number | null>(null);
 
   const autoPriceRequestRef = useRef(0);
   const skipNextAutoPriceLookupRef = useRef(false);
@@ -61,42 +77,188 @@ export function AddAssetModal() {
     if (modal) {
       const todayStr = formatLocalDate();
       setSipStartDate(todayStr);
-      setIsSip(false);
+      setSipDay(String(new Date().getDate()));
+      setIsSubmitting(false);
+      setShowSuggestions(false);
+      setSuggestions([]);
+      setHighlightIndex(-1);
+
       if (prefillAsset) {
         setName(prefillAsset.name);
         setCategory(prefillAsset.category);
-        setBuyPrice(String(prefillAsset.price));
-        setCurrentPrice(String(prefillAsset.price));
+        const at: "stock" | "mf" = prefillAsset.category === "Mutual Funds" ? "mf" : "stock";
+        setAssetType(at);
+        setBuyPrice(prefillAsset.price ? String(prefillAsset.price) : "");
+        setCurrentPrice(prefillAsset.price ? String(prefillAsset.price) : "");
         setCurrency(prefillAsset.currency);
+        setQuantity("");
+        setInvestedAmount("");
+        setCurrentValue("");
+        setIsSip(prefillAsset.category === "Mutual Funds");
         if (prefillAsset.brokerApp) {
           setBrokerApp(prefillAsset.brokerApp);
           setIsCustomBroker(!getQuickBrokerOptions(prefillAsset.category).includes(prefillAsset.brokerApp));
         } else {
-          const quicks = getQuickBrokerOptions(prefillAsset.category);
-          setBrokerApp(quicks[0] || "Groww");
+          setBrokerApp("");
           setIsCustomBroker(false);
         }
       } else {
+        const at: "stock" | "mf" = defaultCategory === "Mutual Funds" ? "mf" : "stock";
+        setAssetType(at);
         setCategory(defaultCategory);
         setCurrency(defaultCategory === "US Stocks" ? "USD" : "INR");
-        const quicks = getQuickBrokerOptions(defaultCategory);
-        setBrokerApp(quicks[0] || "Groww");
+        setIsSip(defaultCategory === "Mutual Funds");
+        setBrokerApp("");
         setIsCustomBroker(false);
       }
     } else {
       setName("");
+      setQuantity("");
       setInvestedAmount("");
       setBuyPrice("");
       setCurrentPrice("");
       setCurrentValue("");
       setIsSip(false);
       setSipAmount("");
-      setSipDay("5");
+      setSipDay(String(new Date().getDate()));
       setSipStartDate("");
       setInitialInstallmentDone(true);
       setPrefillAsset(null);
+      setIsSubmitting(false);
+      setShowSuggestions(false);
+      setSuggestions([]);
+      setHighlightIndex(-1);
     }
   }, [modal, defaultCategory, prefillAsset, setPrefillAsset]);
+
+  const handleSelectAssetType = (type: "stock" | "mf") => {
+    setAssetType(type);
+    setName("");
+    setQuantity("");
+    setInvestedAmount("");
+    setBuyPrice("");
+    setCurrentPrice("");
+    setCurrentValue("");
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setHighlightIndex(-1);
+
+    if (type === "stock") {
+      setCategory("Indian Equities");
+      setCurrency("INR");
+      setIsSip(false);
+      setBrokerApp("");
+      setIsCustomBroker(false);
+    } else {
+      setCategory("Mutual Funds");
+      setCurrency("INR");
+      setIsSip(true);
+      setBrokerApp("");
+      setIsCustomBroker(false);
+    }
+  };
+
+  // Live relatable words lookup whenever name changes
+  useEffect(() => {
+    if (searchDebounceRef.current) {
+      window.clearTimeout(searchDebounceRef.current);
+    }
+
+    const query = name.trim();
+    if (query.length < 1) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setHighlightIndex(-1);
+      return;
+    }
+
+    searchDebounceRef.current = window.setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(
+          `/api/search-assets?q=${encodeURIComponent(query)}&type=${assetType}`
+        );
+        const data = await res.json().catch(() => ({}));
+        if (data.success && Array.isArray(data.results) && data.results.length > 0) {
+          setSuggestions(data.results);
+          setShowSuggestions(true);
+          setHighlightIndex(-1);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 150);
+
+    return () => {
+      if (searchDebounceRef.current) {
+        window.clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, [name, assetType]);
+
+  // Click outside search container to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSuggestion = (item: SearchResultItem) => {
+    skipNextAutoPriceLookupRef.current = true;
+    setName(item.name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setHighlightIndex(-1);
+
+    if (item.category) {
+      setCategory(item.category);
+      if (item.category === "Mutual Funds") {
+        setAssetType("mf");
+        setIsSip(true);
+      } else {
+        setAssetType("stock");
+        setIsSip(false);
+      }
+    }
+    if (item.currency) {
+      setCurrency(item.currency);
+    }
+    // Clear old values and fetch exact live CMP from exchange/AMFI
+    setBuyPrice("");
+    setCurrentPrice("");
+    if (!quantity) setQuantity("1");
+    setIsFetchingPrice(true);
+
+    void handleFetchLivePriceRef.current(item.ticker || item.name, item.category || category);
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === "Enter") {
+      if (highlightIndex >= 0 && highlightIndex < suggestions.length) {
+        e.preventDefault();
+        handleSelectSuggestion(suggestions[highlightIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
 
   const computedAddHoldings = calculateHoldings(investedAmount, buyPrice);
 
@@ -122,11 +284,13 @@ export function AddAssetModal() {
       if (data.success && data.price) {
         setBuyPrice(String(data.price));
         setCurrentPrice(String(data.price));
-        const holdingsAtQuote = calculateHoldings(investedAmount, String(data.price));
-        if (holdingsAtQuote > 0) {
-          setCurrentValue((data.price * holdingsAtQuote).toFixed(2));
-        } else if (Number(investedAmount) > 0) {
-          setCurrentValue(Number(investedAmount).toFixed(2));
+        const qNum = Number(quantity) > 0 ? Number(quantity) : 1;
+        setQuantity(String(qNum));
+        setCurrentValue((qNum * data.price).toFixed(2));
+        if (!investedAmount || Number(investedAmount) <= 0) {
+          setInvestedAmount((qNum * data.price).toFixed(2));
+        } else {
+          setInvestedAmount((qNum * (Number(buyPrice) || data.price)).toFixed(2));
         }
         if (data.currency) setCurrency(data.currency as "INR" | "USD");
         if (data.name && name.trim().length <= 4) {
@@ -138,7 +302,7 @@ export function AddAssetModal() {
       console.error("Live price lookup error:", err);
     } finally {
       if (
-        autoRequestId === undefined ||
+        autoRequestId !== undefined ||
         autoRequestId === autoPriceRequestRef.current
       ) {
         setIsFetchingPrice(false);
@@ -176,11 +340,26 @@ export function AddAssetModal() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
+
+    // Immediately close modal so user cannot keep clicking and trigger duplicate DB rows
+    setIsSubmitting(true);
+    setModal(false);
 
     if (isSip) {
-      const amount = Number(sipAmount);
-      if (!amount || amount <= 0) return;
-      const cp = Number(currentPrice) || Number(buyPrice) || 1;
+      const amount = Number(sipAmount) || Number(investedAmount);
+      if (!amount || amount <= 0) {
+        setIsSubmitting(false);
+        return;
+      }
+      const cp = Number(currentPrice) || Number(buyPrice);
+      if (!cp || cp <= 0) {
+        setIsSubmitting(false);
+        return;
+      }
       const bp = cp;
       const q = initialInstallmentDone ? amount / cp : 0;
       const installments = initialInstallmentDone ? 1 : 0;
@@ -188,47 +367,74 @@ export function AddAssetModal() {
         ? sipStartDate || formatLocalDate()
         : undefined;
 
+      try {
+        await addAsset({
+          name: trimmedName,
+          category,
+          quantity: q,
+          buyPrice: bp,
+          currentPrice: cp,
+          currency,
+          isSip: true,
+          sipAmount: amount,
+          sipDay: Number(sipDay) || new Date().getDate(),
+          sipStartDate: sipStartDate || formatLocalDate(),
+          sipInstallments: installments,
+          lastSipDate: lastDate,
+          sipStatus: "active",
+          brokerApp: brokerApp.trim() || undefined,
+        });
+      } catch (err) {
+        console.error("Add SIP asset error:", err);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    const userQ = Number(quantity);
+    const inv = Number(investedAmount);
+    let bp = Number(buyPrice) || Number(currentPrice);
+    if (!bp || bp <= 0) {
+      if (inv > 0 && userQ > 0) {
+        bp = inv / userQ;
+      } else {
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    let q = 1;
+    if (userQ > 0) {
+      q = userQ;
+    } else if (inv > 0 && bp > 0) {
+      q = inv / bp;
+    }
+
+    // Clean floating-point division noise (e.g. 3.0000000000000004 -> 3)
+    if (Math.abs(q - Math.round(q)) < 0.00001) {
+      q = Math.round(q);
+    }
+
+    const userCp = Number(currentPrice);
+    const cp = userCp > 0 ? userCp : bp;
+
+    try {
       await addAsset({
-        name: name.trim(),
+        name: trimmedName,
         category,
         quantity: q,
         buyPrice: bp,
         currentPrice: cp,
         currency,
-        isSip: true,
-        sipAmount: amount,
-        sipDay: Number(sipDay) || 5,
-        sipStartDate: sipStartDate || formatLocalDate(),
-        sipInstallments: installments,
-        lastSipDate: lastDate,
-        sipStatus: "active",
+        isSip: false,
         brokerApp: brokerApp.trim() || undefined,
       });
-
-      setModal(false);
-      return;
+    } catch (err) {
+      console.error("Add asset error:", err);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const inv = Number(investedAmount);
-    let bp = Number(buyPrice) || Number(currentPrice);
-    if (!inv || !bp || bp <= 0) return;
-
-    const q = inv / bp;
-    const userCp = Number(currentPrice);
-    const cp = userCp > 0 ? userCp : bp;
-
-    await addAsset({
-      name: name.trim(),
-      category,
-      quantity: q,
-      buyPrice: bp,
-      currentPrice: cp,
-      currency,
-      isSip: false,
-      brokerApp: brokerApp.trim() || undefined,
-    });
-
-    setModal(false);
   }
 
   return (
@@ -241,7 +447,7 @@ export function AddAssetModal() {
         <div className="modal-heading">
           <div>
             <h2>Add investment</h2>
-            <p>Record a new asset or scheduled SIP into your portfolio.</p>
+            <p>Select Stock or Mutual Fund, search relatable words, and record holdings.</p>
           </div>
           <button
             type="button"
@@ -252,7 +458,61 @@ export function AddAssetModal() {
           </button>
         </div>
 
-        <div>
+        {/* 1. Ask User First: Stock or MF? */}
+        <div className="add-asset-type-selector">
+          <button
+            type="button"
+            className={`add-type-btn ${assetType === "stock" ? "active" : ""}`}
+            onClick={() => handleSelectAssetType("stock")}
+          >
+            <span className="add-type-icon">📈</span>
+            <div className="add-type-text">
+              <strong>Stocks & Equities</strong>
+              <span>Indian & US Stocks</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className={`add-type-btn ${assetType === "mf" ? "active" : ""}`}
+            onClick={() => handleSelectAssetType("mf")}
+          >
+            <span className="add-type-icon">🏦</span>
+            <div className="add-type-text">
+              <strong>Mutual Funds</strong>
+              <span>SIP & Lumpsum (AMFI)</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Sub-toggle for Stocks: India vs US */}
+        {assetType === "stock" && (
+          <div className="add-stock-market-pills">
+            <button
+              type="button"
+              className={`add-market-sub-pill ${category === "Indian Equities" ? "active" : ""}`}
+              onClick={() => {
+                setCategory("Indian Equities");
+                setCurrency("INR");
+              }}
+            >
+              🇮🇳 India (NSE / BSE)
+            </button>
+            <button
+              type="button"
+              className={`add-market-sub-pill ${category === "US Stocks" ? "active" : ""}`}
+              onClick={() => {
+                setCategory("US Stocks");
+                setCurrency("USD");
+              }}
+            >
+              🇺🇸 US (NASDAQ / NYSE)
+            </button>
+          </div>
+        )}
+
+        {/* 2. Asset / Fund Name with Relatable Words Search Dropdown */}
+        <div ref={searchContainerRef} className="asset-search-container">
           <div
             style={{
               display: "flex",
@@ -268,23 +528,66 @@ export function AddAssetModal() {
                 color: "var(--foreground-muted)",
               }}
             >
-              Asset / Fund Name
+              {assetType === "stock"
+                ? "Stock / Company Name"
+                : "Mutual Fund Scheme"}
             </span>
             <span className="fetch-price-status">
               <Sparkles size={11} />
               {isFetchingPrice
-                ? "Looking up price…"
-                : name.trim().length >= 3
-                  ? "Auto price lookup"
-                  : "Price fills automatically"}
+                ? "Fetching live price…"
+                : isSearching
+                ? "Finding relatable matches…"
+                : "Auto-fills price @ CMP/NAV"}
             </span>
           </div>
+
           <input
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Reliance, Tata Motors, Apple, Parag Parikh Flexi Cap"
+            onFocus={() => {
+              if (suggestions.length > 0) setShowSuggestions(true);
+            }}
+            onKeyDown={handleSearchKeyDown}
+            placeholder={
+              assetType === "stock"
+                ? "Search stocks: e.g. Tata Motors, ICICI Bank, Apple, Reliance..."
+                : "Search mutual funds: e.g. Parag Parikh, Quant Small Cap, Mirae Asset..."
+            }
+            autoComplete="off"
           />
+
+          {/* Relatable Words / Search Suggestions Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="asset-search-dropdown">
+              {suggestions.map((item, idx) => (
+                <div
+                  key={`${item.symbol}-${idx}`}
+                  className={`asset-search-item ${highlightIndex === idx ? "highlighted" : ""}`}
+                  onMouseDown={() => handleSelectSuggestion(item)}
+                >
+                  <div className="asset-search-item-left">
+                    <span className="asset-search-item-badge">{item.ticker || item.symbol}</span>
+                    <div className="asset-search-item-info">
+                      <span className="asset-search-item-name">{item.name}</span>
+                      <span className="asset-search-item-sub">{item.subtext}</span>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: "var(--foreground-muted)",
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Select ↵
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="form-row">
@@ -297,11 +600,18 @@ export function AddAssetModal() {
                 setCategory(c);
                 if (c === "US Stocks") setCurrency("USD");
                 else setCurrency("INR");
+                if (c === "Mutual Funds") {
+                  setAssetType("mf");
+                  setIsSip(true);
+                } else {
+                  setAssetType("stock");
+                  setIsSip(false);
+                }
               }}
             >
-              <option value="Indian Equities">Indian Equities</option>
-              <option value="US Stocks">US Stocks</option>
-              <option value="Mutual Funds">Mutual Funds</option>
+              <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
+              <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
+              <option value="Mutual Funds">Mutual Funds (AMFI)</option>
               <option value="Gold & Fixed Income">Gold & Fixed Income</option>
               <option value="Crypto">Crypto</option>
             </select>
@@ -323,7 +633,7 @@ export function AddAssetModal() {
           <label>
             Investing via App / Broker
             <select
-              value={isCustomBroker ? "__custom__" : (brokerApp || getQuickBrokerOptions(category)[0] || "Groww")}
+              value={isCustomBroker ? "__custom__" : (brokerApp || "")}
               onChange={(e) => {
                 if (e.target.value === "__custom__") {
                   setIsCustomBroker(true);
@@ -334,6 +644,7 @@ export function AddAssetModal() {
                 }
               }}
             >
+              <option value="">-- Select Investing App / Broker (Optional) --</option>
               {getQuickBrokerOptions(category).map((app) => (
                 <option key={app} value={app}>
                   {app}
@@ -395,7 +706,7 @@ export function AddAssetModal() {
                   step="any"
                   value={sipAmount}
                   onChange={(e) => setSipAmount(e.target.value)}
-                  placeholder="e.g. 5000"
+                  placeholder="0.00"
                 />
               </label>
 
@@ -461,118 +772,159 @@ export function AddAssetModal() {
             </div>
           </>
         ) : (
-          <div className="form-row">
-            <label>
-              Amount You Invested ({currency === "USD" ? "$" : "₹"})
-              <input
-                required
-                type="number"
-                min="0.01"
-                step="any"
-                value={investedAmount}
-                onChange={(e) => {
-                  const amount = e.target.value;
-                  const holdings = calculateHoldings(amount, buyPrice);
-                  setInvestedAmount(amount);
-                  if (holdings > 0 && Number(currentPrice) > 0) {
-                    setCurrentValue((holdings * Number(currentPrice)).toFixed(2));
-                  }
-                }}
-                placeholder="e.g. 50000"
-              />
-            </label>
+          <>
+            <div className="form-row">
+              <label>
+                Quantity (Shares / Units)
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={quantity}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    setQuantity(q);
+                    const numQ = Number(q);
+                    if (numQ > 0) {
+                      if (Number(buyPrice) > 0) {
+                        setInvestedAmount((numQ * Number(buyPrice)).toFixed(2));
+                      }
+                      if (Number(currentPrice) > 0) {
+                        setCurrentValue((numQ * Number(currentPrice)).toFixed(2));
+                      }
+                    }
+                  }}
+                  placeholder="e.g. 10"
+                />
+              </label>
 
-            <label>
-              Buy Price per unit ({currency === "USD" ? "$" : "₹"})
-              <input
-                required
-                type="number"
-                min="0.0001"
-                step="any"
-                value={buyPrice}
-                onChange={(e) => {
-                  const price = e.target.value;
-                  const holdings = calculateHoldings(investedAmount, price);
-                  setBuyPrice(price);
-                  if (holdings > 0 && Number(currentPrice) > 0) {
-                    setCurrentValue((holdings * Number(currentPrice)).toFixed(2));
-                  }
-                }}
-                placeholder="e.g. 1165"
-              />
-            </label>
-          </div>
-        )}
+              <label>
+                Buy Price per unit ({currency === "USD" ? "$" : "₹"})
+                <input
+                  required
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={buyPrice}
+                  onChange={(e) => {
+                    const price = e.target.value;
+                    setBuyPrice(price);
+                    const numBp = Number(price);
+                    if (numBp > 0) {
+                      if (Number(quantity) > 0) {
+                        setInvestedAmount((Number(quantity) * numBp).toFixed(2));
+                      } else if (Number(investedAmount) > 0) {
+                        const newQ = Number(investedAmount) / numBp;
+                        setQuantity(newQ.toFixed(newQ % 1 === 0 ? 0 : 4));
+                        if (Number(currentPrice) > 0) {
+                          setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
+                        }
+                      }
+                    }
+                  }}
+                  placeholder="e.g. 1165"
+                />
+              </label>
+            </div>
 
-        {computedAddHoldings > 0 && (
-          <div className="holdings-preview-banner">
-            <Sparkles
-              size={14}
-              style={{ color: "var(--apple-blue)", flexShrink: 0 }}
-            />
-            <span>
-              Calculated Holdings:{" "}
-              <strong>
-                {computedAddHoldings.toFixed(
-                  computedAddHoldings % 1 === 0 ? 0 : 4
-                )}{" "}
-                units
-              </strong>
-              <span
-                style={{ opacity: 0.75, marginLeft: "6px", fontSize: "11px" }}
-              >
-                ({currency === "USD" ? "$" : "₹"}
-                {Number(investedAmount).toLocaleString()} invested ÷{" "}
-                {currency === "USD" ? "$" : "₹"}
-                {Number(buyPrice).toLocaleString()}/unit)
-              </span>
-            </span>
-          </div>
-        )}
+            <div className="form-row">
+              <label>
+                Market Price (CMP / NAV) ({currency === "USD" ? "$" : "₹"})
+                <input
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={currentPrice}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setCurrentPrice(p);
+                    const numCp = Number(p);
+                    if (numCp > 0 && Number(quantity) > 0) {
+                      setCurrentValue((Number(quantity) * numCp).toFixed(2));
+                    }
+                  }}
+                  placeholder={buyPrice ? buyPrice : "e.g. 1165"}
+                />
+              </label>
 
-        {!isSip && (
-          <div className="form-row">
-            <label>
-              Current Value ({currency === "USD" ? "$" : "₹"})
-              <input
-                type="number"
-                min="0.01"
-                step="any"
-                value={currentValue}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const holdings = computedAddHoldings;
-                  setCurrentValue(value);
-                  if (Number(value) > 0 && holdings > 0) {
-                    setCurrentPrice((Number(value) / holdings).toFixed(2));
+              <label>
+                Current Valuation ({currency === "USD" ? "$" : "₹"})
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={currentValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setCurrentValue(value);
+                    const numCv = Number(value);
+                    const cp = Number(currentPrice) || Number(buyPrice);
+                    if (numCv > 0 && cp > 0) {
+                      const newQ = numCv / cp;
+                      setQuantity(newQ.toFixed(newQ % 1 === 0 ? 0 : 4));
+                      if (Number(buyPrice) > 0) {
+                        setInvestedAmount((newQ * Number(buyPrice)).toFixed(2));
+                      }
+                    }
+                  }}
+                  placeholder={
+                    Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
+                      ? (Number(quantity) * Number(currentPrice || buyPrice)).toFixed(2)
+                      : "0.00"
                   }
-                }}
-                placeholder={
-                  computedAddHoldings > 0
-                    ? (computedAddHoldings * (Number(buyPrice) || 1)).toFixed(2)
-                    : "e.g. 50000"
-                }
-              />
-            </label>
+                />
+              </label>
+            </div>
 
-            <label>
-              Market Price ({currency === "USD" ? "$" : "₹"})
-              <input
-                type="number"
-                min="0.0001"
-                step="any"
-                value={currentPrice}
-                onChange={(e) => {
-                  const p = e.target.value;
-                  setCurrentPrice(p);
-                  if (Number(p) > 0 && computedAddHoldings > 0) {
-                    setCurrentValue((Number(p) * computedAddHoldings).toFixed(2));
+            <div className="form-row">
+              <label>
+                Total Amount Invested ({currency === "USD" ? "$" : "₹"})
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={investedAmount}
+                  onChange={(e) => {
+                    const amount = e.target.value;
+                    setInvestedAmount(amount);
+                    const numInv = Number(amount);
+                    const bp = Number(buyPrice);
+                    if (numInv > 0 && bp > 0) {
+                      const newQ = numInv / bp;
+                      setQuantity(newQ.toFixed(newQ % 1 === 0 ? 0 : 4));
+                      if (Number(currentPrice) > 0) {
+                        setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
+                      }
+                    }
+                  }}
+                  placeholder={
+                    Number(quantity) > 0 && Number(buyPrice) > 0
+                      ? (Number(quantity) * Number(buyPrice)).toFixed(2)
+                      : "0.00"
                   }
-                }}
-                placeholder={buyPrice ? buyPrice : "e.g. 1165"}
-              />
-            </label>
-          </div>
+                />
+              </label>
+            </div>
+
+            {(Number(quantity) > 0 || computedAddHoldings > 0) && (
+              <div className="holdings-preview-banner">
+                <Sparkles
+                  size={14}
+                  style={{ color: "var(--apple-blue)", flexShrink: 0 }}
+                />
+                <span>
+                  Holdings: <strong>{(Number(quantity) || computedAddHoldings).toFixed((Number(quantity) || computedAddHoldings) % 1 === 0 ? 0 : 4)} units</strong>
+                  <span
+                    style={{ opacity: 0.85, marginLeft: "8px", fontSize: "11px" }}
+                  >
+                    • Exact Live Value: {currency === "USD" ? "$" : "₹"}
+                    {((Number(quantity) || computedAddHoldings) * (Number(currentPrice) || Number(buyPrice) || 0)).toFixed(2)}
+                  </span>
+                </span>
+              </div>
+            )}
+          </>
         )}
 
         <div className="modal-actions">
@@ -583,8 +935,8 @@ export function AddAssetModal() {
           >
             Cancel
           </button>
-          <button type="submit" className="primary-button">
-            Save Asset
+          <button type="submit" className="primary-button" disabled={isSubmitting}>
+            {isSubmitting ? "Saving…" : "Save Asset"}
           </button>
         </div>
       </form>
@@ -595,18 +947,18 @@ export function AddAssetModal() {
 export function EditAssetModal() {
   const { editingAsset, setEditingAsset, updateAsset } = usePortfolio();
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
 
   // Synchronize purchased app name when opening or changing holding to edit
   useEffect(() => {
     if (editingAsset) {
+      setIsSubmitting(false);
       const quicks = getQuickBrokerOptions(editingAsset.category);
       if (editingAsset.brokerApp && editingAsset.brokerApp.trim()) {
         const isQuick = quicks.includes(editingAsset.brokerApp.trim());
         setIsEditCustomBroker(!isQuick);
       } else {
-        const defaultApp = quicks[0] || "Groww";
-        setEditingAsset({ ...editingAsset, brokerApp: defaultApp });
         setIsEditCustomBroker(false);
       }
     }
@@ -632,10 +984,10 @@ export function EditAssetModal() {
       if (data.success && data.price) {
         const newCp = String(data.price);
         const holdings =
-          Number(editingAsset.investedAmount) > 0 &&
-            Number(editingAsset.buyPrice) > 0
-            ? Number(editingAsset.investedAmount) /
-            Number(editingAsset.buyPrice)
+          Number(editingAsset.quantity) > 0
+            ? Number(editingAsset.quantity)
+            : Number(editingAsset.investedAmount) > 0 && Number(editingAsset.buyPrice) > 0
+            ? Number(editingAsset.investedAmount) / Number(editingAsset.buyPrice)
             : 0;
         setEditingAsset({
           ...editingAsset,
@@ -656,17 +1008,32 @@ export function EditAssetModal() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!editingAsset) return;
+    if (!editingAsset || isSubmitting) return;
 
+    const userQuantity = Number(editingAsset.quantity);
     const inv = Number(editingAsset.investedAmount);
     let bp = Number(editingAsset.buyPrice);
-    if (!inv || !bp || bp <= 0) return;
+    if (!bp && userQuantity > 0 && inv > 0) {
+      bp = inv / userQuantity;
+    }
+    if (!bp || bp <= 0) return;
 
-    const q = inv / bp;
+    let q = 0;
+    if (Number.isFinite(userQuantity) && userQuantity > 0) {
+      q = userQuantity;
+    } else if (inv > 0 && bp > 0) {
+      q = inv / bp;
+    }
+    if (q <= 0) return;
+
+    if (Math.abs(q - Math.round(q)) < 0.00001) {
+      q = Math.round(q);
+    }
+
     const userCp = Number(editingAsset.currentPrice);
-    const cp = userCp > 0 ? userCp : (Number(editingAsset.currentPrice) || bp);
+    const cp = userCp > 0 ? userCp : bp;
 
-    await updateAsset({
+    const assetToUpdate = {
       id: editingAsset.id,
       name: editingAsset.name.trim(),
       category: editingAsset.category,
@@ -683,9 +1050,19 @@ export function EditAssetModal() {
       lastSipDate: editingAsset.lastSipDate,
       sipStatus: editingAsset.sipStatus || (editingAsset.isSip ? "active" : undefined),
       brokerApp: editingAsset.brokerApp?.trim() || undefined,
-    });
+    };
 
+    // Close popup immediately to prevent double submissions!
+    setIsSubmitting(true);
     setEditingAsset(null);
+
+    try {
+      await updateAsset(assetToUpdate);
+    } catch (err) {
+      console.error("Update asset error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -698,7 +1075,7 @@ export function EditAssetModal() {
         <div className="modal-heading">
           <div>
             <h2>Edit holding</h2>
-            <p>Update valuation or units in PostgreSQL.</p>
+            <p>Update valuation, units, or CMP in portfolio.</p>
           </div>
           <button
             type="button"
@@ -759,15 +1136,10 @@ export function EditAssetModal() {
               value={editingAsset.category}
               onChange={(e) => {
                 const c = e.target.value as AssetCategory;
-                const quicks = getQuickBrokerOptions(c);
-                const nextBroker = isEditCustomBroker
-                  ? editingAsset.brokerApp
-                  : (editingAsset.brokerApp && quicks.includes(editingAsset.brokerApp) ? editingAsset.brokerApp : quicks[0] || "Groww");
                 setEditingAsset({
                   ...editingAsset,
                   category: c,
                   currency: c === "US Stocks" ? "USD" : "INR",
-                  brokerApp: nextBroker,
                 });
               }}
             >
@@ -807,9 +1179,7 @@ export function EditAssetModal() {
                     editingAsset.brokerApp
                   ))
                   ? "__custom__"
-                  : (editingAsset.brokerApp ||
-                    getQuickBrokerOptions(editingAsset.category)[0] ||
-                    "Groww")
+                  : (editingAsset.brokerApp || "")
               }
               onChange={(e) => {
                 if (e.target.value === "__custom__") {
@@ -824,6 +1194,7 @@ export function EditAssetModal() {
                 }
               }}
             >
+              <option value="">-- Select Investing App / Broker (Optional) --</option>
               {getQuickBrokerOptions(editingAsset.category).map((app) => (
                 <option key={app} value={app}>
                   {app}
@@ -855,25 +1226,26 @@ export function EditAssetModal() {
 
         <div className="form-row">
           <label>
-            Amount You Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
+            Quantity (Shares / Units)
             <input
               required
               type="number"
-              min="0.01"
+              min="0.0001"
               step="any"
-              value={editingAsset.investedAmount}
+              value={editingAsset.quantity || ""}
               onChange={(e) => {
-                const investedAmount = e.target.value;
-                const holdings = calculateHoldings(investedAmount, editingAsset.buyPrice);
+                const q = e.target.value;
+                const numQ = Number(q);
+                const bp = Number(editingAsset.buyPrice);
+                const cp = Number(editingAsset.currentPrice);
                 setEditingAsset({
                   ...editingAsset,
-                  investedAmount,
-                  currentValue:
-                    holdings > 0 && Number(editingAsset.currentPrice) > 0
-                      ? (holdings * Number(editingAsset.currentPrice)).toFixed(2)
-                      : editingAsset.currentValue,
+                  quantity: q,
+                  investedAmount: numQ > 0 && bp > 0 ? (numQ * bp).toFixed(2) : editingAsset.investedAmount,
+                  currentValue: numQ > 0 && cp > 0 ? (numQ * cp).toFixed(2) : editingAsset.currentValue,
                 });
               }}
+              placeholder="e.g. 10"
             />
           </label>
 
@@ -886,62 +1258,22 @@ export function EditAssetModal() {
               step="any"
               value={editingAsset.buyPrice}
               onChange={(e) => {
-                const buyPrice = e.target.value;
-                const holdings = calculateHoldings(editingAsset.investedAmount, buyPrice);
+                const bp = e.target.value;
+                const numBp = Number(bp);
+                const q = Number(editingAsset.quantity);
                 setEditingAsset({
                   ...editingAsset,
-                  buyPrice,
-                  currentValue:
-                    holdings > 0 && Number(editingAsset.currentPrice) > 0
-                      ? (holdings * Number(editingAsset.currentPrice)).toFixed(2)
-                      : editingAsset.currentValue,
+                  buyPrice: bp,
+                  investedAmount: numBp > 0 && q > 0 ? (q * numBp).toFixed(2) : editingAsset.investedAmount,
                 });
               }}
             />
           </label>
         </div>
 
-        {computedEditHoldings > 0 && (
-          <div className="holdings-preview-banner">
-            <Sparkles
-              size={14}
-              style={{ color: "var(--apple-blue)", flexShrink: 0 }}
-            />
-            <span>
-              Calculated Holdings:{" "}
-              <strong>
-                {computedEditHoldings.toFixed(
-                  computedEditHoldings % 1 === 0 ? 0 : 4
-                )}{" "}
-                units
-              </strong>
-            </span>
-          </div>
-        )}
-
         <div className="form-row">
           <label>
-            Current Value ({editingAsset.currency === "USD" ? "$" : "₹"})
-            <input
-              type="number"
-              min="0.01"
-              step="any"
-              value={editingAsset.currentValue}
-              onChange={(e) => {
-                const cv = e.target.value;
-                const holdings = computedEditHoldings;
-                const cp = Number(cv) > 0 && holdings > 0 ? (Number(cv) / holdings).toFixed(2) : editingAsset.currentPrice;
-                setEditingAsset({
-                  ...editingAsset,
-                  currentValue: cv,
-                  currentPrice: cp,
-                });
-              }}
-            />
-          </label>
-
-          <label>
-            Market Price ({editingAsset.currency === "USD" ? "$" : "₹"})
+            Market Price (CMP / NAV) ({editingAsset.currency === "USD" ? "$" : "₹"})
             <input
               type="number"
               min="0.0001"
@@ -949,17 +1281,103 @@ export function EditAssetModal() {
               value={editingAsset.currentPrice}
               onChange={(e) => {
                 const cp = e.target.value;
-                const holdings = computedEditHoldings;
-                const cv = Number(cp) > 0 && holdings > 0 ? (Number(cp) * holdings).toFixed(2) : editingAsset.currentValue;
+                const numCp = Number(cp);
+                const q = Number(editingAsset.quantity) || computedEditHoldings;
                 setEditingAsset({
                   ...editingAsset,
                   currentPrice: cp,
+                  currentValue: numCp > 0 && q > 0 ? (numCp * q).toFixed(2) : editingAsset.currentValue,
+                });
+              }}
+            />
+          </label>
+
+          <label>
+            Current Valuation ({editingAsset.currency === "USD" ? "$" : "₹"})
+            <input
+              type="number"
+              min="0.01"
+              step="any"
+              value={editingAsset.currentValue}
+              onChange={(e) => {
+                const cv = e.target.value;
+                const numCv = Number(cv);
+                const cp = Number(editingAsset.currentPrice);
+                const bp = Number(editingAsset.buyPrice);
+                let newQ = editingAsset.quantity;
+                let newInv = editingAsset.investedAmount;
+                if (numCv > 0 && cp > 0) {
+                  const calculatedQ = numCv / cp;
+                  newQ = calculatedQ.toFixed(calculatedQ % 1 === 0 ? 0 : 4);
+                  if (bp > 0) {
+                    newInv = (calculatedQ * bp).toFixed(2);
+                  }
+                }
+                setEditingAsset({
+                  ...editingAsset,
                   currentValue: cv,
+                  quantity: newQ,
+                  investedAmount: newInv,
+                });
+              }}
+              placeholder={
+                (Number(editingAsset.quantity) || computedEditHoldings) > 0 && Number(editingAsset.currentPrice || editingAsset.buyPrice) > 0
+                  ? ((Number(editingAsset.quantity) || computedEditHoldings) * Number(editingAsset.currentPrice || editingAsset.buyPrice)).toFixed(2)
+                  : "0.00"
+              }
+            />
+          </label>
+        </div>
+
+        <div className="form-row">
+          <label>
+            Total Amount Invested ({editingAsset.currency === "USD" ? "$" : "₹"})
+            <input
+              required
+              type="number"
+              min="0.01"
+              step="any"
+              value={editingAsset.investedAmount}
+              onChange={(e) => {
+                const inv = e.target.value;
+                const numInv = Number(inv);
+                const bp = Number(editingAsset.buyPrice);
+                const cp = Number(editingAsset.currentPrice);
+                let newQ = editingAsset.quantity;
+                let newCv = editingAsset.currentValue;
+                if (numInv > 0 && bp > 0) {
+                  const calculatedQ = numInv / bp;
+                  newQ = calculatedQ.toFixed(calculatedQ % 1 === 0 ? 0 : 4);
+                  if (cp > 0) {
+                    newCv = (calculatedQ * cp).toFixed(2);
+                  }
+                }
+                setEditingAsset({
+                  ...editingAsset,
+                  investedAmount: inv,
+                  quantity: newQ,
+                  currentValue: newCv,
                 });
               }}
             />
           </label>
         </div>
+
+        {((Number(editingAsset.quantity) || computedEditHoldings) > 0) && (
+          <div className="holdings-preview-banner">
+            <Sparkles
+              size={14}
+              style={{ color: "var(--apple-blue)", flexShrink: 0 }}
+            />
+            <span>
+              Holdings: <strong>{(Number(editingAsset.quantity) || computedEditHoldings).toFixed((Number(editingAsset.quantity) || computedEditHoldings) % 1 === 0 ? 0 : 4)} units</strong>
+              <span style={{ opacity: 0.85, marginLeft: "8px", fontSize: "11px" }}>
+                • Exact Live Valuation: {editingAsset.currency === "USD" ? "$" : "₹"}
+                {((Number(editingAsset.quantity) || computedEditHoldings) * (Number(editingAsset.currentPrice) || Number(editingAsset.buyPrice) || 0)).toFixed(2)}
+              </span>
+            </span>
+          </div>
+        )}
 
         {/* Authentic Apple iOS Switch for SIP Check */}
         <div className={`apple-ios-sip-toggle-card ${editingAsset.isSip ? "active" : ""}`}>
@@ -982,12 +1400,11 @@ export function EditAssetModal() {
               setEditingAsset({
                 ...editingAsset,
                 isSip: next,
-                sipStatus: next ? "active" : "paused",
-                sipDay: editingAsset.sipDay || "5",
+                sipAmount: next && !editingAsset.sipAmount ? editingAsset.investedAmount : editingAsset.sipAmount,
               });
             }}
             role="switch"
-            aria-checked={Boolean(editingAsset.isSip)}
+            aria-checked={editingAsset.isSip}
             aria-label="Toggle SIP"
           >
             <span className="ios-switch-knob" />
@@ -1000,6 +1417,7 @@ export function EditAssetModal() {
               <label>
                 Monthly SIP Amount ({editingAsset.currency === "USD" ? "$" : "₹"})
                 <input
+                  required
                   type="number"
                   min="1"
                   step="any"
@@ -1010,13 +1428,14 @@ export function EditAssetModal() {
                       sipAmount: e.target.value,
                     })
                   }
-                  placeholder="e.g. 5000"
+                  placeholder="0.00"
                 />
               </label>
 
               <label>
                 SIP Start Date
                 <input
+                  required
                   type="date"
                   value={editingAsset.sipStartDate || ""}
                   onChange={(e) =>
@@ -1031,7 +1450,7 @@ export function EditAssetModal() {
 
             <div className="form-row">
               <label>
-                Payment / Debit Date of Month
+                Payment / Debit Day of Month
                 <select
                   value={editingAsset.sipDay || "5"}
                   onChange={(e) =>
@@ -1060,8 +1479,8 @@ export function EditAssetModal() {
                     })
                   }
                 >
-                  <option value="active">Active (Auto-add)</option>
-                  <option value="paused">Paused (Hold)</option>
+                  <option value="active">Active (Auto-invests each month)</option>
+                  <option value="paused">Paused</option>
                 </select>
               </label>
             </div>
@@ -1076,8 +1495,8 @@ export function EditAssetModal() {
           >
             Cancel
           </button>
-          <button type="submit" className="primary-button">
-            Update Asset
+          <button type="submit" className="primary-button" disabled={isSubmitting}>
+            {isSubmitting ? "Updating…" : "Update Asset"}
           </button>
         </div>
       </form>
@@ -1195,44 +1614,113 @@ export function DbConfigModal() {
           >
             <div
               style={{
-                background: "rgba(28, 28, 38, 0.7)",
-                border: "1px solid rgba(147, 102, 255, 0.16)",
-                padding: "10px 14px",
-                borderRadius: "12px",
+                background: "#f8f9fc",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                padding: "12px 14px",
+                borderRadius: "14px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
               }}
             >
-              <div style={{ fontSize: "11px", color: "var(--foreground-muted)" }}>Active User Session</div>
-              <div style={{ fontWeight: 600, fontSize: "14px", marginTop: "2px", textTransform: "uppercase" }}>{currentUserId}</div>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "var(--foreground-muted, #5e5e6e)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                }}
+              >
+                Active User Session
+              </div>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  marginTop: "4px",
+                  color: "var(--foreground, #111116)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.3px",
+                }}
+              >
+                {currentUserId}
+              </div>
             </div>
             <div
               style={{
-                background: "rgba(28, 28, 38, 0.7)",
-                border: "1px solid rgba(147, 102, 255, 0.16)",
-                padding: "10px 14px",
-                borderRadius: "12px",
+                background: "#f8f9fc",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                padding: "12px 14px",
+                borderRadius: "14px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
               }}
             >
-              <div style={{ fontSize: "11px", color: "var(--foreground-muted)" }}>Sync & Multi-Tenant Status</div>
-              <div style={{ fontWeight: 600, fontSize: "14px", marginTop: "2px", color: "#16a34a" }}>
-                {syncStatus.toUpperCase()} ({assets.length} isolated positions)
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "var(--foreground-muted, #5e5e6e)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                }}
+              >
+                Sync & Multi-Tenant Status
+              </div>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  marginTop: "4px",
+                  color: "#16a34a",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <span
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: "#22c55e",
+                    boxShadow: "0 0 6px rgba(34, 197, 94, 0.6)",
+                    display: "inline-block",
+                    flexShrink: 0,
+                  }}
+                />
+                <span>
+                  {syncStatus.toUpperCase()} ({assets.length} isolated positions)
+                </span>
               </div>
             </div>
           </div>
 
           <div
             style={{
-              background: "rgba(22, 163, 74, 0.05)",
-              border: "1px solid rgba(22, 163, 74, 0.2)",
-              borderRadius: "12px",
+              background: "rgba(22, 163, 74, 0.06)",
+              border: "1px solid rgba(22, 163, 74, 0.22)",
+              borderRadius: "14px",
               padding: "12px 14px",
               display: "flex",
               alignItems: "center",
               gap: "10px",
             }}
           >
-            <span style={{ fontSize: "16px" }}>🔒</span>
-            <div style={{ fontSize: "12px", color: "var(--foreground)" }}>
-              <strong>Multi-tenant isolation active.</strong> Holdings, orders, and portfolio allocations are securely scoped to <code>{currentUserId ? currentUserId.toUpperCase() : ""}</code> in Supabase PostgreSQL.
+            <span style={{ fontSize: "16px", flexShrink: 0 }}>🔒</span>
+            <div style={{ fontSize: "12px", color: "var(--foreground, #111116)", lineHeight: "1.5" }}>
+              <strong style={{ color: "#15803d" }}>Multi-tenant isolation active.</strong> Holdings, orders, and portfolio allocations are securely scoped to{" "}
+              <code
+                style={{
+                  background: "rgba(22, 163, 74, 0.12)",
+                  color: "#15803d",
+                  padding: "1px 6px",
+                  borderRadius: "5px",
+                  fontWeight: 700,
+                  fontSize: "11px",
+                }}
+              >
+                {currentUserId ? currentUserId.toUpperCase() : ""}
+              </code>{" "}
+              in Supabase PostgreSQL.
             </div>
           </div>
         </div>

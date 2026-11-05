@@ -12,6 +12,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/stock-price") ||
     pathname.startsWith("/api/stock-chart") ||
     pathname.startsWith("/api/trending") ||
+    pathname.startsWith("/api/search-assets") ||
     pathname.endsWith(".png") ||
     pathname.endsWith(".jpg") ||
     pathname.endsWith(".jpeg") ||

@@ -11,11 +11,6 @@ import {
 import { StockLogoAvatar, getStockTicker } from "@/components/Logos";
 import { AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
-import {
-  getInitialTrendingIndiaStocks,
-  getInitialTrendingUSStocks,
-  getInitialTrendingMF,
-} from "@/data/trendingPool";
 
 export interface TrendingItem {
   rank: number;
@@ -61,18 +56,9 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
     }
   };
 
-  // Instant baseline state: load company name and info immediately on frame 0!
-  const [indiaItems, setIndiaItems] = useState<TrendingItem[]>(() =>
-    type === "stocks" ? (getInitialTrendingIndiaStocks() as TrendingItem[]) : []
-  );
-  const [usItems, setUsItems] = useState<TrendingItem[]>(() =>
-    type === "stocks" ? (getInitialTrendingUSStocks() as TrendingItem[]) : []
-  );
-  const [items, setItems] = useState<TrendingItem[]>(() =>
-    type === "mf"
-      ? (getInitialTrendingMF() as TrendingItem[])
-      : ([...getInitialTrendingIndiaStocks(), ...getInitialTrendingUSStocks()] as TrendingItem[])
-  );
+  const [indiaItems, setIndiaItems] = useState<TrendingItem[]>([]);
+  const [usItems, setUsItems] = useState<TrendingItem[]>([]);
+  const [items, setItems] = useState<TrendingItem[]>([]);
 
   const [marketTab, setMarketTab] = useState<"both" | "india" | "us">("both");
   const [isLoading, setIsLoading] = useState(true);
