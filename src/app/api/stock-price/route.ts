@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStockTicker } from "@/utils/tickers";
+import { fetchNasdaqRealTimeQuote } from "@/lib/live-quotes";
 
 interface SearchQuote {
   symbol?: string;
@@ -129,10 +130,41 @@ async function getMarketQuote(symbol: string): Promise<MarketQuote | null> {
   return {
     symbol: resolvedSymbol,
     name: String(meta?.shortName ?? meta?.longName ?? resolvedSymbol),
-    price: livePrice,
+    price: Number(livePrice.toFixed(2)),
     currency,
     quoteType: String(meta?.instrumentType ?? ""),
   };
+}
+
+async function resolveAccurateQuote(
+  rawSymbol: string,
+  category: string,
+  expectedType?: string
+): Promise<{ symbol: string; name: string; price: number; currency: string } | null> {
+  // For US Stocks, prefer official consolidated NASDAQ real-time quote (exact pre-market/regular/after-hours/close)
+  if (category === "US Stocks") {
+    const nasdaqQuote = await fetchNasdaqRealTimeQuote(rawSymbol).catch(() => null);
+    if (nasdaqQuote) {
+      return nasdaqQuote;
+    }
+  }
+
+  const yahooSym = toYahooSymbol(rawSymbol, category);
+  const directQuote = await getMarketQuote(yahooSym).catch(() => null);
+  if (directQuote && validateMarketQuote(directQuote, category, expectedType)) {
+    return directQuote;
+  }
+
+  // Indian fallback: if .NS returned nothing, try BSE (.BO)
+  if (category === "Indian Equities" && yahooSym.endsWith(".NS")) {
+    const bseSym = yahooSym.replace(/\.NS$/, ".BO");
+    const bseQuote = await getMarketQuote(bseSym).catch(() => null);
+    if (bseQuote && validateMarketQuote(bseQuote, category, expectedType)) {
+      return bseQuote;
+    }
+  }
+
+  return null;
 }
 
 function validateMarketQuote(quote: MarketQuote, category: string, expectedType?: string): boolean {
@@ -287,10 +319,8 @@ export async function GET(req: NextRequest) {
     // 2. Direct ticker symbol check
     const looksLikeTicker = /^[a-zA-Z0-9.^=-]{1,20}$/.test(query);
     if (looksLikeTicker) {
-      const directSymbol = toYahooSymbol(query, category);
-
-      const directQuote = await getMarketQuote(directSymbol).catch(() => null);
-      if (directQuote && validateMarketQuote(directQuote, category)) {
+      const directQuote = await resolveAccurateQuote(query, category).catch(() => null);
+      if (directQuote) {
         return NextResponse.json({
           success: true,
           symbol: directQuote.symbol,
@@ -304,9 +334,8 @@ export async function GET(req: NextRequest) {
     // 3. Known company / ticker resolution via unified mapping
     const mapped = getStockTicker(query, category);
     if (mapped && mapped !== query.toUpperCase()) {
-      const mappedSymbol = toYahooSymbol(mapped, category);
-      const mappedQuote = await getMarketQuote(mappedSymbol).catch(() => null);
-      if (mappedQuote && validateMarketQuote(mappedQuote, category)) {
+      const mappedQuote = await resolveAccurateQuote(mapped, category).catch(() => null);
+      if (mappedQuote) {
         return NextResponse.json({
           success: true,
           symbol: mappedQuote.symbol,
@@ -361,8 +390,8 @@ export async function GET(req: NextRequest) {
       });
 
     for (const candidate of candidates) {
-      const quote = await getMarketQuote(String(candidate.symbol)).catch(() => null);
-      if (!quote || !validateMarketQuote(quote, category, candidate.quoteType)) continue;
+      const quote = await resolveAccurateQuote(String(candidate.symbol), category, candidate.quoteType).catch(() => null);
+      if (!quote) continue;
 
       return NextResponse.json({
         success: true,

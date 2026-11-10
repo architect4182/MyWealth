@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStockTicker } from "@/utils/tickers";
+import { fetchNasdaqRealTimeQuote } from "@/lib/live-quotes";
 
 const headers = {
   "User-Agent":
@@ -353,7 +354,20 @@ export async function GET(req: NextRequest) {
     }
 
     // Determine current and reference prices
-    const latestMarketPrice = Number(meta.regularMarketPrice);
+    let latestMarketPrice = Number(meta.regularMarketPrice);
+    if (category === "US Stocks") {
+      const nasdaqQuote = await fetchNasdaqRealTimeQuote(resolvedSymbol).catch(() => null);
+      if (nasdaqQuote?.price) {
+        latestMarketPrice = nasdaqQuote.price;
+      } else if (rawRange === "1D" && points.length > 0) {
+        const regTime = Number(meta.regularMarketTime) || 0;
+        const lastPt = points[points.length - 1];
+        if (lastPt.timestamp > regTime) {
+          latestMarketPrice = lastPt.price;
+        }
+      }
+    }
+
     const baselinePrice =
       Number(meta.chartPreviousClose) ||
       Number(meta.previousClose) ||

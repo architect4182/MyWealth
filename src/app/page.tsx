@@ -30,12 +30,13 @@ export default function Home() {
     totalReturnPct,
     indianVal,
     usVal,
+    indianProfitsOnly,
+    usProfitsOnly,
     mfVal,
     pctIndian,
     pctUS,
     pctMF,
     pctGold,
-    usdInrRate,
     indianMarket,
     usMarket,
     money,
@@ -185,9 +186,21 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">US Exposure</span>
-                  <span className="apple-stat-chip-val">
-                    ${(usVal / usdInrRate).toFixed(2)} USD
+                  <span className="apple-stat-chip-label">Indian Profits</span>
+                  <span
+                    className="apple-stat-chip-val"
+                    style={{ color: indianProfitsOnly > 0 ? "#16a34a" : undefined }}
+                  >
+                    {indianProfitsOnly > 0 ? `+${money(indianProfitsOnly, "INR")}` : money(0, "INR")}
+                  </span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">US Profits</span>
+                  <span
+                    className="apple-stat-chip-val"
+                    style={{ color: usProfitsOnly > 0 ? "#16a34a" : undefined }}
+                  >
+                    {usProfitsOnly > 0 ? `+${money(usProfitsOnly, "USD")}` : money(0, "USD")}
                   </span>
                 </div>
               </div>

@@ -86,6 +86,8 @@ interface PortfolioContextType {
   mutualFunds: AssetPosition[];
   indianVal: number;
   usVal: number;
+  indianProfitsOnly: number;
+  usProfitsOnly: number;
   mfVal: number;
   goldVal: number;
   pctIndian: number;
@@ -765,6 +767,37 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       assets.filter((a) => a.category === "US Stocks").reduce((s, a) => s + a.quantity * a.currentPrice, 0) * usdInrRate,
     [assets, usdInrRate]
   );
+
+  // Sum of positive profits only (pnl > 0), separated for Indian (INR) and US (USD) holdings
+  const indianProfitsOnly = useMemo(
+    () =>
+      assets
+        .filter((a) => a.category !== "US Stocks" && a.currency === "INR")
+        .reduce((sum, a) => {
+          const invested =
+            a.investedAmount !== undefined && a.investedAmount > 0
+              ? a.investedAmount
+              : a.quantity * a.buyPrice;
+          const pnl = a.quantity * a.currentPrice - invested;
+          return pnl > 0 ? sum + pnl : sum;
+        }, 0),
+    [assets]
+  );
+
+  const usProfitsOnly = useMemo(
+    () =>
+      assets
+        .filter((a) => a.category === "US Stocks" || a.currency === "USD")
+        .reduce((sum, a) => {
+          const invested =
+            a.investedAmount !== undefined && a.investedAmount > 0
+              ? a.investedAmount
+              : a.quantity * a.buyPrice;
+          const pnl = a.quantity * a.currentPrice - invested;
+          return pnl > 0 ? sum + pnl : sum;
+        }, 0),
+    [assets]
+  );
   const mfVal = useMemo(
     () => assets.filter((a) => a.category === "Mutual Funds").reduce((s, a) => s + a.quantity * a.currentPrice, 0),
     [assets]
@@ -1008,16 +1041,16 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   handleRefreshPricesRef.current = handleRefreshPrices;
 
   // Automated background price sync: automatically fetches live prices on load and periodically every 60s
-  const hasAutoSyncedInitialPricesRef = useRef(false);
+  const lastAutoSyncedUserRef = useRef<string>("");
   useEffect(() => {
     if (assets.length === 0 || !currentUserId) return;
 
     let initTimer: ReturnType<typeof setTimeout> | undefined;
-    // 1. Initial automated price sync when assets are first loaded (runs once after assets hydrate)
-    if (!hasAutoSyncedInitialPricesRef.current) {
+    // 1. Initial automated price sync once per user login/load after assets hydrate
+    if (lastAutoSyncedUserRef.current !== currentUserId) {
       initTimer = setTimeout(() => {
-        if (!hasAutoSyncedInitialPricesRef.current) {
-          hasAutoSyncedInitialPricesRef.current = true;
+        if (lastAutoSyncedUserRef.current !== currentUserId) {
+          lastAutoSyncedUserRef.current = currentUserId;
           handleRefreshPricesRef.current(true);
         }
       }, 900);
@@ -1714,6 +1747,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       mutualFunds,
       indianVal,
       usVal,
+      indianProfitsOnly,
+      usProfitsOnly,
       mfVal,
       goldVal,
       pctIndian,
@@ -1792,6 +1827,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       mutualFunds,
       indianVal,
       usVal,
+      indianProfitsOnly,
+      usProfitsOnly,
       mfVal,
       goldVal,
       pctIndian,
