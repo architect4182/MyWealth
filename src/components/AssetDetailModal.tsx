@@ -25,7 +25,7 @@ import {
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLogoAvatar, getStockTicker, BrokerLogoAvatar } from "@/components/Logos";
 import { getBrokersForCategory, getBrokerDestinationUrl } from "@/utils/brokers";
-import { MarketTimingBadge, getAssetMarketStatus } from "@/components/MarketBadge";
+import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate } from "@/utils/sip";
 
 interface ChartPoint {
@@ -68,7 +68,8 @@ export function AssetDetailModal() {
     startEditing,
     setDeletingAsset,
     money,
-    currentTime,
+    indianMarket,
+    usMarket,
     showUsdInRupees,
     openAddModalWithPrefill,
   } = usePortfolio();
@@ -87,10 +88,10 @@ export function AssetDetailModal() {
   const prevPriceRef = useRef<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Market timing status
+  // Market timing status synced with context (respects holidays & sessions)
   const marketStatus = useMemo(() => {
-    return getAssetMarketStatus(viewingAsset?.category || "Indian Equities", currentTime);
-  }, [viewingAsset, currentTime]);
+    return viewingAsset?.category === "US Stocks" ? usMarket : indianMarket;
+  }, [viewingAsset?.category, indianMarket, usMarket]);
 
   const ticker = useMemo(() => {
     return viewingAsset ? getStockTicker(viewingAsset.name, viewingAsset.category) : "";
@@ -191,19 +192,20 @@ export function AssetDetailModal() {
     }
   }, [viewingAsset, selectedPeriod, fetchChart]);
 
-  // Real-time live polling every 5 seconds ONLY while market is open
+  // Real-time live polling every 30 seconds ONLY while that specific market is open and tab is visible
   useEffect(() => {
     if (!viewingAsset) return;
 
-    // Multiple calls should happen ONLY while the market is open!
-    // When market is closed (or Mutual Funds), make the call only once on open and do NOT poll repeatedly.
+    // Multiple calls happen ONLY while this asset's market is open (never on closed/holiday or Mutual Funds)
     if (!marketStatus.isOpen || viewingAsset.category === "Mutual Funds") {
       return;
     }
 
     const pollInterval = window.setInterval(() => {
-      fetchChart(selectedPeriod, true);
-    }, 5000);
+      if (document.visibilityState === "visible") {
+        fetchChart(selectedPeriod, true);
+      }
+    }, 30000);
 
     return () => {
       window.clearInterval(pollInterval);

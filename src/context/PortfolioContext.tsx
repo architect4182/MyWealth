@@ -928,18 +928,62 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [assets, currentUserId]);
 
-  // Live price refresh (manual or automatic background sync)
+  // Track last automatic refresh time to prevent duplicate tab/focus API bursts
+  const lastAutoRefreshAtRef = useRef<number>(0);
+
+  // Live price refresh — strictly market-aware:
+  // Calls Indian APIs only when Indian market is open; US APIs only when US market is open.
   const handleRefreshPrices = async (silentParam?: boolean | unknown) => {
     const silent = typeof silentParam === "boolean" ? silentParam : false;
     if (assets.length === 0 || isRefreshingPrices) return;
+
+    const now = new Date();
+    const indianOpen = getIndianMarketStatus(now, marketHolidays.in).isOpen;
+    const usOpen = getUsMarketStatus(now, marketHolidays.us).isOpen;
+
+    const isEligibleForLiveCall = (asset: AssetPosition): boolean => {
+      if (asset.category === "US Stocks") return usOpen;
+      if (asset.category === "Indian Equities" || asset.category === "Gold & Fixed Income") return indianOpen;
+      if (asset.category === "Crypto") return true;
+      // Mutual Funds update NAV once daily at EOD — never poll repeatedly in background
+      if (asset.category === "Mutual Funds") return !silent;
+      return false;
+    };
+
+    const eligibleIds = new Set(
+      assets.filter(isEligibleForLiveCall).map((a) => a.id)
+    );
+
+    if (eligibleIds.size === 0) {
+      if (!silent) {
+        setPriceRefreshMessage("All asset markets are currently closed — showing last synced prices.");
+        setTimeout(() => setPriceRefreshMessage(""), 4000);
+      }
+      return;
+    }
+
     if (!silent) {
       setIsRefreshingPrices(true);
-      setPriceRefreshMessage("Fetching latest market prices...");
+      const activeMarkets = [
+        indianOpen ? "India (NSE)" : null,
+        usOpen ? "US (NYSE)" : null,
+      ].filter(Boolean);
+      setPriceRefreshMessage(
+        activeMarkets.length > 0
+          ? `Syncing ${activeMarkets.join(" & ")} live prices…`
+          : "Syncing latest NAVs…"
+      );
     }
+
+    lastAutoRefreshAtRef.current = Date.now();
 
     try {
       const refreshedList = await Promise.all(
         assets.map(async (asset) => {
+          if (!eligibleIds.has(asset.id)) {
+            return asset;
+          }
+
           let ticker = "";
           let marketType = "";
 
@@ -1040,45 +1084,58 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const handleRefreshPricesRef = useRef(handleRefreshPrices);
   handleRefreshPricesRef.current = handleRefreshPrices;
 
-  // Automated background price sync: automatically fetches live prices on load and periodically every 60s
+  const marketHolidaysRef = useRef(marketHolidays);
+  marketHolidaysRef.current = marketHolidays;
+
+  // Automated background price sync: runs ONLY for whichever market is currently open
   const lastAutoSyncedUserRef = useRef<string>("");
   useEffect(() => {
     if (assets.length === 0 || !currentUserId) return;
 
+    const shouldSyncAnyOpenMarket = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return false;
+      const now = new Date();
+      const inOpen = getIndianMarketStatus(now, marketHolidaysRef.current.in).isOpen;
+      const usOpen = getUsMarketStatus(now, marketHolidaysRef.current.us).isOpen;
+      return inOpen || usOpen;
+    };
+
     let initTimer: ReturnType<typeof setTimeout> | undefined;
-    // 1. Initial automated price sync once per user login/load after assets hydrate
+    // 1. Initial sync once per user load (only runs APIs for currently open markets)
     if (lastAutoSyncedUserRef.current !== currentUserId) {
       initTimer = setTimeout(() => {
         if (lastAutoSyncedUserRef.current !== currentUserId) {
           lastAutoSyncedUserRef.current = currentUserId;
-          handleRefreshPricesRef.current(true);
+          if (shouldSyncAnyOpenMarket()) {
+            handleRefreshPricesRef.current(true);
+          }
         }
       }, 900);
     }
 
-    // 2. Periodic background refresh every 60 seconds when any market is active (Pre-market / Live / After-hours)
+    // 2. Periodic background refresh every 60 seconds ONLY while tab is visible and relevant market is open
     const intervalTimer = setInterval(() => {
-      if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) {
+      if (shouldSyncAnyOpenMarket()) {
         handleRefreshPricesRef.current(true);
       }
     }, 60 * 1000);
 
-    // 3. Tab visibility / focus refresh
+    // 3. Throttled tab visibility refresh (min 30s cooldown to avoid duplicate bursts)
     const handleVisibilityRefresh = () => {
-      if (document.visibilityState === "visible") {
-        if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) {
-          handleRefreshPricesRef.current(true);
-        }
+      if (
+        document.visibilityState === "visible" &&
+        Date.now() - lastAutoRefreshAtRef.current >= 30_000 &&
+        shouldSyncAnyOpenMarket()
+      ) {
+        handleRefreshPricesRef.current(true);
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityRefresh);
-    window.addEventListener("focus", handleVisibilityRefresh);
 
     return () => {
       if (initTimer) clearTimeout(initTimer);
       clearInterval(intervalTimer);
       document.removeEventListener("visibilitychange", handleVisibilityRefresh);
-      window.removeEventListener("focus", handleVisibilityRefresh);
     };
   }, [assets.length, currentUserId]);
 
@@ -1749,7 +1806,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       usVal,
       indianProfitsOnly,
       usProfitsOnly,
-      mfVal,
+portfol      mfVal,
       goldVal,
       pctIndian,
       pctUS,
