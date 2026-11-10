@@ -49,7 +49,7 @@ export interface EditAssetForm {
 
 export interface MarketTimingStatus {
   isOpen: boolean;
-  status: "LIVE" | "PRE-MARKET" | "AFTER-HOURS" | "CLOSED";
+  status: "LIVE" | "PRE-MARKET" | "AFTER-HOURS" | "CLOSED" | "HOLIDAY";
   label: string;
   marketName: string;
   exchange: string;
@@ -57,6 +57,7 @@ export interface MarketTimingStatus {
   currentTimeStr: string;
   tradingHoursStr: string;
   detail: string;
+  holidayName?: string;
 }
 
 export interface PrefillAssetData {

@@ -21,6 +21,12 @@ import { MarketTimingBadge, getAssetMarketStatus } from "@/components/MarketBadg
 import { getNextSipDate } from "@/utils/sip";
 import { getBrokerDestinationUrl } from "@/utils/brokers";
 
+function formatQty(q: number): string {
+  if (!Number.isFinite(q)) return "0";
+  if (Math.abs(q - Math.round(q)) < 1e-8) return String(Math.round(q));
+  return Number(q.toFixed(8)).toString();
+}
+
 export interface FilterSubTab {
   key: string;
   label: string;
@@ -317,7 +323,7 @@ export function HoldingsTableAndCards({
 
                     <div className="apple-asset-holdings-line">
                       <span className="apple-holdings-tag">
-                        <strong>{item.quantity.toFixed(item.quantity % 1 === 0 ? 0 : 4)}</strong> units
+                        <strong>{formatQty(item.quantity)}</strong> units
                       </span>
                       <span className="apple-dot-sep">•</span>
                       <span className="apple-cost-tag">
@@ -576,9 +582,7 @@ export function HoldingsTableAndCards({
                           {money(investedVal, item.currency)}
                         </strong>
                         <div style={{ fontSize: "11px", color: "var(--muted)" }}>
-                          {item.quantity.toFixed(
-                            item.quantity % 1 === 0 ? 0 : 4
-                          )}{" "}
+                          {formatQty(item.quantity)}{" "}
                           units
                         </div>
                       </td>

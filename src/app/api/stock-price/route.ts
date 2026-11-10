@@ -81,9 +81,21 @@ function querySimilarity(query: string, quote: SearchQuote): number {
   return matches / queryWords.length;
 }
 
+function toYahooSymbol(symbol: string, category: string): string {
+  const upper = symbol.trim().toUpperCase();
+  if (category === "Indian Equities") {
+    return upper.endsWith(".NS") || upper.endsWith(".BO") ? upper : `${upper}.NS`;
+  }
+  if (category === "US Stocks") {
+    // Yahoo Finance uses hyphens for US share classes (e.g. BRK.B -> BRK-B, BF.B -> BF-B)
+    return upper.replace(/\./g, "-");
+  }
+  return upper;
+}
+
 async function getMarketQuote(symbol: string): Promise<MarketQuote | null> {
   const response = await fetch(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}`,
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1m&range=1d&includePrePost=true`,
     { headers, cache: "no-store" }
   );
   if (!response.ok) return null;
@@ -91,15 +103,33 @@ async function getMarketQuote(symbol: string): Promise<MarketQuote | null> {
   const payload = await response.json();
   const result = payload?.chart?.result?.[0];
   const meta = result?.meta;
-  const price = Number(meta?.regularMarketPrice);
+  const regularPrice = Number(meta?.regularMarketPrice);
+  const regularTime = Number(meta?.regularMarketTime) || 0;
   const resolvedSymbol = String(meta?.symbol ?? symbol);
   const currency = String(meta?.currency ?? "");
-  if (!Number.isFinite(price) || price <= 0 || !currency) return null;
+
+  // Check if extended-hours (pre-market / after-hours) or latest 1m interval is fresher than regularMarketTime
+  let livePrice = regularPrice;
+  const timestamps: number[] = Array.isArray(result?.timestamp) ? result.timestamp : [];
+  const closes: Array<number | null> = Array.isArray(result?.indicators?.quote?.[0]?.close)
+    ? result.indicators.quote[0].close
+    : [];
+  for (let i = timestamps.length - 1; i >= 0; i--) {
+    const c = closes[i];
+    if (c !== null && c !== undefined && Number.isFinite(Number(c)) && Number(c) > 0) {
+      if (timestamps[i] > regularTime || !Number.isFinite(livePrice) || livePrice <= 0) {
+        livePrice = Number(Number(c).toFixed(4));
+      }
+      break;
+    }
+  }
+
+  if (!Number.isFinite(livePrice) || livePrice <= 0 || !currency) return null;
 
   return {
     symbol: resolvedSymbol,
     name: String(meta?.shortName ?? meta?.longName ?? resolvedSymbol),
-    price,
+    price: livePrice,
     currency,
     quoteType: String(meta?.instrumentType ?? ""),
   };
@@ -257,10 +287,7 @@ export async function GET(req: NextRequest) {
     // 2. Direct ticker symbol check
     const looksLikeTicker = /^[a-zA-Z0-9.^=-]{1,20}$/.test(query);
     if (looksLikeTicker) {
-      let directSymbol = query.toUpperCase();
-      if (category === "Indian Equities" && !directSymbol.endsWith(".NS") && !directSymbol.endsWith(".BO")) {
-        directSymbol += ".NS";
-      }
+      const directSymbol = toYahooSymbol(query, category);
 
       const directQuote = await getMarketQuote(directSymbol).catch(() => null);
       if (directQuote && validateMarketQuote(directQuote, category)) {
@@ -277,10 +304,7 @@ export async function GET(req: NextRequest) {
     // 3. Known company / ticker resolution via unified mapping
     const mapped = getStockTicker(query, category);
     if (mapped && mapped !== query.toUpperCase()) {
-      let mappedSymbol = mapped.toUpperCase();
-      if (category === "Indian Equities" && !mappedSymbol.endsWith(".NS") && !mappedSymbol.endsWith(".BO")) {
-        mappedSymbol += ".NS";
-      }
+      const mappedSymbol = toYahooSymbol(mapped, category);
       const mappedQuote = await getMarketQuote(mappedSymbol).catch(() => null);
       if (mappedQuote && validateMarketQuote(mappedQuote, category)) {
         return NextResponse.json({

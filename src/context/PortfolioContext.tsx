@@ -3,7 +3,12 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AssetPosition, AssetCategory, EditAssetForm, MarketTimingStatus, PrefillAssetData, AssetSaveNotification, OperationResult, ProcessingState } from "@/types/portfolio";
-import { getIndianMarketStatus, getUsMarketStatus } from "@/lib/market-status";
+import {
+  getIndianMarketStatus,
+  getUsMarketStatus,
+  syncMarketHolidaysWeekly,
+  MarketHolidaysMap,
+} from "@/lib/market-status";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { calculateSipCatchup, formatLocalDate } from "@/utils/sip";
 import { getStockTicker } from "@/utils/tickers";
@@ -298,16 +303,36 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setModal(true);
   };
 
-  // Clock
+  // Clock & Dynamic Weekly Market Holidays
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [marketHolidays, setMarketHolidays] = useState<MarketHolidaysMap>({ in: {}, us: {} });
+
   useEffect(() => {
     setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
 
-  const indianMarket = useMemo(() => getIndianMarketStatus(currentTime), [currentTime]);
-  const usMarket = useMemo(() => getUsMarketStatus(currentTime), [currentTime]);
+  useEffect(() => {
+    let active = true;
+    syncMarketHolidaysWeekly().then((map) => {
+      if (active) {
+        setMarketHolidays(map);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const indianMarket = useMemo(
+    () => getIndianMarketStatus(currentTime, marketHolidays.in),
+    [currentTime, marketHolidays.in]
+  );
+  const usMarket = useMemo(
+    () => getUsMarketStatus(currentTime, marketHolidays.us),
+    [currentTime, marketHolidays.us]
+  );
 
   // Exchange rate
   const [usdInrRate, setUsdInrRate] = useState<number>(84.5);
@@ -931,18 +956,36 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       const uid = (currentUserId || (typeof window !== "undefined" ? localStorage.getItem("mywealth_current_user") : "") || "").trim();
       persistLocal(refreshedList, uid);
 
-      // Persist refreshed prices directly to Supabase so DB is immediately updated
-      if (isSupabaseConfigured && supabase && changedIds.size > 0) {
-        const changedAssets = refreshedList.filter((a) => changedIds.has(a.id));
+      // Persist refreshed prices directly to DB via /api/assets so current_price stays live in Supabase
+      if (changedIds.size > 0) {
+        const changedAssets = refreshedList.filter((a) => changedIds.has(a.id) && !a.id.startsWith("temp-"));
         await Promise.all(
-          changedAssets.map((a) =>
-            supabase!.from("assets").update({ current_price: a.currentPrice }).eq("id", a.id)
-          )
+          changedAssets.map(async (a) => {
+            try {
+              const apiRes = await fetch("/api/assets", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: a.id, currentPrice: a.currentPrice }),
+              });
+              if (apiRes.ok) {
+                dbBaselinePricesRef.current.set(a.id, a.currentPrice);
+                return;
+              }
+            } catch {}
+            if (isSupabaseConfigured && supabase) {
+              const { error } = await supabase
+                .from("assets")
+                .update({ current_price: a.currentPrice })
+                .eq("id", a.id);
+              if (!error) {
+                dbBaselinePricesRef.current.set(a.id, a.currentPrice);
+              }
+            }
+          })
         );
-        changedAssets.forEach((a) => dbBaselinePricesRef.current.set(a.id, a.currentPrice));
         setUnsavedAssetIds(new Set());
       } else {
-        setUnsavedAssetIds(changedIds);
+        setUnsavedAssetIds(new Set());
       }
 
       if (!silent) {
@@ -961,35 +1004,45 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleRefreshPricesRef = useRef(handleRefreshPrices);
+  handleRefreshPricesRef.current = handleRefreshPrices;
+
   // Automated background price sync: automatically fetches live prices on load and periodically every 60s
   const hasAutoSyncedInitialPricesRef = useRef(false);
   useEffect(() => {
     if (assets.length === 0 || !currentUserId) return;
 
-    // 1. Initial automated price sync when assets are first loaded
+    let initTimer: ReturnType<typeof setTimeout> | undefined;
+    // 1. Initial automated price sync when assets are first loaded (runs once after assets hydrate)
     if (!hasAutoSyncedInitialPricesRef.current) {
-      hasAutoSyncedInitialPricesRef.current = true;
-      const initTimer = setTimeout(() => {
-        handleRefreshPrices(true);
-      }, 1000);
-      return () => clearTimeout(initTimer);
+      initTimer = setTimeout(() => {
+        if (!hasAutoSyncedInitialPricesRef.current) {
+          hasAutoSyncedInitialPricesRef.current = true;
+          handleRefreshPricesRef.current(true);
+        }
+      }, 900);
     }
 
-    // 2. Periodic background refresh every 60 seconds
+    // 2. Periodic background refresh every 60 seconds when any market is active (Pre-market / Live / After-hours)
     const intervalTimer = setInterval(() => {
-      if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) { handleRefreshPrices(true); }
+      if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) {
+        handleRefreshPricesRef.current(true);
+      }
     }, 60 * 1000);
 
     // 3. Tab visibility / focus refresh
     const handleVisibilityRefresh = () => {
       if (document.visibilityState === "visible") {
-        if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) { handleRefreshPrices(true); }
+        if (getIndianMarketStatus(new Date()).isOpen || getUsMarketStatus(new Date()).isOpen) {
+          handleRefreshPricesRef.current(true);
+        }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityRefresh);
     window.addEventListener("focus", handleVisibilityRefresh);
 
     return () => {
+      if (initTimer) clearTimeout(initTimer);
       clearInterval(intervalTimer);
       document.removeEventListener("visibilitychange", handleVisibilityRefresh);
       window.removeEventListener("focus", handleVisibilityRefresh);

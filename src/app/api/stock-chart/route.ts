@@ -30,8 +30,8 @@ function resolveKnownSymbol(query: string, category: string): string | null {
   const mapped = getStockTicker(query, category);
 
   if (category === "US Stocks") {
-    if (mapped) return mapped;
-    if (/^[A-Z]{1,6}$/.test(query.trim())) return query.trim();
+    if (mapped) return mapped.replace(/\./g, "-");
+    if (/^[A-Z0-9.-]{1,10}$/i.test(query.trim())) return query.trim().toUpperCase().replace(/\./g, "-");
     return null;
   }
 
@@ -284,9 +284,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const prePostParam = rawRange === "1D" ? "&includePrePost=true" : "";
     let url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
       resolvedSymbol
-    )}?range=${rangeParam}&interval=${intervalParam}`;
+    )}?range=${rangeParam}&interval=${intervalParam}${prePostParam}`;
 
     let res = await fetch(url, { headers, cache: "no-store" });
 

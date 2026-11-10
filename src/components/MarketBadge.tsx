@@ -60,6 +60,23 @@ export function MarketTimingBadge({
     );
   }
 
+  if (status.status === "HOLIDAY") {
+    return (
+      <span
+        className="apple-live-market-badge holiday"
+        title={`${status.marketName}: ${status.holidayName ?? "Market Holiday"} • ${status.detail}`}
+      >
+        <span className="apple-live-dot holiday" />
+        <span>HOLIDAY</span>
+        {!compact && (
+          <span style={{ opacity: 0.85 }}>
+            {status.holidayName ?? status.exchange}
+          </span>
+        )}
+      </span>
+    );
+  }
+
   return (
     <span
       className="apple-live-market-badge closed"

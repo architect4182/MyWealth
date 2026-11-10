@@ -565,10 +565,10 @@ export function AddAssetModal() {
               {isFetchingPrice
                 ? "Fetching live price…"
                 : isSearching
-                ? "Finding relatable matches…"
-                : isStockSelected
-                ? "Market CMP locked"
-                : "Auto-fills price @ CMP/NAV"}
+                  ? "Finding relatable matches…"
+                  : isStockSelected
+                    ? "Market CMP locked"
+                    : "Auto-fills price @ CMP/NAV"}
             </span>
           </div>
 
@@ -581,11 +581,11 @@ export function AddAssetModal() {
               style={
                 isStockSelected
                   ? {
-                      background: "rgba(0, 0, 0, 0.04)",
-                      cursor: "not-allowed",
-                      paddingRight: "80px",
-                      fontWeight: 600,
-                    }
+                    background: "rgba(0, 0, 0, 0.04)",
+                    cursor: "not-allowed",
+                    paddingRight: "80px",
+                    fontWeight: 600,
+                  }
                   : undefined
               }
               onChange={(e) => setName(e.target.value)}
@@ -916,7 +916,7 @@ export function AddAssetModal() {
                         setInvestedAmount((Number(quantity) * numBp).toFixed(2));
                       } else if (Number(investedAmount) > 0) {
                         const newQ = Number(investedAmount) / numBp;
-                        setQuantity(newQ.toFixed(newQ % 1 === 0 ? 0 : 4));
+                        setQuantity(String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8))));
                         if (Number(currentPrice) > 0) {
                           setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
                         }
@@ -999,7 +999,7 @@ export function AddAssetModal() {
                     const bp = Number(buyPrice);
                     if (numInv > 0 && bp > 0) {
                       const newQ = numInv / bp;
-                      setQuantity(newQ.toFixed(newQ % 1 === 0 ? 0 : 4));
+                      setQuantity(String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8))));
                       if (Number(currentPrice) > 0) {
                         setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
                       }
@@ -1326,10 +1326,10 @@ export function EditAssetModal() {
             <select
               value={
                 isEditCustomBroker ||
-                (editingAsset.brokerApp &&
-                  !getQuickBrokerOptions(editingAsset.category).includes(
-                    editingAsset.brokerApp
-                  ))
+                  (editingAsset.brokerApp &&
+                    !getQuickBrokerOptions(editingAsset.category).includes(
+                      editingAsset.brokerApp
+                    ))
                   ? "__custom__"
                   : (editingAsset.brokerApp || "")
               }
@@ -1360,20 +1360,20 @@ export function EditAssetModal() {
               !getQuickBrokerOptions(editingAsset.category).includes(
                 editingAsset.brokerApp
               ))) && (
-            <input
-              style={{ marginTop: "8px" }}
-              required
-              value={editingAsset.brokerApp || ""}
-              onChange={(e) =>
-                setEditingAsset({
-                  ...editingAsset,
-                  brokerApp: e.target.value,
-                })
-              }
-              placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities, ICICI Direct"
-              autoFocus
-            />
-          )}
+              <input
+                style={{ marginTop: "8px" }}
+                required
+                value={editingAsset.brokerApp || ""}
+                onChange={(e) =>
+                  setEditingAsset({
+                    ...editingAsset,
+                    brokerApp: e.target.value,
+                  })
+                }
+                placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities, ICICI Direct"
+                autoFocus
+              />
+            )}
         </div>
 
         {/* Authentic Apple iOS Switch for SIP Check */}
@@ -2031,9 +2031,14 @@ export function MarketSessionsModal() {
               }}
             >
               <span style={{ color: "var(--foreground-muted)" }}>
-                Next Session:
+                {indianMarket.status === "HOLIDAY" ? "Market Holiday:" : "Next Session:"}
               </span>
-              <span style={{ color: "var(--apple-blue)", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: indianMarket.status === "HOLIDAY" ? "#c2410c" : "var(--apple-blue)",
+                  fontWeight: 600,
+                }}
+              >
                 {indianMarket.detail}
               </span>
             </div>
@@ -2101,9 +2106,14 @@ export function MarketSessionsModal() {
               }}
             >
               <span style={{ color: "var(--foreground-muted)" }}>
-                Next Session:
+                {usMarket.status === "HOLIDAY" ? "Market Holiday:" : "Next Session:"}
               </span>
-              <span style={{ color: "var(--apple-blue)", fontWeight: 600 }}>
+              <span
+                style={{
+                  color: usMarket.status === "HOLIDAY" ? "#c2410c" : "var(--apple-blue)",
+                  fontWeight: 600,
+                }}
+              >
                 {usMarket.detail}
               </span>
             </div>

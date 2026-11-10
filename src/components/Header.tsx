@@ -89,7 +89,10 @@ export const Header = React.memo(function Header({
           onClick={() => setMarketModal(true)}
           title="Stock Market Trading Sessions • Click for live hours & schedule"
         >
-          <div className="apple-market-capsule-item">
+          <div
+            className="apple-market-capsule-item"
+            title={`${indianMarket.marketName}: ${indianMarket.label} • ${indianMarket.detail}`}
+          >
             {indianMarket.status === "LIVE" ? (
               <>
                 <span className="apple-live-radar-wrap">
@@ -101,16 +104,39 @@ export const Header = React.memo(function Header({
               </>
             ) : (
               <>
-                <span className={`apple-live-dot ${indianMarket.isOpen ? "pre-mkt" : "closed"}`} />
+                <span
+                  className={`apple-live-dot ${
+                    indianMarket.isOpen
+                      ? "pre-mkt"
+                      : indianMarket.status === "HOLIDAY"
+                      ? "holiday"
+                      : "closed"
+                  }`}
+                />
                 <span className="apple-market-code">NSE</span>
-                <span className={`apple-market-state ${indianMarket.isOpen ? "live" : "closed"}`}>
-                  {indianMarket.status === "PRE-MARKET" ? "PRE" : "CLOSED"}
+                <span
+                  className={`apple-market-state ${
+                    indianMarket.isOpen
+                      ? "live"
+                      : indianMarket.status === "HOLIDAY"
+                      ? "holiday"
+                      : "closed"
+                  }`}
+                >
+                  {indianMarket.status === "PRE-MARKET"
+                    ? "PRE"
+                    : indianMarket.status === "HOLIDAY"
+                    ? "HOLIDAY"
+                    : "CLOSED"}
                 </span>
               </>
             )}
           </div>
           <span className="apple-capsule-divider">|</span>
-          <div className="apple-market-capsule-item">
+          <div
+            className="apple-market-capsule-item"
+            title={`${usMarket.marketName}: ${usMarket.label} • ${usMarket.detail}`}
+          >
             {usMarket.status === "LIVE" ? (
               <>
                 <span className="apple-live-radar-wrap">
@@ -122,10 +148,32 @@ export const Header = React.memo(function Header({
               </>
             ) : (
               <>
-                <span className={`apple-live-dot ${usMarket.isOpen ? "pre-mkt" : "closed"}`} />
+                <span
+                  className={`apple-live-dot ${
+                    usMarket.isOpen
+                      ? "pre-mkt"
+                      : usMarket.status === "HOLIDAY"
+                      ? "holiday"
+                      : "closed"
+                  }`}
+                />
                 <span className="apple-market-code">NYSE</span>
-                <span className={`apple-market-state ${usMarket.isOpen ? "live" : "closed"}`}>
-                  {usMarket.status === "PRE-MARKET" ? "PRE" : usMarket.status === "AFTER-HOURS" ? "AFTER" : "CLOSED"}
+                <span
+                  className={`apple-market-state ${
+                    usMarket.isOpen
+                      ? "live"
+                      : usMarket.status === "HOLIDAY"
+                      ? "holiday"
+                      : "closed"
+                  }`}
+                >
+                  {usMarket.status === "PRE-MARKET"
+                    ? "PRE"
+                    : usMarket.status === "AFTER-HOURS"
+                    ? "AFTER"
+                    : usMarket.status === "HOLIDAY"
+                    ? "HOLIDAY"
+                    : "CLOSED"}
                 </span>
               </>
             )}
