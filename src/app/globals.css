@@ -1049,7 +1049,14 @@ button {
   border-top: 1px solid rgba(147, 102, 255, 0.14);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+  .apple-hero-stat-chips {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 340px) {
   .apple-hero-stat-chips {
     grid-template-columns: 1fr;
   }
@@ -1854,6 +1861,18 @@ tr:hover .apple-table-chevron-circle {
 .table-scroll {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  th {
+    padding: 10px 12px !important;
+    white-space: nowrap !important;
+  }
+
+  td {
+    padding: 12px !important;
+  }
 }
 
 table {
@@ -2168,6 +2187,7 @@ tbody tr:hover td {
 
 .investment-modal {
   width: min(100%, 720px);
+  max-height: calc(100dvh - 32px);
   padding: 32px 36px;
   border-radius: 28px;
   background: var(--glass-bg-modal);
@@ -2180,7 +2200,9 @@ tbody tr:hover td {
   flex-direction: column;
   gap: 20px;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
   overscroll-behavior: contain;
   animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2262,9 +2284,10 @@ tbody tr:hover td {
   gap: 16px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .form-row {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 
@@ -3640,7 +3663,7 @@ select:focus {
   }
 
   .apple-hero-stat-chips {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     padding-top: 12px;
     margin-top: 12px;
@@ -6936,6 +6959,17 @@ tbody tr.flash-pulse td {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 4px;
+}
+
+@media (max-width: 460px) {
+  .add-asset-type-selector {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .add-type-btn {
+    padding: 12px 14px;
+  }
 }
 
 .add-type-btn {

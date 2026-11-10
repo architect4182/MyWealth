@@ -719,7 +719,7 @@ export function AddAssetModal() {
           </label>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", alignItems: "start" }}>
+        <div className="form-row" style={{ alignItems: "start" }}>
           <div>
             <label>
               Investing via App / Broker
@@ -1794,9 +1794,8 @@ export function DbConfigModal() {
           }}
         >
           <div
+            className="form-row"
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
               gap: "10px",
             }}
           >
@@ -2230,9 +2229,8 @@ export function OperationResultModal() {
             </div>
 
             <div
+              className="form-row"
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
                 gap: "8px",
                 fontSize: "12px",
                 borderTop: "1px solid rgba(0, 0, 0, 0.06)",
