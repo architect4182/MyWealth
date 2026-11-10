@@ -336,8 +336,9 @@ export function AssetDetailModal() {
     setHoverPosition(null);
   };
 
-  const strokeColor = "#9366FF";
-  const gradientId = `chartGrad_${viewingAsset.id}`;
+  const isChartProfit = isOwnedInPortfolio ? isPersonalPositive : isPositive;
+  const strokeColor = isChartProfit ? "#16a34a" : "#ef4444";
+  const gradientId = `chartGrad_${viewingAsset.id}_${isChartProfit ? "gain" : "loss"}`;
 
   return (
     <div

@@ -105,17 +105,10 @@ export default function Home() {
             {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
             <div className="apple-wallet-hero">
               <div className="apple-wallet-header">
-                <div className="apple-eyebrow-row">
+                <div className="apple-eyebrow-row" style={{ flexWrap: "wrap", gap: "6px" }}>
                   <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
-                  <MarketTimingBadge
-                    status={
-                      indianMarket.isOpen
-                        ? indianMarket
-                        : usMarket.isOpen
-                          ? usMarket
-                          : indianMarket
-                    }
-                  />
+                  <MarketTimingBadge status={indianMarket} />
+                  <MarketTimingBadge status={usMarket} />
                 </div>
                 <button
                   type="button"

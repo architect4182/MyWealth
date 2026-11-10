@@ -507,8 +507,9 @@ export function HoldingsTableAndCards({
                             <div
                               style={{
                                 display: "flex",
+                                flexWrap: "wrap",
                                 gap: "6px",
-                                marginTop: "2px",
+                                marginTop: "3px",
                                 alignItems: "center",
                               }}
                             >
@@ -554,7 +555,7 @@ export function HoldingsTableAndCards({
                           </div>
                         </div>
                       </td>
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <strong
                           style={{
                             color: "var(--foreground)",
@@ -572,7 +573,7 @@ export function HoldingsTableAndCards({
                             : `₹${item.buyPrice.toFixed(2)}`}
                         </div>
                       </td>
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <strong
                           style={{
                             color: "var(--foreground)",
@@ -582,11 +583,10 @@ export function HoldingsTableAndCards({
                           {money(investedVal, item.currency)}
                         </strong>
                         <div style={{ fontSize: "11px", color: "var(--muted)" }}>
-                          {formatQty(item.quantity)}{" "}
-                          units
+                          {formatQty(item.quantity)} units
                         </div>
                       </td>
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <strong
                           style={{
                             color: "var(--foreground)",
@@ -604,7 +604,7 @@ export function HoldingsTableAndCards({
                           </div>
                         )}
                       </td>
-                      <td style={{ textAlign: "right" }}>
+                      <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <div
                           className={`apple-return-pill ${
                             pnl >= 0 ? "positive" : "negative"
