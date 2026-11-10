@@ -1806,7 +1806,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       usVal,
       indianProfitsOnly,
       usProfitsOnly,
-portfol      mfVal,
+      mfVal,
       goldVal,
       pctIndian,
       pctUS,
