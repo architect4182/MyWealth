@@ -928,13 +928,73 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [assets, currentUserId]);
 
-  // Track last automatic refresh time to prevent duplicate tab/focus API bursts
+  // Track last automatic refresh time & throttled batch DB checkpoints
   const lastAutoRefreshAtRef = useRef<number>(0);
+  const lastDbCheckpointAtRef = useRef<number>(0);
+  const pendingDbPricesRef = useRef<Map<string, number>>(new Map());
+  const DB_CHECKPOINT_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+
+  // Flushes queued current_price updates to Supabase in a single batched PUT request
+  const flushPendingPricesToDb = useCallback(async (options?: { keepalive?: boolean }) => {
+    if (pendingDbPricesRef.current.size === 0) return;
+
+    const updates = Array.from(pendingDbPricesRef.current.entries())
+      .filter(([id, price]) => !id.startsWith("temp-") && Number.isFinite(price) && price > 0)
+      .map(([id, currentPrice]) => ({ id, currentPrice }));
+
+    if (updates.length === 0) {
+      pendingDbPricesRef.current.clear();
+      return;
+    }
+
+    // Clear queue optimistically before async request; restore only on failure
+    const snapshot = new Map(pendingDbPricesRef.current);
+    pendingDbPricesRef.current.clear();
+    lastDbCheckpointAtRef.current = Date.now();
+
+    try {
+      const res = await fetch("/api/assets", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates }),
+        keepalive: Boolean(options?.keepalive),
+      });
+      if (res.ok) {
+        updates.forEach((u) => dbBaselinePricesRef.current.set(u.id, u.currentPrice));
+        return;
+      }
+      throw new Error(`Batch PUT failed (${res.status})`);
+    } catch {
+      // Fallback to direct Supabase client updates (unless unloading via keepalive)
+      if (!options?.keepalive && isSupabaseConfigured && supabase) {
+        await Promise.all(
+          updates.map(async (u) => {
+            const { error } = await supabase!
+              .from("assets")
+              .update({ current_price: u.currentPrice })
+              .eq("id", u.id);
+            if (!error) {
+              dbBaselinePricesRef.current.set(u.id, u.currentPrice);
+            } else {
+              pendingDbPricesRef.current.set(u.id, snapshot.get(u.id) ?? u.currentPrice);
+            }
+          })
+        );
+      } else if (!options?.keepalive) {
+        snapshot.forEach((v, k) => pendingDbPricesRef.current.set(k, v));
+      }
+    }
+  }, []);
 
   // Live price refresh — strictly market-aware:
   // Calls Indian APIs only when Indian market is open; US APIs only when US market is open.
-  const handleRefreshPrices = async (silentParam?: boolean | unknown) => {
+  // UI updates live every 60s; DB writes happen on initial load, manual click, every 15m checkpoint, or tab hide/close.
+  const handleRefreshPrices = async (
+    silentParam?: boolean | unknown,
+    options?: { isInitialSync?: boolean }
+  ) => {
     const silent = typeof silentParam === "boolean" ? silentParam : false;
+    const isInitialSync = Boolean(options?.isInitialSync);
     if (assets.length === 0 || isRefreshingPrices) return;
 
     const now = new Date();
@@ -1033,37 +1093,24 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       const uid = (currentUserId || (typeof window !== "undefined" ? localStorage.getItem("mywealth_current_user") : "") || "").trim();
       persistLocal(refreshedList, uid);
 
-      // Persist refreshed prices directly to DB via /api/assets so current_price stays live in Supabase
+      // Queue any price differences against DB baseline
       if (changedIds.size > 0) {
-        const changedAssets = refreshedList.filter((a) => changedIds.has(a.id) && !a.id.startsWith("temp-"));
-        await Promise.all(
-          changedAssets.map(async (a) => {
-            try {
-              const apiRes = await fetch("/api/assets", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: a.id, currentPrice: a.currentPrice }),
-              });
-              if (apiRes.ok) {
-                dbBaselinePricesRef.current.set(a.id, a.currentPrice);
-                return;
-              }
-            } catch {}
-            if (isSupabaseConfigured && supabase) {
-              const { error } = await supabase
-                .from("assets")
-                .update({ current_price: a.currentPrice })
-                .eq("id", a.id);
-              if (!error) {
-                dbBaselinePricesRef.current.set(a.id, a.currentPrice);
-              }
-            }
-          })
-        );
-        setUnsavedAssetIds(new Set());
-      } else {
-        setUnsavedAssetIds(new Set());
+        refreshedList
+          .filter((a) => changedIds.has(a.id) && !a.id.startsWith("temp-"))
+          .forEach((a) => {
+            pendingDbPricesRef.current.set(a.id, a.currentPrice);
+          });
       }
+
+      // Only hit Supabase DB on: manual click, initial sync, or 15-minute checkpoint
+      const checkpointDue =
+        lastDbCheckpointAtRef.current === 0 ||
+        Date.now() - lastDbCheckpointAtRef.current >= DB_CHECKPOINT_INTERVAL_MS;
+
+      if ((!silent || isInitialSync || checkpointDue) && pendingDbPricesRef.current.size > 0) {
+        await flushPendingPricesToDb();
+      }
+      setUnsavedAssetIds(new Set());
 
       if (!silent) {
         setPriceRefreshMessage(`Successfully synced ${changedIds.size} market valuations.`);
@@ -1101,27 +1148,31 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     };
 
     let initTimer: ReturnType<typeof setTimeout> | undefined;
-    // 1. Initial sync once per user load (only runs APIs for currently open markets)
+    // 1. Initial sync once per user load (writes checkpoint to DB once if stale)
     if (lastAutoSyncedUserRef.current !== currentUserId) {
       initTimer = setTimeout(() => {
         if (lastAutoSyncedUserRef.current !== currentUserId) {
           lastAutoSyncedUserRef.current = currentUserId;
           if (shouldSyncAnyOpenMarket()) {
-            handleRefreshPricesRef.current(true);
+            handleRefreshPricesRef.current(true, { isInitialSync: true });
           }
         }
       }, 900);
     }
 
-    // 2. Periodic background refresh every 60 seconds ONLY while tab is visible and relevant market is open
+    // 2. Periodic background UI refresh every 60 seconds ONLY while tab is visible and market is open
     const intervalTimer = setInterval(() => {
       if (shouldSyncAnyOpenMarket()) {
         handleRefreshPricesRef.current(true);
       }
     }, 60 * 1000);
 
-    // 3. Throttled tab visibility refresh (min 30s cooldown to avoid duplicate bursts)
-    const handleVisibilityRefresh = () => {
+    // 3. On tab switch back -> throttled UI refresh; on tab hide -> flush pending DB checkpoint via keepalive
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        void flushPendingPricesToDb({ keepalive: true });
+        return;
+      }
       if (
         document.visibilityState === "visible" &&
         Date.now() - lastAutoRefreshAtRef.current >= 30_000 &&
@@ -1130,28 +1181,33 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         handleRefreshPricesRef.current(true);
       }
     };
-    document.addEventListener("visibilitychange", handleVisibilityRefresh);
+
+    const handlePageHide = () => {
+      void flushPendingPricesToDb({ keepalive: true });
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
 
     return () => {
       if (initTimer) clearTimeout(initTimer);
       clearInterval(intervalTimer);
-      document.removeEventListener("visibilitychange", handleVisibilityRefresh);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
     };
-  }, [assets.length, currentUserId]);
+  }, [assets.length, currentUserId, flushPendingPricesToDb]);
 
   const handleSavePricesToDb = async () => {
     if (unsavedAssetIds.size === 0 || isSavingPrices) return;
     setIsSavingPrices(true);
     try {
       const changedAssets = assets.filter((a) => unsavedAssetIds.has(a.id));
-      if (isSupabaseConfigured && supabase && changedAssets.length > 0) {
-        await Promise.all(
-          changedAssets.map((a) =>
-            supabase!.from("assets").update({ current_price: a.currentPrice }).eq("id", a.id)
-          )
-        );
-      }
-      changedAssets.forEach((a) => dbBaselinePricesRef.current.set(a.id, a.currentPrice));
+      changedAssets.forEach((a) => {
+        if (!a.id.startsWith("temp-")) {
+          pendingDbPricesRef.current.set(a.id, a.currentPrice);
+        }
+      });
+      await flushPendingPricesToDb();
       setUnsavedAssetIds(new Set());
       persistLocal(assets);
     } catch (err) {

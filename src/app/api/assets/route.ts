@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT: Update an existing asset
+// PUT: Update an existing asset (or batch price updates)
 export async function PUT(req: NextRequest) {
   if (!isSupabaseConfigured || !supabase) {
     return NextResponse.json({ success: false, error: "Supabase is not configured" }, { status: 503 });
@@ -166,6 +166,31 @@ export async function PUT(req: NextRequest) {
 
   const authUser = await getAuthUser(req);
   const body = await req.json().catch(() => ({}));
+
+  // Batched price checkpoint mode: { updates: [{ id, currentPrice }] }
+  if (Array.isArray(body.updates)) {
+    const validUpdates = body.updates.filter(
+      (u: any) => u?.id && Number.isFinite(Number(u.currentPrice)) && Number(u.currentPrice) > 0
+    );
+    if (validUpdates.length === 0) {
+      return NextResponse.json({ success: true, updatedCount: 0 });
+    }
+    try {
+      const results = await Promise.all(
+        validUpdates.map((u: any) =>
+          supabase!
+            .from("assets")
+            .update({ current_price: Number(u.currentPrice) })
+            .eq("id", String(u.id))
+        )
+      );
+      const updatedCount = results.filter((r) => !r.error).length;
+      return NextResponse.json({ success: true, updatedCount });
+    } catch (err: any) {
+      return NextResponse.json({ success: false, error: err.message || "Batch update failed" }, { status: 500 });
+    }
+  }
+
   const id = body.id;
 
   if (!id) {
