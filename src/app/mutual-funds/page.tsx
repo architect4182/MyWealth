@@ -230,9 +230,6 @@ export default function MutualFundsPage() {
                   <h3 className="apple-alloc-title">Fund Schemes</h3>
                   <p className="apple-alloc-sub">Invested mutual fund holdings</p>
                 </div>
-                <span className="apple-alloc-badge">
-                  {mutualFunds.length} Schemes
-                </span>
               </div>
 
               {/* Multi-segment Spectrum Bar for Funds */}

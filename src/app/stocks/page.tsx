@@ -201,9 +201,6 @@ export default function StocksPage() {
                   <h3 className="apple-alloc-title">Equities Diversification</h3>
                   <p className="apple-alloc-sub">Geographic & exchange invested exposure</p>
                 </div>
-                <span className="apple-alloc-badge">
-                  {equities.length} Stocks
-                </span>
               </div>
 
               {/* Multi-segment Spectrum Bar for Equities */}

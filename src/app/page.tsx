@@ -314,9 +314,6 @@ export default function Home() {
                       <h3 className="apple-alloc-title">Asset Allocation</h3>
                       <p className="apple-alloc-sub">Multi-class invested capital distribution</p>
                     </div>
-                    <span className="apple-alloc-badge">
-                      {assets.length} Positions
-                    </span>
                   </div>
 
                   {/* Multi-segment Spectrum Bar */}
