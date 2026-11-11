@@ -129,13 +129,18 @@ html {
   scroll-behavior: smooth;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  background-color: #ffffff;
+  background-color: #f5f5f8;
   overflow-x: clip;
 }
 
 body {
-  background-color: #ffffff !important;
-  background: #ffffff !important;
+  background-color: #f5f5f8 !important;
+  background:
+    radial-gradient(ellipse 68% 46% at 14% 6%, rgba(147, 102, 255, 0.085) 0%, transparent 62%),
+    radial-gradient(ellipse 56% 42% at 86% 12%, rgba(99, 102, 241, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 64% 48% at 50% 96%, rgba(236, 189, 152, 0.075) 0%, transparent 64%),
+    linear-gradient(180deg, #F5F5F8 0%, #F1F2F6 50%, #ECEEF3 100%) !important;
+  background-attachment: fixed !important;
   color: var(--foreground);
   font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 14px;
@@ -145,7 +150,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   position: relative;
   overflow-x: clip;
-  overflow-y: auto;
   overflow-y: visible;
   width: 100%;
   -webkit-overflow-scrolling: touch;
@@ -287,7 +291,7 @@ button {
   padding: 90px 36px 100px;
   position: relative;
   box-sizing: border-box;
-  background: #ffffff;
+  background: transparent;
   max-width: 1600px;
   margin: 0 auto;
 }
@@ -5125,15 +5129,20 @@ button.ios-switch {
 }
 
 body {
-  background-color: #ffffff !important;
-  background: #ffffff !important;
+  background-color: #f5f5f8 !important;
+  background:
+    radial-gradient(ellipse 68% 46% at 14% 6%, rgba(147, 102, 255, 0.085) 0%, transparent 62%),
+    radial-gradient(ellipse 56% 42% at 86% 12%, rgba(99, 102, 241, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 64% 48% at 50% 96%, rgba(236, 189, 152, 0.075) 0%, transparent 64%),
+    linear-gradient(180deg, #F5F5F8 0%, #F1F2F6 50%, #ECEEF3 100%) !important;
+  background-attachment: fixed !important;
   color: #111116 !important;
 }
 
 .apple-portfolio-app,
 .apple-canvas {
-  background-color: #ffffff !important;
-  background: #ffffff !important;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 .apple-side-panel,
