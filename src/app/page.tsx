@@ -200,8 +200,6 @@ export default function Home() {
                   <div className="apple-wallet-header">
                     <div className="apple-eyebrow-row" style={{ flexWrap: "wrap", gap: "6px" }}>
                       <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
-                      <MarketTimingBadge status={indianMarket} />
-                      <MarketTimingBadge status={usMarket} />
                     </div>
                     <button
                       type="button"
