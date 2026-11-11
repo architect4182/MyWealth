@@ -173,6 +173,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     isSupabaseConfigured ? "connecting" : "offline"
   );
   const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
+  const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isRefreshingPrices, setIsRefreshingPrices] = useState(false);
   const [priceRefreshMessage, setPriceRefreshMessage] = useState("");
   const [flashAssetId, setFlashAssetId] = useState<string | null>(null);
@@ -241,6 +242,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       const savedUser = localStorage.getItem("mywealth_current_user");
       if (savedUser) {
         setCurrentUserId(savedUser);
+        setIsAuthResolved(true);
       }
 
     } catch {}
@@ -270,7 +272,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         }
 
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setIsAuthResolved(true);
+      });
   }, []);
 
 
@@ -411,8 +416,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
     if (!currentUserId || !currentUserId.trim()) {
       setAssets([]);
-      setIsLoading(false);
-      setSyncStatus("offline");
+      if (isAuthResolved) {
+        setIsLoading(false);
+        setSyncStatus("offline");
+      }
       return;
     }
 
@@ -683,7 +690,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         supabase?.removeChannel(channel);
       } catch {}
     };
-  }, [currentUserId]);
+  }, [currentUserId, isAuthResolved]);
 
   // Save to localStorage partitioned per user
   const persistLocal = (newAssets: AssetPosition[], uid?: string) => {

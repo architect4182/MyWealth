@@ -59,6 +59,7 @@ export default function Home() {
     indianMarket,
     usMarket,
     money,
+    isLoading,
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
@@ -178,6 +179,24 @@ export default function Home() {
       {/* 3. Main Stage Layout */}
       <div className="apple-stage-layout full-width">
         <section className="apple-content-stage">
+          {isLoading ? (
+            <div className="ios-loading-container" style={{ minHeight: "55vh", justifyContent: "center" }}>
+              <div className="ios-loading-card">
+                <div className="ios-spinner" role="status" aria-label="Loading Overview">
+                  <div /><div /><div /><div /><div /><div />
+                  <div /><div /><div /><div /><div /><div />
+                </div>
+                <span className="ios-loading-title">Loading Portfolio Overview</span>
+                <span className="ios-loading-subtitle">Syncing valuations & insights…</span>
+              </div>
+              <div className="ios-skeleton-wrap">
+                <div className="ios-skeleton-row" style={{ width: "100%" }} />
+                <div className="ios-skeleton-row" style={{ width: "92%" }} />
+                <div className="ios-skeleton-row" style={{ width: "96%" }} />
+              </div>
+            </div>
+          ) : (
+            <>
           {/* OVERVIEW BENTO HERO STAGE: Portfolio Valuation + Asset Allocation */}
           <div className="apple-bento-hero">
             {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
@@ -751,6 +770,8 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          )}
+            </>
           )}
         </section>
       </div>
