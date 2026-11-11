@@ -2360,12 +2360,23 @@ tbody tr:hover td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px 10px;
   }
+
+  .form-row-3 > *:first-child {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 600px) {
   .form-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .modal-broker-sip-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -6954,11 +6965,130 @@ select:focus {
   transform: translateX(2px) !important;
 }
 
+.apple-trending-skeleton-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+}
+
+.apple-trending-skeleton-card {
+  height: 112px !important;
+  border-radius: 20px !important;
+}
+
+@media (max-width: 1180px) {
+  .apple-trending-skeleton-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .apple-trending-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .apple-trending-title-group {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .apple-trending-title-row {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .apple-trending-toolbar-right {
+    width: 100% !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .apple-trending-toolbar-right .apple-filter-group {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  .apple-trending-toolbar-right .apple-filter-group::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .apple-trending-toolbar-right .apple-filter-pill {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .apple-trending-toolbar-right .apple-hero-refresh-btn {
+    flex-shrink: 0 !important;
+  }
+
+  .apple-trending-sub-header {
+    flex-wrap: wrap !important;
+    gap: 6px 10px !important;
+    align-items: center !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .apple-trending-skeleton-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .apple-trending-sub-title {
+    flex-wrap: wrap !important;
+    font-size: 13px !important;
+    gap: 6px !important;
+  }
+
+  .apple-trending-sub-header .apple-count-caption {
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .modal-broker-sip-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .investment-modal .apple-ios-sip-toggle-card {
+    margin: 0 !important;
+  }
+}
+
 @media (max-width: 480px) {
   .apple-trending-card {
     padding: 14px 14px !important;
     gap: 10px !important;
     border-radius: 18px !important;
+  }
+
+  .apple-trending-card-top {
+    gap: 8px !important;
+  }
+
+  .apple-trending-card-left {
+    gap: 8px !important;
+  }
+
+  .apple-trending-card-bottom {
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+  }
+
+  .apple-trending-price-row {
+    flex-wrap: wrap !important;
+    gap: 4px 6px !important;
   }
 
   .apple-trending-name {
@@ -6972,6 +7102,76 @@ select:focus {
   .apple-trending-chevron {
     width: 24px !important;
     height: 24px !important;
+  }
+
+  .apple-trending-toolbar-right .apple-filter-pill {
+    padding: 5px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .apple-trending-toolbar-right .apple-hero-refresh-btn {
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Restore iOS SIP switch proportions inside modals (override header switch shrink) */
+  .apple-ios-sip-toggle-card .ios-switch {
+    width: 34px !important;
+    height: 20px !important;
+    padding: 2px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .apple-ios-sip-toggle-card .ios-switch-knob {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .apple-ios-sip-toggle-card .ios-switch.active .ios-switch-knob {
+    transform: translateX(14px) !important;
+  }
+
+  .investment-modal {
+    padding: 14px 14px 12px !important;
+    gap: 8px !important;
+  }
+
+  .investment-modal .add-market-sub-pill {
+    padding: 7px 8px !important;
+    font-size: 11.5px !important;
+    white-space: nowrap !important;
+  }
+
+  .investment-modal .add-type-btn {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .investment-modal .add-type-icon {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 14px !important;
+  }
+
+  .investment-modal .add-type-text strong {
+    font-size: 12px !important;
+  }
+
+  .investment-modal .add-type-text span {
+    font-size: 10px !important;
+  }
+
+  .investment-modal .modal-actions {
+    flex-direction: row !important;
+    gap: 8px !important;
+    padding: 10px 0 2px !important;
+  }
+
+  .investment-modal .modal-actions button {
+    width: auto !important;
+    flex: 1 1 0 !important;
+    padding: 9px 12px !important;
+    font-size: 13px !important;
   }
 }
 

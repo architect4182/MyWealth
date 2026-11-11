@@ -818,7 +818,7 @@ export function AddAssetModal() {
           </label>
         </div>
 
-        <div className="form-row" style={{ alignItems: "start" }}>
+        <div className="form-row modal-broker-sip-row" style={{ alignItems: "start" }}>
           <div>
             <label>
               Investing via App / Broker
