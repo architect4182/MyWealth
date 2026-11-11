@@ -61,18 +61,22 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     berkshirehathaway: "berkshirehathaway.com",
     brkb: "berkshirehathaway.com",
     brka: "berkshirehathaway.com",
-    vanguard: "vanguard.com",
-    voo: "vanguard.com",
-    vti: "vanguard.com",
-    vgt: "vanguard.com",
-    vxus: "vanguard.com",
-    vug: "vanguard.com",
-    vtv: "vanguard.com",
-    vym: "vanguard.com",
-    bnd: "vanguard.com",
+    vanguard: "corporate.vanguard.com",
+    voo: "corporate.vanguard.com",
+    vti: "corporate.vanguard.com",
+    vgt: "corporate.vanguard.com",
+    vxus: "corporate.vanguard.com",
+    vug: "corporate.vanguard.com",
+    vtv: "corporate.vanguard.com",
+    vym: "corporate.vanguard.com",
+    vea: "corporate.vanguard.com",
+    vwo: "corporate.vanguard.com",
+    bnd: "corporate.vanguard.com",
     qqq: "invesco.com",
+    qqqm: "invesco.com",
     invesco: "invesco.com",
     spy: "ssga.com",
+    splg: "ssga.com",
     spdr: "ssga.com",
     ishares: "ishares.com",
     blackrock: "blackrock.com",
@@ -86,7 +90,7 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
 
   // Match well-known ETF / fund house prefixes when full fund title includes index words
   const lowerName = trimmed.toLowerCase();
-  if (lowerName.includes("vanguard")) return "vanguard.com";
+  if (lowerName.includes("vanguard")) return "corporate.vanguard.com";
   if (lowerName.includes("ishares")) return "ishares.com";
   if (lowerName.includes("spdr")) return "ssga.com";
   if (lowerName.includes("invesco")) return "invesco.com";
@@ -115,6 +119,7 @@ const loadedLogosCache = new Set<string>();
  */
 const FMP_LOGO_TICKER_OVERRIDES: Record<string, string> = {
   "berkshirehathaway.com": "BRK-B",
+  "corporate.vanguard.com": "VOO",
 };
 
 const AVATAR_PALETTES = [
@@ -223,18 +228,19 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
     .toUpperCase()
     .replace(/\.(NS|BO)$/i, "")
     .replace(/\./g, "-");
-  const primaryLogoUrl =
-    domain && FMP_LOGO_TICKER_OVERRIDES[domain]
+  const fmpLogoUrl =
+    normalizedUsTicker && (category === "US Stocks" || FMP_LOGO_TICKER_OVERRIDES[domain])
+      ? `https://financialmodelingprep.com/image-stock/${
+          normalizedUsTicker || FMP_LOGO_TICKER_OVERRIDES[domain]
+        }.png`
+      : domain && FMP_LOGO_TICKER_OVERRIDES[domain]
       ? `https://financialmodelingprep.com/image-stock/${FMP_LOGO_TICKER_OVERRIDES[domain]}.png`
-      : domain
-      ? `${COMPANY_LOGO_API}/${domain}`
       : "";
-  const fallbackFmpUrl =
-    category === "US Stocks" && normalizedUsTicker
-      ? `https://financialmodelingprep.com/image-stock/${normalizedUsTicker}.png`
-      : "";
+  const companyEnrichUrl = domain ? `${COMPANY_LOGO_API}/${domain}` : "";
+  const primaryLogoUrl = fmpLogoUrl || companyEnrichUrl;
+  const fallbackLogoUrl = fmpLogoUrl && companyEnrichUrl && fmpLogoUrl !== companyEnrichUrl ? companyEnrichUrl : "";
   const [useFallbackLogo, setUseFallbackLogo] = useState(false);
-  const logoUrl = useFallbackLogo ? fallbackFmpUrl : primaryLogoUrl;
+  const logoUrl = useFallbackLogo ? fallbackLogoUrl : primaryLogoUrl;
 
   return (
     <div
@@ -282,7 +288,7 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
             setIsLoaded(true);
           }}
           onError={() => {
-            if (!useFallbackLogo && fallbackFmpUrl && fallbackFmpUrl !== logoUrl) {
+            if (!useFallbackLogo && fallbackLogoUrl && fallbackLogoUrl !== logoUrl) {
               setUseFallbackLogo(true);
             } else {
               setImgError(true);

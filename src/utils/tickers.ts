@@ -306,9 +306,22 @@ const ETF_MAPPINGS: TickerMapping[] = [
   { match: /\bbharat 22\b/i, ticker: "BHARAT22" },
   { match: /\bhdfc gold\b/i, ticker: "HDFCGOLD" },
   { match: /\bsbi gold\b/i, ticker: "SBIGETS" },
-  { match: /\b(s&p 500|spy)\b/i, ticker: "SPY" },
-  { match: /\b(voo|vanguard s&p 500)\b/i, ticker: "VOO" },
+  { match: /\b(voo|vanguard s&p 500|vanguard 500)\b/i, ticker: "VOO" },
+  { match: /\b(ivv|ishares core s&p 500)\b/i, ticker: "IVV" },
+  { match: /\b(splg|spdr portfolio s&p 500)\b/i, ticker: "SPLG" },
+  { match: /\b(vti|vanguard total stock)\b/i, ticker: "VTI" },
+  { match: /\b(vgt|vanguard information tech(?:nology)?)\b/i, ticker: "VGT" },
+  { match: /\b(vxus|vanguard total international)\b/i, ticker: "VXUS" },
+  { match: /\b(vug|vanguard growth)\b/i, ticker: "VUG" },
+  { match: /\b(vtv|vanguard value)\b/i, ticker: "VTV" },
+  { match: /\b(vym|vanguard high dividend)\b/i, ticker: "VYM" },
+  { match: /\b(vea|vanguard (?:ftse )?developed)\b/i, ticker: "VEA" },
+  { match: /\b(vwo|vanguard (?:ftse )?emerging)\b/i, ticker: "VWO" },
+  { match: /\b(bnd|vanguard total bond)\b/i, ticker: "BND" },
+  { match: /\b(schd|schwab u\.?s\.? dividend)\b/i, ticker: "SCHD" },
+  { match: /\b(qqqm|invesco nasdaq 100)\b/i, ticker: "QQQM" },
   { match: /\b(qqq|nasdaq 100)\b/i, ticker: "QQQ" },
+  { match: /\b(spdr s&p 500|s&p 500|spy)\b/i, ticker: "SPY" },
 ];
 
 // 5. Cryptocurrencies
@@ -337,7 +350,11 @@ export function getStockTicker(name: string, category?: string): string {
     return trimmed.toUpperCase();
   }
 
-  const isMF = category === "Mutual Funds" || /mutual fund|fund|direct|growth|regular|idcw|amfi|flexi cap|small cap|mid cap|large cap/i.test(trimmed);
+  const isMF =
+    category === "Mutual Funds" ||
+    (category !== "US Stocks" &&
+      category !== "Indian Equities" &&
+      /mutual fund|fund|direct|growth|regular|idcw|amfi|flexi cap|small cap|mid cap|large cap/i.test(trimmed));
 
   // 2. Mutual Fund Lookups
   if (isMF) {
