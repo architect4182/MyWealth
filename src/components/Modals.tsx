@@ -981,47 +981,13 @@ export function AddAssetModal() {
           </>
         ) : (
           <>
-            <div className="form-row-full">
+            <div className="form-row-3">
               <label>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
                   <span>Trade Date (Optional)</span>
-                  <span style={{ fontSize: "10.5px", color: isFetchingTradePrice ? "#7c3aed" : "var(--foreground-muted)", fontWeight: 500 }}>
-                    {isFetchingTradePrice
-                      ? "Calculating from trade day price…"
-                      : tradePriceNote || "Pick buy date to auto-fill price, or skip"}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  <input
-                    type="date"
-                    max={formatLocalDate()}
-                    value={tradeDate}
-                    onChange={(e) => {
-                      const nextDate = e.target.value;
-                      setTradeDate(nextDate);
-                      if (!nextDate) {
-                        ++tradePriceRequestRef.current;
-                        setIsFetchingTradePrice(false);
-                        setTradePriceNote("");
-                        if (currentPrice && Number(currentPrice) > 0) {
-                          setBuyPrice(currentPrice);
-                          if (Number(quantity) > 0) {
-                            setInvestedAmount((Number(quantity) * Number(currentPrice)).toFixed(2));
-                          }
-                        }
-                        return;
-                      }
-                      const targetQuery = selectedSymbol || getStockTicker(name, category) || name.trim();
-                      if (targetQuery) {
-                        void handleFetchTradeDatePrice(targetQuery, category, nextDate);
-                      }
-                    }}
-                  />
                   {tradeDate && (
                     <button
                       type="button"
-                      className="secondary-button"
-                      style={{ padding: "8px 12px", fontSize: "11.5px", whiteSpace: "nowrap" }}
                       onClick={() => {
                         setTradeDate("");
                         ++tradePriceRequestRef.current;
@@ -1034,15 +1000,52 @@ export function AddAssetModal() {
                           }
                         }
                       }}
+                      style={{
+                        border: "none",
+                        background: "none",
+                        color: "#7c3aed",
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: 0,
+                      }}
                     >
                       Clear
                     </button>
                   )}
                 </div>
+                <input
+                  type="date"
+                  max={formatLocalDate()}
+                  value={tradeDate}
+                  onChange={(e) => {
+                    const nextDate = e.target.value;
+                    setTradeDate(nextDate);
+                    if (!nextDate) {
+                      ++tradePriceRequestRef.current;
+                      setIsFetchingTradePrice(false);
+                      setTradePriceNote("");
+                      if (currentPrice && Number(currentPrice) > 0) {
+                        setBuyPrice(currentPrice);
+                        if (Number(quantity) > 0) {
+                          setInvestedAmount((Number(quantity) * Number(currentPrice)).toFixed(2));
+                        }
+                      }
+                      return;
+                    }
+                    const targetQuery = selectedSymbol || getStockTicker(name, category) || name.trim();
+                    if (targetQuery) {
+                      void handleFetchTradeDatePrice(targetQuery, category, nextDate);
+                    }
+                  }}
+                />
+                {(isFetchingTradePrice || tradePriceNote) && (
+                  <span style={{ fontSize: "10px", color: isFetchingTradePrice ? "#7c3aed" : "var(--foreground-muted)", fontWeight: 500 }}>
+                    {isFetchingTradePrice ? "Calculating from trade day…" : tradePriceNote}
+                  </span>
+                )}
               </label>
-            </div>
 
-            <div className="form-row">
               <label>
                 Quantity (Shares / Units)
                 <input
@@ -1097,12 +1100,40 @@ export function AddAssetModal() {
               </label>
             </div>
 
-            <div className="form-row">
+            <div className="form-row-3">
+              <label>
+                Total Amount Invested ({currency === "USD" ? "$" : "₹"})
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={investedAmount}
+                  onChange={(e) => {
+                    const amount = e.target.value;
+                    setInvestedAmount(amount);
+                    const numInv = Number(amount);
+                    const bp = Number(buyPrice);
+                    if (numInv > 0 && bp > 0) {
+                      const newQ = numInv / bp;
+                      setQuantity(String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8))));
+                      if (Number(currentPrice) > 0) {
+                        setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
+                      }
+                    }
+                  }}
+                  placeholder={
+                    Number(quantity) > 0 && Number(buyPrice) > 0
+                      ? (Number(quantity) * Number(buyPrice)).toFixed(2)
+                      : "0.00"
+                  }
+                />
+              </label>
+
               <label>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Market Price (CMP / NAV) ({currency === "USD" ? "$" : "₹"})</span>
-                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
-                    🔒 Live Market CMP
+                  <span>Market Price ({currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "9.5px", color: "var(--foreground-muted)" }}>
+                    🔒 Live CMP
                   </span>
                 </div>
                 <div className="modal-price-field-wrap">
@@ -1124,7 +1155,7 @@ export function AddAssetModal() {
                         ? "Updating real-time price…"
                         : buyPrice
                         ? buyPrice
-                        : "Live CMP auto-fills on select"
+                        : "Live CMP"
                     }
                   />
                   {isFetchingPrice && (
@@ -1138,8 +1169,8 @@ export function AddAssetModal() {
 
               <label>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Current Valuation ({currency === "USD" ? "$" : "₹"})</span>
-                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                  <span>Valuation ({currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "9.5px", color: "var(--foreground-muted)" }}>
                     🔒 Units × CMP
                   </span>
                 </div>
@@ -1176,36 +1207,6 @@ export function AddAssetModal() {
                     </span>
                   )}
                 </div>
-              </label>
-            </div>
-
-            <div className="form-row-full">
-              <label>
-                Total Amount Invested ({currency === "USD" ? "$" : "₹"})
-                <input
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  value={investedAmount}
-                  onChange={(e) => {
-                    const amount = e.target.value;
-                    setInvestedAmount(amount);
-                    const numInv = Number(amount);
-                    const bp = Number(buyPrice);
-                    if (numInv > 0 && bp > 0) {
-                      const newQ = numInv / bp;
-                      setQuantity(String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8))));
-                      if (Number(currentPrice) > 0) {
-                        setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
-                      }
-                    }
-                  }}
-                  placeholder={
-                    Number(quantity) > 0 && Number(buyPrice) > 0
-                      ? (Number(quantity) * Number(buyPrice)).toFixed(2)
-                      : "0.00"
-                  }
-                />
               </label>
             </div>
 
@@ -1870,42 +1871,45 @@ export function EditAssetModal() {
           </>
         ) : (
           <>
-            <div className="form-row-full">
+            <div className="form-row-3">
               <label>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
                   <span>Trade Date (Optional)</span>
-                  <span style={{ fontSize: "10.5px", color: isFetchingEditTradePrice ? "#7c3aed" : "var(--foreground-muted)", fontWeight: 500 }}>
-                    {isFetchingEditTradePrice
-                      ? "Calculating from trade day price…"
-                      : editTradeNote || "Pick buy date to recalculate cost from that day, or skip"}
-                  </span>
-                </div>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  <input
-                    type="date"
-                    max={formatLocalDate()}
-                    value={editingAsset.tradeDate || ""}
-                    onChange={(e) => {
-                      void handleEditTradeDateChange(e.target.value);
-                    }}
-                  />
                   {editingAsset.tradeDate && (
                     <button
                       type="button"
-                      className="secondary-button"
-                      style={{ padding: "8px 12px", fontSize: "11.5px", whiteSpace: "nowrap" }}
                       onClick={() => {
                         void handleEditTradeDateChange("");
+                      }}
+                      style={{
+                        border: "none",
+                        background: "none",
+                        color: "#7c3aed",
+                        fontSize: "10.5px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: 0,
                       }}
                     >
                       Clear
                     </button>
                   )}
                 </div>
+                <input
+                  type="date"
+                  max={formatLocalDate()}
+                  value={editingAsset.tradeDate || ""}
+                  onChange={(e) => {
+                    void handleEditTradeDateChange(e.target.value);
+                  }}
+                />
+                {(isFetchingEditTradePrice || editTradeNote) && (
+                  <span style={{ fontSize: "10px", color: isFetchingEditTradePrice ? "#7c3aed" : "var(--foreground-muted)", fontWeight: 500 }}>
+                    {isFetchingEditTradePrice ? "Calculating from trade day…" : editTradeNote}
+                  </span>
+                )}
               </label>
-            </div>
 
-            <div className="form-row">
               <label>
                 Quantity (Shares / Units)
                 <input
@@ -1947,12 +1951,12 @@ export function EditAssetModal() {
               </label>
             </div>
 
-            <div className="form-row">
+            <div className="form-row-3">
               <label>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>Avg Buy Price ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
-                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
-                    🔒 Invested ÷ Units
+                  <span style={{ fontSize: "9.5px", color: "var(--foreground-muted)" }}>
+                    🔒 Inv ÷ Qty
                   </span>
                 </div>
                 <input
@@ -1975,9 +1979,9 @@ export function EditAssetModal() {
 
               <label>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Market Price (CMP / NAV) ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
-                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
-                    🔒 Live Market CMP
+                  <span>Market Price ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "9.5px", color: "var(--foreground-muted)" }}>
+                    🔒 Live CMP
                   </span>
                 </div>
                 <div className="modal-price-field-wrap">
@@ -2004,13 +2008,11 @@ export function EditAssetModal() {
                   )}
                 </div>
               </label>
-            </div>
 
-            <div className="form-row">
-              <label style={{ width: "100%" }}>
+              <label>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span>Current Valuation ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
-                  <span style={{ fontSize: "10px", color: "var(--foreground-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                  <span>Valuation ({editingAsset.currency === "USD" ? "$" : "₹"})</span>
+                  <span style={{ fontSize: "9.5px", color: "var(--foreground-muted)" }}>
                     🔒 Units × CMP
                   </span>
                 </div>

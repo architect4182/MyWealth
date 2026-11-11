@@ -2251,10 +2251,10 @@ tbody tr:hover td {
 }
 
 .investment-modal {
-  width: min(100%, 720px);
-  max-height: calc(100dvh - 32px);
-  padding: 32px 36px;
-  border-radius: 28px;
+  width: min(94vw, 860px);
+  max-height: calc(100dvh - 24px);
+  padding: 20px 26px 0;
+  border-radius: 26px;
   background: var(--glass-bg-modal);
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
@@ -2263,7 +2263,7 @@ tbody tr:hover td {
   box-shadow: var(--shadow-glass-modal);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
@@ -2340,19 +2340,32 @@ tbody tr:hover td {
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px 14px;
+}
+
+.form-row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 12px;
 }
 
 .form-row-full {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .form-row-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+  }
 }
 
 @media (max-width: 600px) {
   .form-row {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
   }
 }
 
@@ -5818,6 +5831,74 @@ body {
   -webkit-overflow-scrolling: touch !important;
 }
 
+.investment-modal .modal-heading h2 {
+  font-size: 16.5px !important;
+}
+
+.investment-modal .modal-heading p {
+  font-size: 11.5px !important;
+  margin-top: 2px !important;
+}
+
+.investment-modal label {
+  gap: 4px !important;
+  font-size: 10.5px !important;
+}
+
+.investment-modal input,
+.investment-modal select {
+  height: 36px !important;
+  border-radius: 10px !important;
+  padding: 0 11px !important;
+  font-size: 12.5px !important;
+}
+
+.investment-modal .add-type-btn {
+  padding: 9px 12px !important;
+  gap: 9px !important;
+  border-radius: 12px !important;
+}
+
+.investment-modal .add-type-icon {
+  font-size: 19px !important;
+}
+
+.investment-modal .add-type-text strong {
+  font-size: 13px !important;
+}
+
+.investment-modal .add-type-text span {
+  font-size: 11px !important;
+  margin-top: 1px !important;
+}
+
+.investment-modal .add-market-sub-pill {
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  border-radius: 9px !important;
+}
+
+.investment-modal .apple-ios-sip-toggle-card {
+  padding: 7px 11px !important;
+}
+
+.investment-modal .holdings-preview-banner {
+  padding: 7px 12px !important;
+  font-size: 11.5px !important;
+}
+
+.investment-modal .modal-actions {
+  position: sticky;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-top: 1px solid rgba(17, 17, 22, 0.06);
+  padding: 10px 0 18px !important;
+  margin-top: 2px !important;
+  z-index: 8;
+}
+
 .investment-modal::-webkit-scrollbar,
 .stock-detail-modal::-webkit-scrollbar {
   display: none !important;
@@ -6285,15 +6366,33 @@ select:focus {
   .investment-modal {
     width: 100% !important;
     max-width: 100% !important;
-    max-height: 92vh !important;
-    padding: 16px 14px !important;
+    max-height: 92dvh !important;
+    padding: 14px 14px 0 !important;
     border-radius: 20px !important;
     margin: 0 !important;
+    gap: 8px !important;
     overflow-x: hidden !important;
     overflow-y: auto;
     box-sizing: border-box !important;
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
+  }
+
+  .add-asset-type-selector {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  .investment-modal .modal-actions {
+    flex-direction: row !important;
+    gap: 8px !important;
+    padding: 8px 0 12px !important;
+  }
+
+  .investment-modal .modal-actions button {
+    flex: 1 !important;
+    justify-content: center !important;
+    padding: 9px 12px !important;
   }
 
   .stock-detail-modal::-webkit-scrollbar,
@@ -6360,9 +6459,16 @@ select:focus {
 
   .stock-detail-modal,
   .investment-modal {
-    padding: 14px 12px !important;
+    padding: 12px 12px 0 !important;
     border-radius: 18px !important;
-    gap: 12px !important;
+    gap: 8px !important;
+  }
+
+  .investment-modal input,
+  .investment-modal select {
+    height: 34px !important;
+    font-size: 12px !important;
+    padding: 0 9px !important;
   }
 
   .stock-detail-header {
