@@ -105,7 +105,7 @@ export default function Home() {
             {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
             <div className="apple-wallet-hero">
               <div className="apple-wallet-header">
-                <div className="apple-eyebrow-row" style={{ flexWrap: "wrap", gap: "6px" }}>
+                <div className="apple-eyebrow-rwhow" style={{ flexWrap: "wrap", gap: "6px" }}>
                   <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
                 </div>
                 <button
@@ -185,8 +185,8 @@ export default function Home() {
                         indianProfitsOnly > 0
                           ? "#16a34a"
                           : indianProfitsOnly < 0
-                          ? "#dc2626"
-                          : undefined,
+                            ? "#dc2626"
+                            : undefined,
                     }}
                   >
                     {indianProfitsOnly > 0
@@ -203,8 +203,8 @@ export default function Home() {
                         usProfitsOnly > 0
                           ? "#16a34a"
                           : usProfitsOnly < 0
-                          ? "#dc2626"
-                          : undefined,
+                            ? "#dc2626"
+                            : undefined,
                     }}
                   >
                     {usProfitsOnly > 0

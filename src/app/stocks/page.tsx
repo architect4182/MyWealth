@@ -28,7 +28,6 @@ export default function StocksPage() {
     usVal,
     pctIndian,
     pctUS,
-    usdInrRate,
     money,
     isRefreshingPrices,
     handleRefreshPrices,
@@ -44,6 +43,18 @@ export default function StocksPage() {
     () => equities.filter((a) => a.category === "US Stocks"),
     [equities]
   );
+
+  const calcNetPnl = (list: typeof equities) =>
+    list.reduce((sum, a) => {
+      const invested =
+        a.investedAmount !== undefined && a.investedAmount > 0
+          ? a.investedAmount
+          : a.quantity * a.buyPrice;
+      return sum + (a.quantity * a.currentPrice - invested);
+    }, 0);
+
+  const indianStocksPnl = useMemo(() => calcNetPnl(indianAssets), [indianAssets]);
+  const usStocksPnl = useMemo(() => calcNetPnl(usAssets), [usAssets]);
 
   const displayedStocks = useMemo(() => {
     if (stockSubTab === "indian") return indianAssets;
@@ -144,22 +155,45 @@ export default function StocksPage() {
                   </span>
                 </div>
                 <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Indian Stocks</span>
-                  <span className="apple-stat-chip-val">
-                    {indianAssets.length} Holdings ({money(indianVal)})
-                  </span>
-                </div>
-                <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">US Stocks</span>
-                  <span className="apple-stat-chip-val">
-                    {usAssets.length} Holdings ($
-                    {(usVal / usdInrRate).toFixed(2)} USD)
-                  </span>
-                </div>
-                <div className="apple-stat-chip">
                   <span className="apple-stat-chip-label">Equity Share</span>
                   <span className="apple-stat-chip-val">
                     {(pctIndian + pctUS).toFixed(1)}% of Net Worth
+                  </span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">Indian P&L</span>
+                  <span
+                    className="apple-stat-chip-val"
+                    style={{
+                      color:
+                        indianStocksPnl > 0
+                          ? "#16a34a"
+                          : indianStocksPnl < 0
+                          ? "#dc2626"
+                          : undefined,
+                    }}
+                  >
+                    {indianStocksPnl > 0
+                      ? `+${money(indianStocksPnl, "INR")}`
+                      : money(indianStocksPnl, "INR")}
+                  </span>
+                </div>
+                <div className="apple-stat-chip">
+                  <span className="apple-stat-chip-label">US P&L</span>
+                  <span
+                    className="apple-stat-chip-val"
+                    style={{
+                      color:
+                        usStocksPnl > 0
+                          ? "#16a34a"
+                          : usStocksPnl < 0
+                          ? "#dc2626"
+                          : undefined,
+                    }}
+                  >
+                    {usStocksPnl > 0
+                      ? `+${money(usStocksPnl, "USD")}`
+                      : money(usStocksPnl, "USD")}
                   </span>
                 </div>
               </div>
