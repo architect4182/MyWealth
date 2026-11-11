@@ -7211,4 +7211,574 @@ tbody tr.flash-pulse td {
   border-color: rgba(239, 68, 68, 0.28) !important;
 }
 
+/* =========================================================================
+   HOLDINGS BENTO CARDS GRID (Apple / Minimalist Investor Card Design)
+   ========================================================================= */
+
+.apple-bento-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 1120px) {
+  .apple-bento-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .apple-bento-card-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.apple-bento-asset-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 20px 22px;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.025);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  min-width: 0;
+}
+
+.apple-bento-asset-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(147, 102, 255, 0.38);
+  box-shadow: 0 10px 26px rgba(17, 17, 22, 0.06);
+  background: #fcfcff;
+}
+
+.apple-bento-asset-card.unsaved-glow {
+  border-color: rgba(147, 102, 255, 0.45);
+  box-shadow: 0 6px 20px rgba(147, 102, 255, 0.14);
+}
+
+.apple-bento-asset-card.flash-pulse {
+  animation: flashAppleRow 2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bento-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bento-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.bento-avatar-circle {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0;
+}
+
+.bento-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bento-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bento-card-name {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #111116;
+  letter-spacing: -0.25px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bento-card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bento-sip-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.bento-sip-inline.paused {
+  color: #b45309;
+}
+
+.bento-card-valuation-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.bento-card-val-left,
+.bento-card-val-right {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bento-card-val-right {
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bento-card-micro-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.bento-card-hero-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111116;
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.bento-card-usd-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #7c3aed;
+}
+
+.bento-card-cmp-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111116;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.bento-card-cmp-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.bento-card-cmp-pct.is-positive {
+  color: #059669;
+}
+
+.bento-card-cmp-pct.is-negative {
+  color: #dc2626;
+}
+
+.bento-card-divider {
+  height: 1px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.bento-card-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bento-card-metric-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.bento-card-metric-label {
+  color: #64748b;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.bento-card-metric-val {
+  color: #111116;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bento-return-val {
+  font-weight: 700;
+}
+
+.bento-return-val.is-positive {
+  color: #059669;
+}
+
+.bento-return-val.is-negative {
+  color: #dc2626;
+}
+
+.bento-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.bento-card-broker-text {
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bento-card-broker-link {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bento-card-broker-link:hover {
+  text-decoration: underline;
+}
+
+.bento-card-inspect-link {
+  color: #2563eb;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.apple-bento-asset-card:hover .bento-card-inspect-link {
+  transform: translateX(2px);
+}
+
+@media (max-width: 480px) {
+  .apple-bento-asset-card {
+    padding: 16px 16px;
+    border-radius: 18px;
+    gap: 12px;
+  }
+
+  .bento-card-hero-value {
+    font-size: 21px;
+  }
+
+  .bento-card-cmp-value {
+    font-size: 15.5px;
+  }
+}
+
+/* =========================================================================
+   REDESIGNED STOCK / FUND DETAIL POPUP (Reference Bento Layout)
+   ========================================================================= */
+
+.stock-detail-info-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.stock-detail-info-inline .stock-detail-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #111116;
+  letter-spacing: -0.3px;
+}
+
+.stock-modal-header-divider {
+  height: 1px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.07);
+  margin: 2px 0;
+}
+
+.stock-hero-meta-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.stock-unified-chart-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.stock-chart-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stock-trajectory-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.stock-unified-chart-card .stock-period-segmented-bar {
+  margin: 0;
+  background: #f1f4f9;
+  padding: 3px;
+  border-radius: 9999px;
+}
+
+.stock-unified-chart-card .stock-period-tab.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+}
+
+.stock-chart-svg-wrap {
+  position: relative;
+  min-height: 185px;
+  width: 100%;
+  padding: 4px 2px;
+}
+
+.stock-unified-chart-card .stock-chart-dates-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #64748b;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+/* Right Column: Investment Position Outer Card */
+.stock-position-outer-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.025);
+}
+
+.stock-position-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stock-position-title {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #111116;
+}
+
+.stock-ledger-pill {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.stock-position-broker-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #f8f9fc;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.18s ease;
+}
+
+.stock-position-broker-banner:hover {
+  background: #f3f6fc;
+  border-color: rgba(37, 99, 235, 0.35);
+}
+
+.stock-position-broker-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stock-position-broker-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  color: #111116;
+}
+
+.stock-position-broker-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  white-space: nowrap;
+}
+
+.stock-position-outer-card .stock-bento-card {
+  background: #f8f9fc !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  padding: 12px 14px !important;
+}
+
+.stock-net-return-banner {
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-net-return-banner.gain {
+  background: #ecfdf5;
+  border: 1px solid rgba(22, 163, 74, 0.22);
+}
+
+.stock-net-return-banner.loss {
+  background: #fef2f2;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.stock-net-return-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stock-net-return-amount {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.stock-net-return-banner.gain .stock-net-return-amount {
+  color: #15803d;
+}
+
+.stock-net-return-banner.loss .stock-net-return-amount {
+  color: #dc2626;
+}
+
+.stock-net-return-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stock-net-return-pill.positive {
+  color: #15803d;
+}
+
+.stock-net-return-pill.negative {
+  color: #dc2626;
+}
+
+/* Key Market Statistics Gradient Sliders */
+.stock-market-stats-section .range-track.gradient-track {
+  background: linear-gradient(90deg, #facc15 0%, #3b82f6 55%, #10b981 100%) !important;
+  height: 6px !important;
+  border-radius: 9999px !important;
+}
+
+.stock-market-stats-section .range-pin.pin-blue {
+  background: #2563eb !important;
+  border: 2px solid #ffffff !important;
+}
+
+@media (max-width: 640px) {
+  .stock-detail-header {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .stock-detail-top-actions {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .stock-detail-top-actions .stock-header-btn {
+    flex: 1 1 0 !important;
+  }
+
+  .stock-position-broker-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 

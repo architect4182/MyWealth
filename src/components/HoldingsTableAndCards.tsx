@@ -231,29 +231,37 @@ export function HoldingsTableAndCards({
           </button>
         </div>
       ) : viewMode === "cards" ? (
-        /* APPLE STOCKS GLASS CARDS STACK */
-        <div className="apple-card-stack">
+        /* BENTO PORTFOLIO HOLDINGS CARDS GRID */
+        <div className="apple-bento-card-grid">
           {displayedAssets.map((item) => {
             const ticker = getStockTicker(item.name, item.category);
             const isUnsaved = unsavedAssetIds.has(item.id);
             const isFlashed = flashAssetId === item.id;
-            const investedVal = item.investedAmount !== undefined && item.investedAmount > 0
-              ? item.investedAmount
-              : (item.quantity * item.buyPrice);
+            const investedVal =
+              item.investedAmount !== undefined && item.investedAmount > 0
+                ? item.investedAmount
+                : item.quantity * item.buyPrice;
             const currentVal = item.quantity * item.currentPrice;
             const pnl = currentVal - investedVal;
             const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
             const unitGain = item.currentPrice - item.buyPrice;
             const unitGainPct = item.buyPrice > 0 ? (unitGain / item.buyPrice) * 100 : 0;
+            const cmpStr =
+              item.currency === "USD"
+                ? `$${item.currentPrice.toFixed(2)}`
+                : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`;
+            const avgStr =
+              item.currency === "USD"
+                ? `$${item.buyPrice.toFixed(2)}`
+                : `₹${item.category === "Mutual Funds" ? item.buyPrice.toFixed(4) : item.buyPrice.toFixed(2)}`;
 
             return (
               <div
                 key={item.id}
-                className={`apple-asset-card ${isFlashed ? "flash-pulse" : ""} ${
+                className={`apple-bento-asset-card ${isFlashed ? "flash-pulse" : ""} ${
                   isUnsaved ? "unsaved-glow" : ""
                 }`}
                 onClick={() => openAssetDetail(item)}
-                style={{ cursor: "pointer" }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -263,128 +271,147 @@ export function HoldingsTableAndCards({
                   }
                 }}
               >
-                {/* Left Side: Avatar + Full Name + Ticker & Category + Holdings & Cost */}
-                <div className="apple-asset-card-main">
-                  <div className="apple-avatar-squircle">
-                    <StockLogoAvatar
-                      name={item.name}
-                      ticker={ticker}
-                      category={item.category}
-                    />
-                  </div>
-
-                  <div className="apple-identity-text">
-                    <div className="apple-asset-name-row">
-                      <h4 className="apple-asset-name">{item.name}</h4>
-                      {isUnsaved && (
-                        <span className="apple-live-badge">
-                          <Sparkles size={8} /> Live
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="apple-asset-tags">
-                      <span className="apple-ticker-pill">{ticker}</span>
-                      <span className="apple-category-pill">{item.category}</span>
-                      {item.isSip && (
-                        <span
-                          className={`apple-sip-pill ${item.sipStatus === "paused" ? "paused" : "active"}`}
-                          title={`Monthly SIP: ${money(item.sipAmount || 0, item.currency)} on ${item.sipDay || 5}th. Next auto-investment: ${getNextSipDate(item.sipDay || 5)}`}
-                        >
-                          <Repeat size={10} /> SIP · {money(item.sipAmount || 0, item.currency)}/mo ({item.sipDay || 5}th)
-                          {item.sipStatus === "paused" ? " • Paused" : ""}
-                        </span>
-                      )}
-                      <MarketTimingBadge
-                        status={item.category === "US Stocks" ? usStatus : inStatus}
-                        compact
+                {/* 1. Card Header: Logo + Name / Ticker · Category + Market Badge */}
+                <div className="bento-card-header">
+                  <div className="bento-card-identity">
+                    <div className="apple-avatar-squircle bento-avatar-circle">
+                      <StockLogoAvatar
+                        name={item.name}
+                        ticker={ticker}
+                        category={item.category}
                       />
-                      {item.brokerApp && (() => {
-                        const brokerUrl = getBrokerDestinationUrl(
+                    </div>
+                    <div className="bento-card-title-group">
+                      <div className="bento-card-name-row">
+                        <h4 className="bento-card-name" title={item.name}>
+                          {item.name}
+                        </h4>
+                        {isUnsaved && (
+                          <span className="apple-live-badge">
+                            <Sparkles size={8} /> Live
+                          </span>
+                        )}
+                      </div>
+                      <div className="bento-card-subtitle">
+                        <span>{ticker}</span>
+                        <span>•</span>
+                        <span>{item.category}</span>
+                        {item.isSip && (
+                          <>
+                            <span>•</span>
+                            <span
+                              className={`bento-sip-inline ${item.sipStatus === "paused" ? "paused" : "active"}`}
+                            >
+                              <Repeat size={10} /> SIP
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <MarketTimingBadge
+                    status={item.category === "US Stocks" ? usStatus : inStatus}
+                    compact
+                  />
+                </div>
+
+                {/* 2. Primary Valuation Split: Holding Value (Left) vs CMP / NAV (Right) */}
+                <div className="bento-card-valuation-row">
+                  <div className="bento-card-val-left">
+                    <span className="bento-card-micro-label">Holding Value</span>
+                    <div className="bento-card-hero-value">
+                      {money(currentVal, item.currency)}
+                    </div>
+                    {item.currency === "USD" && showUsdInRupees && (
+                      <span className="bento-card-usd-sub">
+                        ${currentVal.toFixed(2)} USD
+                      </span>
+                    )}
+                  </div>
+                  <div className="bento-card-val-right">
+                    <span className="bento-card-micro-label">
+                      {item.category === "Mutual Funds" ? "NAV" : "CMP"}
+                    </span>
+                    <div className="bento-card-cmp-value">{cmpStr}</div>
+                    <span
+                      className={`bento-card-cmp-pct ${
+                        unitGain >= 0 ? "is-positive" : "is-negative"
+                      }`}
+                    >
+                      {unitGainPct >= 0 ? "+" : ""}
+                      {unitGainPct.toFixed(2)}% vs Avg
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bento-card-divider" />
+
+                {/* 3. Breakdown Stats */}
+                <div className="bento-card-metrics">
+                  <div className="bento-card-metric-row">
+                    <span className="bento-card-metric-label">Holdings</span>
+                    <span className="bento-card-metric-val">
+                      {formatQty(item.quantity)} units @ avg {avgStr}
+                    </span>
+                  </div>
+                  <div className="bento-card-metric-row">
+                    <span className="bento-card-metric-label">Invested</span>
+                    <span className="bento-card-metric-val">
+                      {money(investedVal, item.currency)}
+                    </span>
+                  </div>
+                  <div className="bento-card-metric-row">
+                    <span className="bento-card-metric-label">Total Return</span>
+                    <span
+                      className={`bento-card-metric-val bento-return-val ${
+                        pnl >= 0 ? "is-positive" : "is-negative"
+                      }`}
+                    >
+                      {pnl >= 0 ? "+" : ""}
+                      {money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}
+                      {pnlPct.toFixed(2)}%)
+                    </span>
+                  </div>
+                  {item.isSip && (
+                    <div className="bento-card-metric-row">
+                      <span className="bento-card-metric-label">SIP Schedule</span>
+                      <span className="bento-card-metric-val" style={{ color: "#7c3aed" }}>
+                        {money(item.sipAmount || 0, item.currency)}/mo · Next {getNextSipDate(item.sipDay || 5)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bento-card-divider" />
+
+                {/* 4. Card Footer: Broker Info + Inspect Action */}
+                <div className="bento-card-footer">
+                  {item.brokerApp ? (
+                    <span className="bento-card-broker-text">
+                      Broker:{" "}
+                      <a
+                        href={getBrokerDestinationUrl(
                           item.brokerApp,
                           item.name,
                           ticker,
                           item.category
-                        );
-                        return (
-                          <a
-                            href={brokerUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="apple-broker-pill"
-                            title={`Open ${item.brokerApp} website in new tab`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            via {item.brokerApp} ↗
-                          </a>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="apple-asset-holdings-line">
-                      <span className="apple-holdings-tag">
-                        <strong>{formatQty(item.quantity)}</strong> units
-                      </span>
-                      <span className="apple-dot-sep">•</span>
-                      <span className="apple-cost-tag">
-                        Avg: {item.currency === "USD" ? `$${item.buyPrice.toFixed(2)}` : `₹${item.buyPrice.toFixed(2)}`}
-                      </span>
-                      <span className="apple-dot-sep">•</span>
-                      <span className="apple-inv-tag">
-                        Inv: {money(investedVal, item.currency)}
-                      </span>
-                      {item.isSip && (
-                        <>
-                          <span className="apple-dot-sep">•</span>
-                          <span className="apple-sip-sched-tag">
-                            Next: {getNextSipDate(item.sipDay || 5)} ({item.sipInstallments || 1} done)
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side: Valuation + CMP + Return Gain */}
-                <div className="apple-asset-card-right">
-                  <div className="apple-card-valuation-group">
-                    <div className="apple-card-val-primary-col">
-                      <div className="apple-val-primary">
-                        {money(currentVal, item.currency)}
-                      </div>
-                      <div className="apple-cmp-sub">
-                        {item.category === "Mutual Funds" ? "NAV" : "CMP"}: {item.currency === "USD" ? `$${item.currentPrice.toFixed(2)}` : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
-                        {unitGain !== 0 && (
-                          <span className={`apple-unit-diff ${unitGain >= 0 ? "positive-text" : "negative-text"}`}>
-                            {" "}({unitGain >= 0 ? "+" : ""}{unitGainPct.toFixed(1)}%)
-                          </span>
                         )}
-                      </div>
-                      {item.currency === "USD" && showUsdInRupees && (
-                        <span className="apple-val-usd-pill" style={{ margin: "1px 0" }}>
-                          ${currentVal.toFixed(2)} USD
-                        </span>
-                      )}
-                    </div>
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bento-card-broker-link"
+                        title={`Open ${item.brokerApp} in new tab`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {item.brokerApp} ↗
+                      </a>
+                    </span>
+                  ) : (
+                    <span className="bento-card-broker-text">Direct Portfolio</span>
+                  )}
 
-                    <div
-                      className={`apple-return-pill ${
-                        pnl >= 0 ? "positive" : "negative"
-                      }`}
-                      style={{ margin: 0, padding: "2px 7px", fontSize: "11px" }}
-                    >
-                      {pnl >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                      <span>
-                        {pnl >= 0 ? "+" : ""}
-                        {money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}
-                        {pnlPct.toFixed(2)}%)
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="apple-card-chevron-circle" title="Click to view live charts & details">
-                    <ChevronRight size={14} />
-                  </div>
+                  <span className="bento-card-inspect-link">
+                    Inspect Holding →
+                  </span>
                 </div>
               </div>
             );
