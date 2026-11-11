@@ -129,17 +129,17 @@ html {
   scroll-behavior: smooth;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  background-color: #fff1f2;
+  background-color: #f5f5f8;
   overflow-x: clip;
 }
 
 body {
-  background-color: #fff1f2 !important;
+  background-color: #f5f5f8 !important;
   background:
-    radial-gradient(ellipse 68% 48% at 15% 8%, rgba(244, 63, 94, 0.12) 0%, transparent 62%),
-    radial-gradient(ellipse 58% 44% at 86% 14%, rgba(251, 113, 133, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 66% 50% at 50% 96%, rgba(244, 63, 94, 0.08) 0%, transparent 64%),
-    linear-gradient(180deg, #FFF1F2 0%, #FFEAEF 52%, #FFE4E6 100%) !important;
+    radial-gradient(ellipse 68% 46% at 14% 6%, rgba(147, 102, 255, 0.085) 0%, transparent 62%),
+    radial-gradient(ellipse 56% 42% at 86% 12%, rgba(99, 102, 241, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 64% 48% at 50% 96%, rgba(236, 189, 152, 0.075) 0%, transparent 64%),
+    linear-gradient(180deg, #F5F5F8 0%, #F1F2F6 50%, #ECEEF3 100%) !important;
   background-attachment: fixed !important;
   color: var(--foreground);
   font-family: 'SF Pro Display', 'SF Pro Text', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -2772,15 +2772,15 @@ select:focus {
   gap: 8px;
   font-size: 11.5px;
   font-weight: 500;
-  color: #475569;
+  color: var(--muted);
   padding: 7px 18px;
   border-radius: 9999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 241, 242, 0.68) 100%);
-  border: 1px solid rgba(244, 63, 94, 0.18);
-  border-top: 1px solid rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(18px) saturate(165%);
-  -webkit-backdrop-filter: blur(18px) saturate(165%);
-  box-shadow: 0 4px 14px rgba(136, 19, 55, 0.06), inset 0 1px 0.5px rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(28, 28, 38, 0.9) 0%, rgba(22, 22, 30, 0.85) 100%);
+  border: 1px solid rgba(147, 102, 255, 0.18);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1.5px 1px rgba(255, 255, 255, 0.05);
 }
 
 .apple-footer-dot {
@@ -3340,10 +3340,10 @@ select:focus {
     max-width: 100% !important;
     z-index: 100 !important;
     background: linear-gradient(180deg,
-        rgba(255, 255, 255, 0.78) 0%,
-        rgba(255, 241, 242, 0.66) 100%) !important;
-    backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
-    -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(248, 246, 255, 0.56) 100%) !important;
+    backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
     margin-top: 0 !important;
     margin-bottom: 0 !important;
     border-top: none !important;
@@ -5129,12 +5129,12 @@ button.ios-switch {
 }
 
 body {
-  background-color: #fff1f2 !important;
+  background-color: #f5f5f8 !important;
   background:
-    radial-gradient(ellipse 68% 48% at 15% 8%, rgba(244, 63, 94, 0.12) 0%, transparent 62%),
-    radial-gradient(ellipse 58% 44% at 86% 14%, rgba(251, 113, 133, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 66% 50% at 50% 96%, rgba(244, 63, 94, 0.08) 0%, transparent 64%),
-    linear-gradient(180deg, #FFF1F2 0%, #FFEAEF 52%, #FFE4E6 100%) !important;
+    radial-gradient(ellipse 68% 46% at 14% 6%, rgba(147, 102, 255, 0.085) 0%, transparent 62%),
+    radial-gradient(ellipse 56% 42% at 86% 12%, rgba(99, 102, 241, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 64% 48% at 50% 96%, rgba(236, 189, 152, 0.075) 0%, transparent 64%),
+    linear-gradient(180deg, #F5F5F8 0%, #F1F2F6 50%, #ECEEF3 100%) !important;
   background-attachment: fixed !important;
   color: #111116 !important;
 }
@@ -5208,21 +5208,21 @@ body {
   box-shadow: none !important;
 }
 
-/* 2. Rose-Tinted Liquid Glass Top Navigation Bar & Action Controls */
+/* 2. Liquid Glass Top Navigation Bar & Action Controls */
 .apple-island-header {
   background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.72) 0%,
-      rgba(255, 241, 242, 0.60) 52%,
-      rgba(255, 228, 230, 0.70) 100%) !important;
-  backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.84) !important;
-  border-bottom: 1px solid rgba(244, 63, 94, 0.16) !important;
+      rgba(255, 255, 255, 0.68) 0%,
+      rgba(255, 255, 255, 0.44) 52%,
+      rgba(245, 242, 255, 0.58) 100%) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  border-bottom: 1px solid rgba(147, 102, 255, 0.16) !important;
   box-shadow:
-    0 12px 36px -6px rgba(136, 19, 55, 0.08),
-    0 2px 10px rgba(244, 63, 94, 0.08),
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.95),
-    inset 0 -1px 1px rgba(244, 63, 94, 0.06) !important;
+    0 12px 36px -6px rgba(17, 17, 22, 0.1),
+    0 2px 10px rgba(147, 102, 255, 0.08),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.94),
+    inset 0 -1px 1px rgba(147, 102, 255, 0.06) !important;
 }
 
 .apple-island-header::before {
@@ -5239,13 +5239,13 @@ body {
 }
 
 .apple-segmented-nav {
-  background: rgba(255, 241, 242, 0.62) !important;
+  background: rgba(242, 243, 249, 0.55) !important;
   backdrop-filter: blur(14px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
   box-shadow:
-    inset 0 1px 2px rgba(136, 19, 55, 0.05),
-    0 1px 2px rgba(255, 255, 255, 0.85) !important;
+    inset 0 1px 2px rgba(17, 17, 22, 0.06),
+    0 1px 2px rgba(255, 255, 255, 0.8) !important;
 }
 
 .apple-nav-pill {
@@ -5254,33 +5254,33 @@ body {
 
 .apple-nav-pill:hover {
   color: #111116 !important;
-  background: rgba(255, 255, 255, 0.68) !important;
+  background: rgba(255, 255, 255, 0.58) !important;
 }
 
 .apple-nav-pill.active {
   background: linear-gradient(180deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(255, 245, 246, 0.92) 100%) !important;
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(249, 247, 255, 0.88) 100%) !important;
   color: #7c3aed !important;
-  border: 1px solid rgba(244, 63, 94, 0.16) !important;
+  border: 1px solid rgba(147, 102, 255, 0.24) !important;
   box-shadow:
-    0 3px 10px rgba(136, 19, 55, 0.09),
+    0 3px 10px rgba(147, 102, 255, 0.14),
     inset 0 1px 0.5px rgba(255, 255, 255, 1) !important;
 }
 
 .apple-market-header-capsule {
-  background: rgba(255, 245, 246, 0.62) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
   backdrop-filter: blur(14px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
   box-shadow:
-    inset 0 1px 0.5px rgba(255, 255, 255, 0.94),
-    0 2px 6px rgba(136, 19, 55, 0.04) !important;
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
 }
 
 .apple-market-header-capsule:hover {
-  background: rgba(255, 255, 255, 0.86) !important;
-  border-color: rgba(244, 63, 94, 0.28) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 .apple-market-code {
@@ -5310,19 +5310,19 @@ body {
 
 /* Currency Toggle Pill */
 .ios-toggle-pill {
-  background: rgba(255, 245, 246, 0.62) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
   backdrop-filter: blur(14px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
   box-shadow:
-    inset 0 1px 0.5px rgba(255, 255, 255, 0.94),
-    0 2px 6px rgba(136, 19, 55, 0.04) !important;
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
   color: #111116 !important;
 }
 
 .ios-toggle-pill:hover {
-  background: rgba(255, 255, 255, 0.86) !important;
-  border-color: rgba(244, 63, 94, 0.28) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 .ios-toggle-symbol {
@@ -5371,38 +5371,38 @@ body {
 }
 
 .apple-circle-icon-btn {
-  background: rgba(255, 245, 246, 0.62) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
   backdrop-filter: blur(14px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
   color: #5e5e6e !important;
   box-shadow:
-    inset 0 1px 0.5px rgba(255, 255, 255, 0.94),
-    0 2px 6px rgba(136, 19, 55, 0.04) !important;
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
 }
 
 .apple-circle-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.86) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
   color: #9366FF !important;
-  border-color: rgba(244, 63, 94, 0.28) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 /* User Profile Pill */
 .apple-user-combo-pill,
 .apple-user-pill {
-  background: rgba(255, 245, 246, 0.62) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
   backdrop-filter: blur(14px) saturate(160%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
   box-shadow:
-    inset 0 1px 0.5px rgba(255, 255, 255, 0.94),
-    0 2px 6px rgba(136, 19, 55, 0.04) !important;
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
   color: #111116 !important;
 }
 
 .apple-user-combo-pill:hover {
-  background: rgba(255, 255, 255, 0.86) !important;
-  border-color: rgba(244, 63, 94, 0.28) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 .apple-combo-user-part,
@@ -5840,11 +5840,8 @@ select:focus {
 }
 
 .apple-auth-canvas {
-  background-color: #fff1f2 !important;
-  background:
-    radial-gradient(ellipse 68% 48% at 15% 8%, rgba(244, 63, 94, 0.12) 0%, transparent 62%),
-    radial-gradient(ellipse 58% 44% at 86% 14%, rgba(251, 113, 133, 0.12) 0%, transparent 60%),
-    linear-gradient(180deg, #FFF1F2 0%, #FFEAEF 52%, #FFE4E6 100%) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 .apple-auth-card {
@@ -5871,12 +5868,10 @@ select:focus {
 .apple-footer {
   width: 100%;
   margin-top: 48px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 241, 242, 0.72) 100%);
-  backdrop-filter: blur(22px) saturate(170%);
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
-  border: 1px solid rgba(244, 63, 94, 0.16);
-  box-shadow: 0 6px 26px -2px rgba(136, 19, 55, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.88);
+  background: #ffffff;
+  border: 1px solid rgba(147, 102, 255, 0.16);
   border-radius: 24px;
+  box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.04);
   padding: 36px 36px 24px;
   box-sizing: border-box;
 }
