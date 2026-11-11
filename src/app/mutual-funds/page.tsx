@@ -223,12 +223,12 @@ export default function MutualFundsPage() {
               </div>
             </div>
 
-            {/* Schemes Diversification Bento Card */}
+            {/* Schemes Diversification Bento Card (Total Invested) */}
             <div className="apple-allocation-card">
               <div className="apple-alloc-header">
                 <div>
                   <h3 className="apple-alloc-title">Fund Schemes</h3>
-                  <p className="apple-alloc-sub">Active mutual fund holdings</p>
+                  <p className="apple-alloc-sub">Invested mutual fund holdings</p>
                 </div>
                 <span className="apple-alloc-badge">
                   {mutualFunds.length} Schemes
@@ -239,8 +239,11 @@ export default function MutualFundsPage() {
               <div className="apple-spectrum-bar-wrap" style={{ marginTop: "8px" }}>
                 <div className="apple-spectrum-bar">
                   {mutualFunds.map((mf, idx) => {
-                    const mfVal = mf.quantity * mf.currentPrice;
-                    const pct = mfCurrent > 0 ? (mfVal / mfCurrent) * 100 : 0;
+                    const mfInv =
+                      mf.investedAmount !== undefined && mf.investedAmount > 0
+                        ? mf.investedAmount
+                        : mf.quantity * mf.buyPrice;
+                    const pct = mfInvested > 0 ? (mfInv / mfInvested) * 100 : 0;
                     if (pct <= 0) return null;
                     const bgColors = ["#9366FF", "#b28eff", "#7844eb", "#c5aaff", "#6032d6"];
                     return (
@@ -265,8 +268,11 @@ export default function MutualFundsPage() {
                   </div>
                 ) : (
                   mutualFunds.map((mf) => {
-                    const mfVal = mf.quantity * mf.currentPrice;
-                    const pct = mfCurrent > 0 ? ((mfVal / mfCurrent) * 100).toFixed(1) : "0";
+                    const mfInv =
+                      mf.investedAmount !== undefined && mf.investedAmount > 0
+                        ? mf.investedAmount
+                        : mf.quantity * mf.buyPrice;
+                    const pct = mfInvested > 0 ? ((mfInv / mfInvested) * 100).toFixed(1) : "0";
                     return (
                       <div key={mf.id} className="apple-alloc-item">
                         <div className="apple-alloc-item-left">
@@ -274,11 +280,11 @@ export default function MutualFundsPage() {
                           <div>
                             <span className="apple-alloc-name">{mf.name}</span>
                             <span className="apple-alloc-pct">
-                              {mf.quantity.toFixed(2)} units @ NAV ₹{mf.currentPrice.toFixed(2)} ({pct}%)
+                              {mf.quantity.toFixed(2)} units @ Avg ₹{mf.buyPrice.toFixed(2)} ({pct}% invested)
                             </span>
                           </div>
                         </div>
-                        <span className="apple-alloc-val">{money(mfVal)}</span>
+                        <span className="apple-alloc-val">{money(mfInv)}</span>
                       </div>
                     );
                   })

@@ -90,10 +90,17 @@ interface PortfolioContextType {
   usProfitsOnly: number;
   mfVal: number;
   goldVal: number;
+  indianInvested: number;
+  usInvested: number;
+  goldInvested: number;
   pctIndian: number;
   pctUS: number;
   pctMF: number;
   pctGold: number;
+  investedPctIndian: number;
+  investedPctUS: number;
+  investedPctMF: number;
+  investedPctGold: number;
   money: (val: number, cur?: "INR" | "USD") => string;
   isRefreshingPrices: boolean;
   priceRefreshMessage: string;
@@ -804,10 +811,37 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     [assets]
   );
 
+  const calcInvestedInr = (list: AssetPosition[]) =>
+    list.reduce((sum, a) => {
+      const cost =
+        a.investedAmount !== undefined && a.investedAmount > 0
+          ? a.investedAmount
+          : a.quantity * a.buyPrice;
+      return sum + (a.currency === "USD" ? cost * usdInrRate : cost);
+    }, 0);
+
+  const indianInvested = useMemo(
+    () => calcInvestedInr(assets.filter((a) => a.category === "Indian Equities")),
+    [assets, usdInrRate]
+  );
+  const usInvested = useMemo(
+    () => calcInvestedInr(assets.filter((a) => a.category === "US Stocks")),
+    [assets, usdInrRate]
+  );
+  const goldInvested = useMemo(
+    () => calcInvestedInr(assets.filter((a) => a.category === "Gold & Fixed Income")),
+    [assets, usdInrRate]
+  );
+
   const pctIndian = totalCurrentINR > 0 ? Number(((indianVal / totalCurrentINR) * 100).toFixed(1)) : 0;
   const pctUS = totalCurrentINR > 0 ? Number(((usVal / totalCurrentINR) * 100).toFixed(1)) : 0;
   const pctMF = totalCurrentINR > 0 ? Number(((mfVal / totalCurrentINR) * 100).toFixed(1)) : 0;
   const pctGold = totalCurrentINR > 0 ? Number(((goldVal / totalCurrentINR) * 100).toFixed(1)) : 0;
+
+  const investedPctIndian = totalInvestedINR > 0 ? Number(((indianInvested / totalInvestedINR) * 100).toFixed(1)) : 0;
+  const investedPctUS = totalInvestedINR > 0 ? Number(((usInvested / totalInvestedINR) * 100).toFixed(1)) : 0;
+  const investedPctMF = totalInvestedINR > 0 ? Number(((mfInvested / totalInvestedINR) * 100).toFixed(1)) : 0;
+  const investedPctGold = totalInvestedINR > 0 ? Number(((goldInvested / totalInvestedINR) * 100).toFixed(1)) : 0;
 
   const money = useCallback(
     (val: number, cur: "INR" | "USD" = "INR") => {
@@ -1897,10 +1931,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       usProfitsOnly,
       mfVal,
       goldVal,
+      indianInvested,
+      usInvested,
+      goldInvested,
       pctIndian,
       pctUS,
       pctMF,
       pctGold,
+      investedPctIndian,
+      investedPctUS,
+      investedPctMF,
+      investedPctGold,
       money,
       isRefreshingPrices,
       priceRefreshMessage,
@@ -1978,10 +2019,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       usProfitsOnly,
       mfVal,
       goldVal,
+      indianInvested,
+      usInvested,
+      goldInvested,
       pctIndian,
       pctUS,
       pctMF,
       pctGold,
+      investedPctIndian,
+      investedPctUS,
+      investedPctMF,
+      investedPctGold,
       money,
       isRefreshingPrices,
       priceRefreshMessage,

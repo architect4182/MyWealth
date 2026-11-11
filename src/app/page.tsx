@@ -45,15 +45,15 @@ export default function Home() {
     totalInvestedINR,
     totalPnlINR,
     totalReturnPct,
-    indianVal,
-    usVal,
+    indianInvested,
+    usInvested,
+    mfInvested,
     indianProfitsOnly,
     usProfitsOnly,
-    mfVal,
-    pctIndian,
-    pctUS,
-    pctMF,
-    pctGold,
+    investedPctIndian,
+    investedPctUS,
+    investedPctMF,
+    investedPctGold,
     usdInrRate,
     indianMarket,
     usMarket,
@@ -309,12 +309,12 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Bento Card 2: Apple Spectrum Allocation Visualizer */}
+                {/* Bento Card 2: Apple Spectrum Allocation Visualizer (Total Invested) */}
                 <div className="apple-allocation-card">
                   <div className="apple-alloc-header">
                     <div>
                       <h3 className="apple-alloc-title">Asset Allocation</h3>
-                      <p className="apple-alloc-sub">Multi-class portfolio distribution</p>
+                      <p className="apple-alloc-sub">Multi-class invested capital distribution</p>
                     </div>
                     <span className="apple-alloc-badge">
                       {assets.length} Positions
@@ -324,32 +324,32 @@ export default function Home() {
                   {/* Multi-segment Spectrum Bar */}
                   <div className="apple-spectrum-bar-wrap">
                     <div className="apple-spectrum-bar">
-                      {pctIndian > 0 && (
+                      {investedPctIndian > 0 && (
                         <div
                           className="apple-spectrum-segment seg-indian"
-                          style={{ width: `${pctIndian}%` }}
-                          title={`Indian Equities: ${pctIndian}%`}
+                          style={{ width: `${investedPctIndian}%` }}
+                          title={`Indian Equities: ${investedPctIndian}%`}
                         />
                       )}
-                      {pctMF > 0 && (
+                      {investedPctMF > 0 && (
                         <div
                           className="apple-spectrum-segment seg-mf"
-                          style={{ width: `${pctMF}%` }}
-                          title={`Mutual Funds: ${pctMF}%`}
+                          style={{ width: `${investedPctMF}%` }}
+                          title={`Mutual Funds: ${investedPctMF}%`}
                         />
                       )}
-                      {pctUS > 0 && (
+                      {investedPctUS > 0 && (
                         <div
                           className="apple-spectrum-segment seg-us"
-                          style={{ width: `${pctUS}%` }}
-                          title={`US Stocks: ${pctUS}%`}
+                          style={{ width: `${investedPctUS}%` }}
+                          title={`US Stocks: ${investedPctUS}%`}
                         />
                       )}
-                      {pctGold > 0 && (
+                      {investedPctGold > 0 && (
                         <div
                           className="apple-spectrum-segment seg-gold"
-                          style={{ width: `${pctGold}%` }}
-                          title={`Gold & Fixed: ${pctGold}%`}
+                          style={{ width: `${investedPctGold}%` }}
+                          title={`Gold & Fixed: ${investedPctGold}%`}
                         />
                       )}
                     </div>
@@ -369,11 +369,11 @@ export default function Home() {
                               Indian Equities ↗
                             </span>
                             <span className="apple-alloc-pct">
-                              {pctIndian}% of total
+                              {investedPctIndian}% of invested
                             </span>
                           </div>
                         </div>
-                        <span className="apple-alloc-val">{money(indianVal)}</span>
+                        <span className="apple-alloc-val">{money(indianInvested)}</span>
                       </div>
                     </Link>
 
@@ -389,11 +389,11 @@ export default function Home() {
                               Mutual Funds ↗
                             </span>
                             <span className="apple-alloc-pct">
-                              {pctMF}% of total
+                              {investedPctMF}% of invested
                             </span>
                           </div>
                         </div>
-                        <span className="apple-alloc-val">{money(mfVal)}</span>
+                        <span className="apple-alloc-val">{money(mfInvested)}</span>
                       </div>
                     </Link>
 
@@ -408,10 +408,10 @@ export default function Home() {
                             <span className="apple-alloc-name">
                               US Equities ↗
                             </span>
-                            <span className="apple-alloc-pct">{pctUS}% of total</span>
+                            <span className="apple-alloc-pct">{investedPctUS}% of invested</span>
                           </div>
                         </div>
-                        <span className="apple-alloc-val">{money(usVal)}</span>
+                        <span className="apple-alloc-val">{money(usInvested)}</span>
                       </div>
                     </Link>
                   </div>

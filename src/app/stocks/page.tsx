@@ -23,8 +23,8 @@ export default function StocksPage() {
     stocksInvested,
     stocksPnl,
     stocksPnlPct,
-    indianVal,
-    usVal,
+    indianInvested,
+    usInvested,
     pctIndian,
     pctUS,
     money,
@@ -194,12 +194,12 @@ export default function StocksPage() {
               </div>
             </div>
 
-            {/* Equities Diversification Bento Card */}
+            {/* Equities Diversification Bento Card (Total Invested) */}
             <div className="apple-allocation-card">
               <div className="apple-alloc-header">
                 <div>
                   <h3 className="apple-alloc-title">Equities Diversification</h3>
-                  <p className="apple-alloc-sub">Geographic & exchange exposure</p>
+                  <p className="apple-alloc-sub">Geographic & exchange invested exposure</p>
                 </div>
                 <span className="apple-alloc-badge">
                   {equities.length} Stocks
@@ -209,22 +209,22 @@ export default function StocksPage() {
               {/* Multi-segment Spectrum Bar for Equities */}
               <div className="apple-spectrum-bar-wrap" style={{ marginTop: "8px" }}>
                 <div className="apple-spectrum-bar">
-                  {stocksCurrent > 0 && indianVal > 0 && (
+                  {stocksInvested > 0 && indianInvested > 0 && (
                     <div
                       className="apple-spectrum-segment seg-indian"
                       style={{
-                        width: `${((indianVal / stocksCurrent) * 100).toFixed(1)}%`,
+                        width: `${((indianInvested / stocksInvested) * 100).toFixed(1)}%`,
                       }}
-                      title={`NSE/BSE: ${((indianVal / stocksCurrent) * 100).toFixed(1)}%`}
+                      title={`NSE/BSE: ${((indianInvested / stocksInvested) * 100).toFixed(1)}%`}
                     />
                   )}
-                  {stocksCurrent > 0 && usVal > 0 && (
+                  {stocksInvested > 0 && usInvested > 0 && (
                     <div
                       className="apple-spectrum-segment seg-us"
                       style={{
-                        width: `${((usVal / stocksCurrent) * 100).toFixed(1)}%`,
+                        width: `${((usInvested / stocksInvested) * 100).toFixed(1)}%`,
                       }}
-                      title={`NASDAQ/NYSE: ${((usVal / stocksCurrent) * 100).toFixed(1)}%`}
+                      title={`NASDAQ/NYSE: ${((usInvested / stocksInvested) * 100).toFixed(1)}%`}
                     />
                   )}
                 </div>
@@ -243,14 +243,14 @@ export default function StocksPage() {
                         NSE / BSE Equities (India)
                       </span>
                       <span className="apple-alloc-pct">
-                        {stocksCurrent > 0
-                          ? ((indianVal / stocksCurrent) * 100).toFixed(1)
+                        {stocksInvested > 0
+                          ? ((indianInvested / stocksInvested) * 100).toFixed(1)
                           : 0}
-                        % of equities ({indianAssets.length} holdings)
+                        % of invested ({indianAssets.length} holdings)
                       </span>
                     </div>
                   </div>
-                  <span className="apple-alloc-val">{money(indianVal)}</span>
+                  <span className="apple-alloc-val">{money(indianInvested)}</span>
                 </div>
 
                 <div
@@ -265,14 +265,14 @@ export default function StocksPage() {
                         NASDAQ / NYSE Equities (US)
                       </span>
                       <span className="apple-alloc-pct">
-                        {stocksCurrent > 0
-                          ? ((usVal / stocksCurrent) * 100).toFixed(1)
+                        {stocksInvested > 0
+                          ? ((usInvested / stocksInvested) * 100).toFixed(1)
                           : 0}
-                        % of equities ({usAssets.length} holdings)
+                        % of invested ({usAssets.length} holdings)
                       </span>
                     </div>
                   </div>
-                  <span className="apple-alloc-val">{money(usVal)}</span>
+                  <span className="apple-alloc-val">{money(usInvested)}</span>
                 </div>
               </div>
             </div>
