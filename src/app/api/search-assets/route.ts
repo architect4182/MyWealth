@@ -107,9 +107,9 @@ export async function GET(req: NextRequest) {
   };
 
   const matchesCategory = (cat: string) => {
+    if (categoryFilter) return categoryFilter === cat;
     if (type === "mf") return cat === "Mutual Funds";
     if (type === "stock") return cat === "Indian Equities" || cat === "US Stocks";
-    if (categoryFilter) return categoryFilter === cat;
     return true;
   };
 
@@ -231,58 +231,71 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Stocks search via Yahoo Finance
+  // Stocks & ETFs search via Yahoo Finance
+  const searchYahooStocks = async (searchQuery: string, extraParams: string = "") => {
+    try {
+      const yRes = await fetch(
+        `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(searchQuery)}&quotesCount=15${extraParams}`,
+        {
+          headers: {
+            "User-Agent": "Mozilla/5.0",
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(3500),
+          cache: "no-store",
+        }
+      );
+      if (!yRes.ok) return;
+
+      const yData = await yRes.json().catch(() => ({}));
+      const quotes = (yData?.quotes || []) as Array<{
+        symbol?: string;
+        shortname?: string;
+        longname?: string;
+        quoteType?: string;
+        exchange?: string;
+      }>;
+
+      quotes
+        .filter(
+          (quote) =>
+            (quote.quoteType === "EQUITY" || quote.quoteType === "ETF") && quote.symbol
+        )
+        .forEach((quote) => {
+          const sym = String(quote.symbol);
+          if (seenSymbols.has(sym)) return;
+
+          const isIndian = sym.endsWith(".NS") || sym.endsWith(".BO");
+          const isAllowedUsSymbol = !isIndian && (!sym.includes(".") || /\.[AB]$/i.test(sym)) && !sym.includes("=");
+
+          if (isIndian && !matchesCategory("Indian Equities")) return;
+          if (!isIndian && (!matchesCategory("US Stocks") || !isAllowedUsSymbol)) return;
+
+          seenSymbols.add(sym);
+          const category = isIndian ? "Indian Equities" : "US Stocks";
+          const cleanTicker = sym.replace(/\.(NS|BO)$/i, "");
+          const typeLabel = quote.quoteType === "ETF" ? "ETF" : "Equities";
+          results.push({
+            symbol: sym,
+            name: quote.longname || quote.shortname || cleanTicker,
+            ticker: cleanTicker,
+            category,
+            currency: isIndian ? "INR" : "USD",
+            subtext: isIndian
+              ? `NSE / BSE India ${typeLabel} • ${sym}`
+              : `${quote.exchange || "US Exchange"} ${typeLabel} • ${sym}`,
+          });
+        });
+    } catch {}
+  };
+
   if (matchesCategory("Indian Equities") || matchesCategory("US Stocks")) {
-    externalTasks.push(
-      (async () => {
-        try {
-          const yRes = await fetch(
-            `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=8`,
-            {
-              headers: {
-                "User-Agent": "Mozilla/5.0",
-                Accept: "application/json",
-              },
-              signal: AbortSignal.timeout(2000),
-              cache: "no-store",
-            }
-          );
-          if (yRes.ok) {
-            const yData = await yRes.json().catch(() => ({}));
-            const quotes = (yData?.quotes || []) as Array<{
-              symbol?: string;
-              shortname?: string;
-              longname?: string;
-              quoteType?: string;
-              exchange?: string;
-            }>;
-
-            quotes
-              .filter((quote) => quote.quoteType === "EQUITY" && quote.symbol)
-              .forEach((quote) => {
-                const sym = String(quote.symbol);
-                if (seenSymbols.has(sym)) return;
-
-                const isIndian = sym.endsWith(".NS") || sym.endsWith(".BO");
-                if (isIndian && !matchesCategory("Indian Equities")) return;
-                if (!isIndian && !matchesCategory("US Stocks")) return;
-
-                seenSymbols.add(sym);
-                const category = isIndian ? "Indian Equities" : "US Stocks";
-                const cleanTicker = sym.replace(/\.(NS|BO)$/i, "");
-                results.push({
-                  symbol: sym,
-                  name: quote.longname || quote.shortname || cleanTicker,
-                  ticker: cleanTicker,
-                  category,
-                  currency: isIndian ? "INR" : "USD",
-                  subtext: isIndian ? `NSE / BSE India • ${sym}` : `${quote.exchange || "US Exchange"} • ${sym}`,
-                });
-              });
-          }
-        } catch {}
-      })()
-    );
+    if (matchesCategory("Indian Equities") && !matchesCategory("US Stocks")) {
+      externalTasks.push(searchYahooStocks(q, "&region=IN&lang=en-IN"));
+      externalTasks.push(searchYahooStocks(`${q} NS`, "&region=IN&lang=en-IN"));
+    } else {
+      externalTasks.push(searchYahooStocks(q));
+    }
   }
 
   await Promise.allSettled(externalTasks);

@@ -35,7 +35,7 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     .replace(/\s+/g, "")
     .toLowerCase();
 
-  // 3. Known alternate TLDs or parent brand entities (e.g. Indian banks/telcos)
+  // 3. Known alternate TLDs, brand prefixes, or parent brand entities
   const domainOverrides: Record<string, string> = {
     sbi: "sbi.co.in",
     statebankofindia: "sbi.co.in",
@@ -58,11 +58,40 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     jpmorganchase: "jpmorganchase.com",
     tcs: "tcs.com",
     tataconsultancyservices: "tcs.com",
+    berkshirehathaway: "berkshirehathaway.com",
+    brkb: "berkshirehathaway.com",
+    brka: "berkshirehathaway.com",
+    vanguard: "vanguard.com",
+    voo: "vanguard.com",
+    vti: "vanguard.com",
+    vgt: "vanguard.com",
+    vxus: "vanguard.com",
+    vug: "vanguard.com",
+    vtv: "vanguard.com",
+    vym: "vanguard.com",
+    bnd: "vanguard.com",
+    qqq: "invesco.com",
+    invesco: "invesco.com",
+    spy: "ssga.com",
+    spdr: "ssga.com",
+    ishares: "ishares.com",
+    blackrock: "blackrock.com",
+    schwab: "schwab.com",
+    schd: "schwab.com",
   };
 
   const tKey = ticker.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (domainOverrides[tKey]) return domainOverrides[tKey];
   if (domainOverrides[clean]) return domainOverrides[clean];
+
+  // Match well-known ETF / fund house prefixes when full fund title includes index words
+  const lowerName = trimmed.toLowerCase();
+  if (lowerName.includes("vanguard")) return "vanguard.com";
+  if (lowerName.includes("ishares")) return "ishares.com";
+  if (lowerName.includes("spdr")) return "ssga.com";
+  if (lowerName.includes("invesco")) return "invesco.com";
+  if (lowerName.includes("charles schwab") || lowerName.startsWith("schwab")) return "schwab.com";
+  if (lowerName.includes("berkshire hathaway")) return "berkshirehathaway.com";
 
   if (clean.length >= 2) return `${clean}.com`;
   if (tKey.length >= 2) return `${tKey}.com`;
@@ -79,6 +108,14 @@ export { getStockTicker } from "@/utils/tickers";
  * Enables instantaneous display for previously seen logos without network flicker
  */
 const loadedLogosCache = new Set<string>();
+
+/**
+ * Domains whose CompanyEnrich endpoint returns a generic grey monogram circle
+ * instead of an actual brand emblem; use FinancialModelingPrep stock logo instead.
+ */
+const FMP_LOGO_TICKER_OVERRIDES: Record<string, string> = {
+  "berkshirehathaway.com": "BRK-B",
+};
 
 const AVATAR_PALETTES = [
   { bg: "#ede9fe", color: "#6d28d9", border: "transparent" },
@@ -181,7 +218,23 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
 
   const monogram = getCompanyMonogram(name, ticker);
   const palette = getPaletteForEntity(ticker || name || "company");
-  const logoUrl = domain ? `${COMPANY_LOGO_API}/${domain}` : "";
+  const normalizedUsTicker = ticker
+    .trim()
+    .toUpperCase()
+    .replace(/\.(NS|BO)$/i, "")
+    .replace(/\./g, "-");
+  const primaryLogoUrl =
+    domain && FMP_LOGO_TICKER_OVERRIDES[domain]
+      ? `https://financialmodelingprep.com/image-stock/${FMP_LOGO_TICKER_OVERRIDES[domain]}.png`
+      : domain
+      ? `${COMPANY_LOGO_API}/${domain}`
+      : "";
+  const fallbackFmpUrl =
+    category === "US Stocks" && normalizedUsTicker
+      ? `https://financialmodelingprep.com/image-stock/${normalizedUsTicker}.png`
+      : "";
+  const [useFallbackLogo, setUseFallbackLogo] = useState(false);
+  const logoUrl = useFallbackLogo ? fallbackFmpUrl : primaryLogoUrl;
 
   return (
     <div
@@ -228,7 +281,13 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
             loadedLogosCache.add(domain);
             setIsLoaded(true);
           }}
-          onError={() => setImgError(true)}
+          onError={() => {
+            if (!useFallbackLogo && fallbackFmpUrl && fallbackFmpUrl !== logoUrl) {
+              setUseFallbackLogo(true);
+            } else {
+              setImgError(true);
+            }
+          }}
           style={{
             position: "absolute",
             inset: 0,

@@ -284,8 +284,7 @@ button {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 16px 36px 100px;
-  padding: 88px 36px 100px;
+  padding: 90px 36px 100px;
   position: relative;
   box-sizing: border-box;
   background: #ffffff;
@@ -297,13 +296,11 @@ button {
    Floating Glass Island Header (Apple Capsule Header)
    ========================================================================== */
 .apple-island-header {
-  position: sticky;
   position: fixed;
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 90;
-  width: 100%;
   width: min(calc(100% - 72px), 1528px);
   max-width: 1528px;
   min-height: 56px;
@@ -2687,7 +2684,7 @@ select:focus {
    ========================================================================== */
 .apple-stage-layout {
   width: 100%;
-  margin-top: 36px;
+  margin-top: 0;
   margin-bottom: 48px;
   display: block;
   position: relative;
@@ -3187,8 +3184,7 @@ select:focus {
 
   .apple-portfolio-app,
   .apple-canvas {
-    padding: 14px 20px 80px;
-    padding: 84px 20px 80px;
+    padding: 86px 20px 80px;
   }
 
   .apple-island-header {
@@ -3271,8 +3267,7 @@ select:focus {
 
   .apple-portfolio-app,
   .apple-canvas {
-    padding: 12px 16px 80px;
-    padding: 82px 16px 80px;
+    padding: 86px 16px 80px;
   }
 
   .apple-island-header {
@@ -3322,8 +3317,7 @@ select:focus {
 
   .apple-portfolio-app,
   .apple-canvas {
-    padding: 0 12px 60px !important;
-    padding: 118px 12px 60px !important;
+    padding: 132px 12px 60px !important;
   }
 
   /* Pinned Capsule Header: 2-Row Liquid Glass Layout */
@@ -3335,7 +3329,6 @@ select:focus {
     min-height: auto !important;
     position: fixed !important;
     top: 0 !important;
-    position: sticky !important;
     left: 0 !important;
     right: 0 !important;
     transform: none !important;
@@ -3348,7 +3341,7 @@ select:focus {
     backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
     -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
     margin-top: 0 !important;
-    margin-bottom: 16px !important;
+    margin-bottom: 0 !important;
     border-top: none !important;
   }
 
@@ -3638,16 +3631,13 @@ select:focus {
 
   .apple-portfolio-app,
   .apple-canvas {
-    padding: 6px 8px 48px;
-    padding: 110px 8px 48px !important;
+    padding: 124px 8px 48px !important;
   }
 
   .apple-island-header {
-    padding: 8px 10px;
-    border-radius: 18px;
     padding: 8px 10px !important;
     border-radius: 0 0 18px 18px !important;
-    gap: 6px;
+    gap: 6px !important;
   }
 
   .apple-brand-title {

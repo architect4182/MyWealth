@@ -164,11 +164,13 @@ export function AddAssetModal() {
     }
   };
 
-  // Live relatable words lookup whenever name changes
+  // Live relatable words lookup whenever name or selected market changes
   useEffect(() => {
     if (searchDebounceRef.current) {
       window.clearTimeout(searchDebounceRef.current);
     }
+
+    if (isStockSelected) return;
 
     const query = name.trim();
     if (query.length < 1) {
@@ -181,8 +183,12 @@ export function AddAssetModal() {
     searchDebounceRef.current = window.setTimeout(async () => {
       setIsSearching(true);
       try {
+        const categoryParam =
+          assetType === "stock" && (category === "Indian Equities" || category === "US Stocks")
+            ? `&category=${encodeURIComponent(category)}`
+            : "";
         const res = await fetch(
-          `/api/search-assets?q=${encodeURIComponent(query)}&type=${assetType}`
+          `/api/search-assets?q=${encodeURIComponent(query)}&type=${assetType}${categoryParam}`
         );
         const data = await res.json().catch(() => ({}));
         if (data.success && Array.isArray(data.results) && data.results.length > 0) {
@@ -205,7 +211,7 @@ export function AddAssetModal() {
         window.clearTimeout(searchDebounceRef.current);
       }
     };
-  }, [name, assetType]);
+  }, [name, assetType, category, isStockSelected]);
 
   // Click outside search container to close dropdown
   useEffect(() => {
@@ -245,7 +251,10 @@ export function AddAssetModal() {
     if (!quantity) setQuantity("1");
     setIsFetchingPrice(true);
 
-    void handleFetchLivePriceRef.current(item.ticker || item.name, item.category || category);
+    void handleFetchLivePriceRef.current(
+      item.symbol || item.ticker || item.name,
+      item.category || category
+    );
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

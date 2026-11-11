@@ -28,7 +28,7 @@ function isAllowedQuoteType(category: string, quoteType: string): boolean {
   switch (category) {
     case "Indian Equities":
     case "US Stocks":
-      return quoteType === "EQUITY";
+      return quoteType === "EQUITY" || quoteType === "ETF";
     case "Mutual Funds":
       return quoteType === "MUTUALFUND";
     case "Gold & Fixed Income":
