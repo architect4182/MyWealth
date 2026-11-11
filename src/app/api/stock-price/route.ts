@@ -15,6 +15,7 @@ interface MarketQuote {
   price: number;
   currency: string;
   quoteType: string;
+  priceDate?: string;
 }
 
 const headers = {
@@ -136,11 +137,101 @@ async function getMarketQuote(symbol: string): Promise<MarketQuote | null> {
   };
 }
 
+async function getHistoricalMarketQuote(
+  symbol: string,
+  targetDate: string,
+  category: string
+): Promise<MarketQuote | null> {
+  const match = targetDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const [, yStr, mStr, dStr] = match;
+  const y = Number(yStr);
+  const m = Number(mStr);
+  const d = Number(dStr);
+
+  // Include a 12-day lookback window so weekends & extended holidays resolve cleanly
+  const period1 = Math.floor(Date.UTC(y, m - 1, d) / 1000) - 12 * 86400;
+  const period2 = Math.floor(Date.UTC(y, m - 1, d + 2, 23, 59, 59) / 1000);
+
+  const response = await fetch(
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&period1=${period1}&period2=${period2}`,
+    { headers, cache: "no-store" }
+  );
+  if (!response.ok) return null;
+
+  const payload = await response.json();
+  const result = payload?.chart?.result?.[0];
+  const meta = result?.meta;
+  const resolvedSymbol = String(meta?.symbol ?? symbol);
+  const currency = String(meta?.currency ?? "");
+  if (!currency) return null;
+
+  const tz =
+    String(meta?.exchangeTimezoneName || "") ||
+    (category === "Indian Equities" || category === "Gold & Fixed Income"
+      ? "Asia/Kolkata"
+      : category === "US Stocks"
+      ? "America/New_York"
+      : "UTC");
+
+  const timestamps: number[] = Array.isArray(result?.timestamp) ? result.timestamp : [];
+  const closes: Array<number | null> = Array.isArray(result?.indicators?.quote?.[0]?.close)
+    ? result.indicators.quote[0].close
+    : [];
+  const adjCloses: Array<number | null> = Array.isArray(result?.indicators?.adjclose?.[0]?.adjclose)
+    ? result.indicators.adjclose[0].adjclose
+    : [];
+
+  let matchedPrice: number | null = null;
+  let matchedDate = targetDate;
+
+  for (let i = 0; i < timestamps.length; i++) {
+    const rawClose = closes[i] ?? adjCloses[i];
+    if (rawClose === null || rawClose === undefined || !Number.isFinite(Number(rawClose)) || Number(rawClose) <= 0) {
+      continue;
+    }
+    const barDate = new Date(timestamps[i] * 1000).toLocaleDateString("en-CA", { timeZone: tz });
+    if (barDate <= targetDate) {
+      matchedPrice = Number(Number(rawClose).toFixed(2));
+      matchedDate = barDate;
+    }
+  }
+
+  if (!matchedPrice || matchedPrice <= 0) return null;
+
+  return {
+    symbol: resolvedSymbol,
+    name: String(meta?.shortName ?? meta?.longName ?? resolvedSymbol),
+    price: matchedPrice,
+    currency,
+    quoteType: String(meta?.instrumentType ?? ""),
+    priceDate: matchedDate,
+  };
+}
+
 async function resolveAccurateQuote(
   rawSymbol: string,
   category: string,
-  expectedType?: string
-): Promise<{ symbol: string; name: string; price: number; currency: string } | null> {
+  expectedType?: string,
+  targetDate?: string
+): Promise<{ symbol: string; name: string; price: number; currency: string; priceDate?: string } | null> {
+  if (targetDate) {
+    const yahooSym = toYahooSymbol(rawSymbol, category);
+    const histQuote = await getHistoricalMarketQuote(yahooSym, targetDate, category).catch(() => null);
+    if (histQuote && validateMarketQuote(histQuote, category, expectedType)) {
+      return histQuote;
+    }
+    if (category === "Indian Equities" && yahooSym.endsWith(".NS")) {
+      const bseSym = yahooSym.replace(/\.NS$/, ".BO");
+      const bseHist = await getHistoricalMarketQuote(bseSym, targetDate, category).catch(() => null);
+      if (bseHist && validateMarketQuote(bseHist, category, expectedType)) {
+        return bseHist;
+      }
+    }
+    return null;
+  }
+
   // For US Stocks, prefer official consolidated NASDAQ real-time quote (exact pre-market/regular/after-hours/close)
   if (category === "US Stocks") {
     const nasdaqQuote = await fetchNasdaqRealTimeQuote(rawSymbol).catch(() => null);
@@ -173,10 +264,39 @@ function validateMarketQuote(quote: MarketQuote, category: string, expectedType?
   return !quoteType || isAllowedQuoteType(category, quoteType);
 }
 
+function parseAmfiDateToIso(raw: string): string {
+  const parts = String(raw || "").split("-");
+  if (parts.length !== 3) return "";
+  return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+}
+
+function pickNavForDate(
+  entries: Array<{ date: string; nav: string }> | undefined,
+  targetDate?: string
+): { nav: number; priceDate?: string } | null {
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+  if (!targetDate) {
+    const latest = Number(entries[0]?.nav);
+    return Number.isFinite(latest) && latest > 0
+      ? { nav: latest, priceDate: parseAmfiDateToIso(entries[0]?.date) || undefined }
+      : null;
+  }
+
+  for (const row of entries) {
+    const iso = parseAmfiDateToIso(row.date);
+    const val = Number(row.nav);
+    if (iso && iso <= targetDate && Number.isFinite(val) && val > 0) {
+      return { nav: val, priceDate: iso };
+    }
+  }
+  return null;
+}
+
 // Dedicated Indian Mutual Fund lookup via AMFI (mfapi.in)
 async function getIndianMutualFundQuote(
-  query: string
-): Promise<{ symbol: string; name: string; price: number; currency: string } | null> {
+  query: string,
+  targetDate?: string
+): Promise<{ symbol: string; name: string; price: number; currency: string; priceDate?: string } | null> {
   try {
     const mfCodeMatch = query.match(/^(?:MF-)?(\d{5,7})$/i);
     if (mfCodeMatch) {
@@ -184,13 +304,14 @@ async function getIndianMutualFundQuote(
       const navRes = await fetch(`https://api.mfapi.in/mf/${code}`, { cache: "no-store" });
       if (navRes.ok) {
         const navPayload = await navRes.json().catch(() => null);
-        const latestNav = Number(navPayload?.data?.[0]?.nav);
-        if (Number.isFinite(latestNav) && latestNav > 0) {
+        const picked = pickNavForDate(navPayload?.data, targetDate);
+        if (picked) {
           return {
             symbol: `MF-${code}`,
             name: navPayload?.meta?.scheme_name || query,
-            price: latestNav,
+            price: picked.nav,
             currency: "INR",
+            priceDate: picked.priceDate,
           };
         }
       }
@@ -253,14 +374,15 @@ async function getIndianMutualFundQuote(
     const navRes = await fetch(`https://api.mfapi.in/mf/${best.schemeCode}`, { cache: "no-store" });
     if (!navRes.ok) return null;
     const navPayload = await navRes.json().catch(() => null);
-    const latestNav = Number(navPayload?.data?.[0]?.nav);
-    if (!Number.isFinite(latestNav) || latestNav <= 0) return null;
+    const picked = pickNavForDate(navPayload?.data, targetDate);
+    if (!picked) return null;
 
     return {
       symbol: `MF-${best.schemeCode}`,
       name: best.schemeName,
-      price: latestNav,
+      price: picked.nav,
       currency: "INR",
+      priceDate: picked.priceDate,
     };
   } catch {
     return null;
@@ -271,6 +393,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("query")?.trim() || searchParams.get("symbol")?.trim();
   const market = searchParams.get("market")?.toUpperCase();
+  const rawDate = searchParams.get("date")?.trim() || "";
+  const targetDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : undefined;
   let category = searchParams.get("category") || "";
 
   if (!category && market) {
@@ -287,7 +411,7 @@ export async function GET(req: NextRequest) {
     category === "Mutual Funds" ||
     (!category && (query.toUpperCase().includes("FUND") || query.toUpperCase().startsWith("MF-")))
   ) {
-    const mfQuote = await getIndianMutualFundQuote(query);
+    const mfQuote = await getIndianMutualFundQuote(query, targetDate);
     if (mfQuote) {
       return NextResponse.json({
         success: true,
@@ -295,6 +419,7 @@ export async function GET(req: NextRequest) {
         name: mfQuote.name,
         price: mfQuote.price,
         currency: mfQuote.currency,
+        priceDate: mfQuote.priceDate,
       });
     }
   }
@@ -319,7 +444,7 @@ export async function GET(req: NextRequest) {
     // 2. Direct ticker symbol check
     const looksLikeTicker = /^[a-zA-Z0-9.^=-]{1,20}$/.test(query);
     if (looksLikeTicker) {
-      const directQuote = await resolveAccurateQuote(query, category).catch(() => null);
+      const directQuote = await resolveAccurateQuote(query, category, undefined, targetDate).catch(() => null);
       if (directQuote) {
         return NextResponse.json({
           success: true,
@@ -327,6 +452,7 @@ export async function GET(req: NextRequest) {
           name: directQuote.name,
           price: directQuote.price,
           currency: directQuote.currency,
+          priceDate: directQuote.priceDate,
         });
       }
     }
@@ -334,7 +460,7 @@ export async function GET(req: NextRequest) {
     // 3. Known company / ticker resolution via unified mapping
     const mapped = getStockTicker(query, category);
     if (mapped && mapped !== query.toUpperCase()) {
-      const mappedQuote = await resolveAccurateQuote(mapped, category).catch(() => null);
+      const mappedQuote = await resolveAccurateQuote(mapped, category, undefined, targetDate).catch(() => null);
       if (mappedQuote) {
         return NextResponse.json({
           success: true,
@@ -342,6 +468,7 @@ export async function GET(req: NextRequest) {
           name: mappedQuote.name,
           price: mappedQuote.price,
           currency: mappedQuote.currency,
+          priceDate: mappedQuote.priceDate,
         });
       }
     }
@@ -390,7 +517,7 @@ export async function GET(req: NextRequest) {
       });
 
     for (const candidate of candidates) {
-      const quote = await resolveAccurateQuote(String(candidate.symbol), category, candidate.quoteType).catch(() => null);
+      const quote = await resolveAccurateQuote(String(candidate.symbol), category, candidate.quoteType, targetDate).catch(() => null);
       if (!quote) continue;
 
       return NextResponse.json({
@@ -399,6 +526,7 @@ export async function GET(req: NextRequest) {
         name: candidate.shortname || candidate.longname || quote.name,
         price: quote.price,
         currency: quote.currency,
+        priceDate: quote.priceDate,
       });
     }
 

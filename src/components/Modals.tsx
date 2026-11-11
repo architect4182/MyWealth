@@ -17,7 +17,7 @@ import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate, formatLocalDate } from "@/utils/sip";
 import { AssetDetailModal } from "@/components/AssetDetailModal";
 import { getQuickBrokerOptions } from "@/utils/brokers";
-import { BrokerLogoAvatar } from "@/components/Logos";
+import { BrokerLogoAvatar, getStockTicker } from "@/components/Logos";
 import { SearchResultItem } from "@/app/api/search-assets/route";
 
 function calculateHoldings(investedAmount: string, buyPrice: string): number {
@@ -64,6 +64,10 @@ export function AddAssetModal() {
   const [brokerApp, setBrokerApp] = useState("");
   const [isCustomBroker, setIsCustomBroker] = useState(false);
   const [isStockSelected, setIsStockSelected] = useState(false);
+  const [selectedSymbol, setSelectedSymbol] = useState("");
+  const [tradeDate, setTradeDate] = useState("");
+  const [isFetchingTradePrice, setIsFetchingTradePrice] = useState(false);
+  const [tradePriceNote, setTradePriceNote] = useState("");
 
   // Search / Relatable words state
   const [suggestions, setSuggestions] = useState<SearchResultItem[]>([]);
@@ -74,6 +78,9 @@ export function AddAssetModal() {
   const searchDebounceRef = useRef<number | null>(null);
 
   const autoPriceRequestRef = useRef(0);
+  const tradePriceRequestRef = useRef(0);
+  const tradeDateRef = useRef("");
+  tradeDateRef.current = tradeDate;
   const skipNextAutoPriceLookupRef = useRef(false);
 
   useEffect(() => {
@@ -106,6 +113,7 @@ export function AddAssetModal() {
           setBrokerApp("");
           setIsCustomBroker(false);
         }
+        setSelectedSymbol(prefillAsset.name);
       } else {
         const at: "stock" | "mf" = defaultCategory === "Mutual Funds" ? "mf" : "stock";
         setAssetType(at);
@@ -114,9 +122,17 @@ export function AddAssetModal() {
         setIsSip(defaultCategory === "Mutual Funds");
         setBrokerApp("");
         setIsCustomBroker(false);
+        setSelectedSymbol("");
       }
+      setTradeDate("");
+      setIsFetchingTradePrice(false);
+      setTradePriceNote("");
     } else {
       setIsStockSelected(false);
+      setSelectedSymbol("");
+      setTradeDate("");
+      setIsFetchingTradePrice(false);
+      setTradePriceNote("");
       setName("");
       setQuantity("");
       setInvestedAmount("");
@@ -138,6 +154,10 @@ export function AddAssetModal() {
 
   const handleSelectAssetType = (type: "stock" | "mf") => {
     setIsStockSelected(false);
+    setSelectedSymbol("");
+    setTradeDate("");
+    setIsFetchingTradePrice(false);
+    setTradePriceNote("");
     setAssetType(type);
     setName("");
     setQuantity("");
@@ -246,15 +266,19 @@ export function AddAssetModal() {
       setCurrency(item.currency);
     }
     // Clear old values and fetch exact live CMP from exchange/AMFI
+    const lookupKey = item.symbol || item.ticker || item.name;
+    const nextCat = item.category || category;
+    setSelectedSymbol(lookupKey);
     setBuyPrice("");
     setCurrentPrice("");
+    setTradePriceNote("");
     if (!quantity) setQuantity("1");
     setIsFetchingPrice(true);
 
-    void handleFetchLivePriceRef.current(
-      item.symbol || item.ticker || item.name,
-      item.category || category
-    );
+    void handleFetchLivePriceRef.current(lookupKey, nextCat);
+    if (tradeDateRef.current) {
+      void handleFetchTradeDatePrice(lookupKey, nextCat, tradeDateRef.current);
+    }
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -298,15 +322,19 @@ export function AddAssetModal() {
       )
         return;
       if (data.success && data.price) {
-        setBuyPrice(String(data.price));
         setCurrentPrice(String(data.price));
         const qNum = Number(quantity) > 0 ? Number(quantity) : 1;
         setQuantity(String(qNum));
         setCurrentValue((qNum * data.price).toFixed(2));
-        if (!investedAmount || Number(investedAmount) <= 0) {
-          setInvestedAmount((qNum * data.price).toFixed(2));
-        } else {
-          setInvestedAmount((qNum * (Number(buyPrice) || data.price)).toFixed(2));
+
+        // Only default buyPrice/investedAmount from today's CMP when no historical trade date was chosen
+        if (!tradeDateRef.current) {
+          setBuyPrice(String(data.price));
+          if (!investedAmount || Number(investedAmount) <= 0) {
+            setInvestedAmount((qNum * data.price).toFixed(2));
+          } else {
+            setInvestedAmount((qNum * (Number(buyPrice) || data.price)).toFixed(2));
+          }
         }
         if (data.currency) setCurrency(data.currency as "INR" | "USD");
         // Only overwrite name when explicitly triggered by a selection, not auto-typing
@@ -323,6 +351,58 @@ export function AddAssetModal() {
         autoRequestId === autoPriceRequestRef.current
       ) {
         setIsFetchingPrice(false);
+      }
+    }
+  }
+
+  async function handleFetchTradeDatePrice(
+    stockQuery: string,
+    cat: AssetCategory,
+    targetDate: string
+  ) {
+    if (!stockQuery.trim() || !targetDate) return;
+    const reqId = ++tradePriceRequestRef.current;
+    setIsFetchingTradePrice(true);
+    setTradePriceNote(`Fetching price for ${targetDate}…`);
+    try {
+      const res = await fetch(
+        `/api/stock-price?query=${encodeURIComponent(
+          stockQuery.trim()
+        )}&category=${encodeURIComponent(cat)}&date=${encodeURIComponent(targetDate)}`
+      );
+      const data = await res.json().catch(() => ({}));
+      if (reqId !== tradePriceRequestRef.current) return;
+
+      if (data.success && data.price) {
+        const histPrice = Number(data.price);
+        setBuyPrice(String(histPrice));
+        const qNum = Number(quantity);
+        const invNum = Number(investedAmount);
+        if (qNum > 0) {
+          setInvestedAmount((qNum * histPrice).toFixed(2));
+        } else if (invNum > 0 && histPrice > 0) {
+          const newQ = invNum / histPrice;
+          setQuantity(
+            String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8)))
+          );
+        }
+        const curSym = (data.currency || currency) === "USD" ? "$" : "₹";
+        const matchedDate = data.priceDate || targetDate;
+        setTradePriceNote(
+          matchedDate !== targetDate
+            ? `Prior trading close (${matchedDate}): ${curSym}${histPrice}`
+            : `Price on ${matchedDate}: ${curSym}${histPrice}`
+        );
+      } else {
+        setTradePriceNote("No historical price found — enter buy price manually");
+      }
+    } catch {
+      if (reqId === tradePriceRequestRef.current) {
+        setTradePriceNote("Could not fetch trade date price");
+      }
+    } finally {
+      if (reqId === tradePriceRequestRef.current) {
+        setIsFetchingTradePrice(false);
       }
     }
   }
@@ -459,6 +539,7 @@ export function AddAssetModal() {
         currency,
         isSip: false,
         brokerApp: brokerApp.trim() || undefined,
+        tradeDate: tradeDate.trim() || undefined,
       });
     } catch (err) {
       console.error("Add asset error:", err);
@@ -882,6 +963,67 @@ export function AddAssetModal() {
           </>
         ) : (
           <>
+            <div className="form-row-full">
+              <label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                  <span>Trade Date (Optional)</span>
+                  <span style={{ fontSize: "10.5px", color: isFetchingTradePrice ? "#7c3aed" : "var(--foreground-muted)", fontWeight: 500 }}>
+                    {isFetchingTradePrice
+                      ? "Calculating from trade day price…"
+                      : tradePriceNote || "Pick buy date to auto-fill price, or skip"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    type="date"
+                    max={formatLocalDate()}
+                    value={tradeDate}
+                    onChange={(e) => {
+                      const nextDate = e.target.value;
+                      setTradeDate(nextDate);
+                      if (!nextDate) {
+                        ++tradePriceRequestRef.current;
+                        setIsFetchingTradePrice(false);
+                        setTradePriceNote("");
+                        if (currentPrice && Number(currentPrice) > 0) {
+                          setBuyPrice(currentPrice);
+                          if (Number(quantity) > 0) {
+                            setInvestedAmount((Number(quantity) * Number(currentPrice)).toFixed(2));
+                          }
+                        }
+                        return;
+                      }
+                      const targetQuery = selectedSymbol || getStockTicker(name, category) || name.trim();
+                      if (targetQuery) {
+                        void handleFetchTradeDatePrice(targetQuery, category, nextDate);
+                      }
+                    }}
+                  />
+                  {tradeDate && (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      style={{ padding: "8px 12px", fontSize: "11.5px", whiteSpace: "nowrap" }}
+                      onClick={() => {
+                        setTradeDate("");
+                        ++tradePriceRequestRef.current;
+                        setIsFetchingTradePrice(false);
+                        setTradePriceNote("");
+                        if (currentPrice && Number(currentPrice) > 0) {
+                          setBuyPrice(currentPrice);
+                          if (Number(quantity) > 0) {
+                            setInvestedAmount((Number(quantity) * Number(currentPrice)).toFixed(2));
+                          }
+                        }
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </label>
+            </div>
+
             <div className="form-row">
               <label>
                 Quantity (Shares / Units)
@@ -1064,11 +1206,19 @@ export function EditAssetModal() {
   const { editingAsset, setEditingAsset, updateAsset } = usePortfolio();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
+  const [isFetchingEditTradePrice, setIsFetchingEditTradePrice] = useState(false);
+  const [editTradeNote, setEditTradeNote] = useState("");
+  const editTradeRequestRef = useRef(0);
+  const latestEditingRef = useRef(editingAsset);
+  latestEditingRef.current = editingAsset;
 
   // Synchronize state when opening or changing holding to edit
   useEffect(() => {
     if (editingAsset) {
       setIsSubmitting(false);
+      setIsFetchingEditTradePrice(false);
+      setEditTradeNote("");
+      ++editTradeRequestRef.current;
       const quicks = getQuickBrokerOptions(editingAsset.category);
       if (editingAsset.brokerApp && editingAsset.brokerApp.trim()) {
         const isQuick = quicks.includes(editingAsset.brokerApp.trim());
@@ -1078,6 +1228,83 @@ export function EditAssetModal() {
       }
     }
   }, [editingAsset?.id]);
+
+  async function handleEditTradeDateChange(nextDate: string) {
+    const currentDraft = latestEditingRef.current;
+    if (!currentDraft) return;
+
+    const reqId = ++editTradeRequestRef.current;
+    setEditingAsset({ ...currentDraft, tradeDate: nextDate });
+
+    if (!nextDate) {
+      setIsFetchingEditTradePrice(false);
+      setEditTradeNote("");
+      return;
+    }
+
+    const symQuery = getStockTicker(currentDraft.name, currentDraft.category) || currentDraft.name.trim();
+    if (!symQuery) return;
+
+    setIsFetchingEditTradePrice(true);
+    setEditTradeNote(`Fetching price for ${nextDate}…`);
+    try {
+      const res = await fetch(
+        `/api/stock-price?query=${encodeURIComponent(
+          symQuery
+        )}&category=${encodeURIComponent(currentDraft.category)}&date=${encodeURIComponent(nextDate)}`
+      );
+      const data = await res.json().catch(() => ({}));
+      if (reqId !== editTradeRequestRef.current) return;
+
+      const latest = latestEditingRef.current;
+      if (!latest || latest.id !== currentDraft.id || latest.tradeDate !== nextDate) return;
+
+      if (data.success && data.price) {
+        const histPrice = Number(data.price);
+        const qNum = Number(latest.quantity) || 0;
+        const invNum = Number(latest.investedAmount) || 0;
+        let nextInvested = latest.investedAmount;
+        let nextQty = latest.quantity;
+
+        if (qNum > 0) {
+          nextInvested = (qNum * histPrice).toFixed(2);
+        } else if (invNum > 0 && histPrice > 0) {
+          const computedQ = invNum / histPrice;
+          nextQty = String(
+            Math.abs(computedQ - Math.round(computedQ)) < 1e-8
+              ? Math.round(computedQ)
+              : Number(computedQ.toFixed(8))
+          );
+        }
+
+        setEditingAsset({
+          ...latest,
+          tradeDate: nextDate,
+          quantity: nextQty,
+          investedAmount: nextInvested,
+          buyPrice: String(histPrice),
+        });
+
+        const curSym = (data.currency || latest.currency) === "USD" ? "$" : "₹";
+        const matchedDate = data.priceDate || nextDate;
+        setEditTradeNote(
+          matchedDate !== nextDate
+            ? `Prior trading close (${matchedDate}): ${curSym}${histPrice}`
+            : `Price on ${matchedDate}: ${curSym}${histPrice}`
+        );
+      } else {
+        setEditTradeNote("No historical price found — adjust invested amount manually");
+      }
+    } catch {
+      if (reqId === editTradeRequestRef.current) {
+        setEditTradeNote("Could not fetch trade date price");
+      }
+    } finally {
+      if (reqId === editTradeRequestRef.current) {
+        setIsFetchingEditTradePrice(false);
+      }
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -1144,6 +1371,7 @@ export function EditAssetModal() {
           currentPrice: userCp > 0 ? userCp : finalBp,
           currency: draft.currency,
           date: formatLocalDate(),
+          tradeDate: draft.tradeDate?.trim() || undefined,
           isSip: false,
           brokerApp: draft.brokerApp?.trim() || undefined,
         };
@@ -1545,6 +1773,41 @@ export function EditAssetModal() {
           </>
         ) : (
           <>
+            <div className="form-row-full">
+              <label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                  <span>Trade Date (Optional)</span>
+                  <span style={{ fontSize: "10.5px", color: isFetchingEditTradePrice ? "#7c3aed" : "var(--foreground-muted)", fontWeight: 500 }}>
+                    {isFetchingEditTradePrice
+                      ? "Calculating from trade day price…"
+                      : editTradeNote || "Pick buy date to recalculate cost from that day, or skip"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    type="date"
+                    max={formatLocalDate()}
+                    value={editingAsset.tradeDate || ""}
+                    onChange={(e) => {
+                      void handleEditTradeDateChange(e.target.value);
+                    }}
+                  />
+                  {editingAsset.tradeDate && (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      style={{ padding: "8px 12px", fontSize: "11.5px", whiteSpace: "nowrap" }}
+                      onClick={() => {
+                        void handleEditTradeDateChange("");
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </label>
+            </div>
+
             <div className="form-row">
               <label>
                 Quantity (Shares / Units)

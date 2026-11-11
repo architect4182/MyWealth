@@ -126,6 +126,7 @@ interface PortfolioContextType {
     lastSipDate?: string;
     sipStatus?: "active" | "paused";
     brokerApp?: string;
+    tradeDate?: string;
   }) => Promise<void>;
   updateAsset: (updated: AssetPosition) => Promise<void>;
   deleteAsset: (id: string) => Promise<void>;
@@ -486,6 +487,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
               lastSipDate: row.last_sip_date || undefined,
               sipStatus: (row.sip_status as "active" | "paused") || (row.is_sip ? "active" : undefined),
               brokerApp: row.broker_app || undefined,
+              tradeDate: row.trade_date || undefined,
             };
           });
 
@@ -508,6 +510,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 }
                 if (loc?.brokerApp && !pos.brokerApp) {
                   pos.brokerApp = loc.brokerApp;
+                }
+                if (loc?.tradeDate && !pos.tradeDate) {
+                  pos.tradeDate = loc.tradeDate;
                 }
               });
             }
@@ -588,6 +593,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             sipInstallments: row.sip_installments ? Number(row.sip_installments) : undefined,
             lastSipDate: row.last_sip_date || undefined,
             sipStatus: (row.sip_status as "active" | "paused") || (row.is_sip ? "active" : undefined),
+            brokerApp: row.broker_app || undefined,
+            tradeDate: row.trade_date || undefined,
           };
           dbBaselinePricesRef.current.set(newPos.id, newPos.currentPrice);
 
@@ -677,6 +684,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 sipInstallments: row.sip_installments !== undefined ? (row.sip_installments ? Number(row.sip_installments) : undefined) : a.sipInstallments,
                 lastSipDate: row.last_sip_date !== undefined ? (row.last_sip_date || undefined) : a.lastSipDate,
                 sipStatus: (row.sip_status as "active" | "paused") ?? a.sipStatus,
+                brokerApp: row.broker_app !== undefined ? (row.broker_app || undefined) : a.brokerApp,
+                tradeDate: row.trade_date !== undefined ? (row.trade_date || undefined) : a.tradeDate,
               };
             });
             persistLocal(next, uid);
@@ -1308,6 +1317,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     lastSipDate?: string;
     sipStatus?: "active" | "paused";
     brokerApp?: string;
+    tradeDate?: string;
   }) => {
     const uid = (
       currentUserId ||
@@ -1419,6 +1429,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 lastSipDate: realRow.last_sip_date || a.lastSipDate,
                 sipStatus: realRow.sip_status || a.sipStatus,
                 brokerApp: realRow.broker_app || a.brokerApp,
+                tradeDate: realRow.trade_date || a.tradeDate,
               }
             : a
         );
@@ -1479,12 +1490,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 currency: newPos.currency,
                 username: uid,
                 broker_app: newPos.brokerApp || null,
+                trade_date: newPos.tradeDate || null,
                 ...sipFields,
               },
             ])
             .select();
 
-          if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested") || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip"))) {
+          if (insertRes.error && (insertRes.error.code === "42703" || insertRes.error.message?.includes("invested") || insertRes.error.message?.includes("broker") || insertRes.error.message?.includes("sip") || insertRes.error.message?.includes("trade_date"))) {
             insertRes = await supabase
               .from("assets")
               .insert([
@@ -1652,11 +1664,12 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
                 current_price: updated.currentPrice,
                 currency: updated.currency,
                 broker_app: updated.brokerApp || null,
+                trade_date: updated.tradeDate || null,
                 ...sipRow,
               })
               .eq("id", updated.id);
 
-            if (sbRes.error && (sbRes.error.code === "42703" || sbRes.error.message?.includes("invested") || sbRes.error.message?.includes("broker_app"))) {
+            if (sbRes.error && (sbRes.error.code === "42703" || sbRes.error.message?.includes("invested") || sbRes.error.message?.includes("broker_app") || sbRes.error.message?.includes("trade_date"))) {
               sbRes = await supabase
                 .from("assets")
                 .update({
@@ -1820,6 +1833,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       lastSipDate: asset.lastSipDate,
       sipStatus: asset.sipStatus,
       brokerApp: asset.brokerApp || "",
+      tradeDate: asset.tradeDate || "",
     });
   };
 

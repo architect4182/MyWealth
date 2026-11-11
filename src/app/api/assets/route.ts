@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     : (body.invested_amount !== undefined ? Number(body.invested_amount) : (quantity * buyPrice));
   const currency = (body.currency === "USD" ? "USD" : "INR") as "INR" | "USD";
   const brokerApp = body.brokerApp ? String(body.brokerApp).trim() : (body.broker_app ? String(body.broker_app).trim() : null);
+  const tradeDate = body.tradeDate ? String(body.tradeDate).trim() : (body.trade_date ? String(body.trade_date).trim() : null);
 
   const sipFields = isSip
     ? {
@@ -106,12 +107,24 @@ export async function POST(req: NextRequest) {
     if (brokerApp) {
       basePayload.broker_app = brokerApp;
     }
+    if (tradeDate) {
+      basePayload.trade_date = tradeDate;
+    }
 
-    // 1. Try full insert with username, broker_app, invested_amount, and SIP fields
+    // 1. Try full insert with username, broker_app, trade_date, invested_amount, and SIP fields
     let insertRes = await supabase
       .from("assets")
       .insert([{ ...basePayload, ...sipFields }])
       .select();
+
+    // 1b. If trade_date column is not provisioned yet in schema, retry full payload without trade_date first
+    if (insertRes.error && insertRes.error.message?.includes("trade_date") && "trade_date" in basePayload) {
+      delete basePayload.trade_date;
+      insertRes = await supabase
+        .from("assets")
+        .insert([{ ...basePayload, ...sipFields }])
+        .select();
+    }
 
     // 2. Safe fallback: If broker_app, invested_amount, or SIP columns fail
     if (insertRes.error) {
@@ -214,6 +227,10 @@ export async function PUT(req: NextRequest) {
   if (body.brokerApp !== undefined || body.broker_app !== undefined) {
     updates.broker_app = body.brokerApp !== undefined ? body.brokerApp : body.broker_app;
   }
+  if (body.tradeDate !== undefined || body.trade_date !== undefined) {
+    const rawTd = body.tradeDate !== undefined ? body.tradeDate : body.trade_date;
+    updates.trade_date = rawTd ? String(rawTd).trim() : null;
+  }
   if (body.isSip !== undefined) updates.is_sip = Boolean(body.isSip);
   if (body.sipAmount !== undefined) updates.sip_amount = body.sipAmount ? Number(body.sipAmount) : null;
   if (body.sipDay !== undefined) updates.sip_day = body.sipDay ? Number(body.sipDay) : null;
@@ -225,11 +242,17 @@ export async function PUT(req: NextRequest) {
   try {
     let updateRes = await supabase.from("assets").update(updates).eq("id", id).select();
 
+    if (updateRes.error && updateRes.error.message?.includes("trade_date") && "trade_date" in updates) {
+      delete updates.trade_date;
+      updateRes = await supabase.from("assets").update(updates).eq("id", id).select();
+    }
+
     if (updateRes.error && (updateRes.error.code === "42703" || updateRes.error.message?.includes("invested") || updateRes.error.message?.includes("broker_app"))) {
       if (updateRes.error.code === "42703" || updateRes.error.message?.includes("invested")) {
         delete updates.invested_amount;
       }
       delete updates.broker_app;
+      delete updates.trade_date;
       updateRes = await supabase.from("assets").update(updates).eq("id", id).select();
     }
 

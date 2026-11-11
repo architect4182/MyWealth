@@ -17,6 +17,7 @@ export interface AssetPosition {
   currentPrice: number;
   currency: "INR" | "USD";
   date: string;
+  tradeDate?: string;
   isSip?: boolean;
   sipAmount?: number;
   sipDay?: number;
@@ -37,6 +38,7 @@ export interface EditAssetForm {
   currentPrice: string;
   currentValue: string;
   currency: "INR" | "USD";
+  tradeDate?: string;
   isSip?: boolean;
   sipAmount?: string;
   sipDay?: string;
