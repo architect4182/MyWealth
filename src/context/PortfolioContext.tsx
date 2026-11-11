@@ -110,6 +110,7 @@ interface PortfolioContextType {
   handleSavePricesToDb: () => Promise<void>;
   handleDiscardRefreshedPrices: () => void;
   flashAssetId: string | null;
+  updatingPriceAssetIds: Set<string>;
   addAsset: (item: {
     name: string;
     category: AssetCategory;
@@ -197,6 +198,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
   const [modal, setModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<EditAssetForm | null>(null);
+  const [updatingPriceAssetIds, setUpdatingPriceAssetIds] = useState<Set<string>>(new Set());
   const [deletingAsset, setDeletingAsset] = useState<AssetPosition | null>(null);
   const [dbModal, setDbModal] = useState(false);
   const [marketModal, setMarketModal] = useState(false);
@@ -1300,6 +1302,47 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     setUnsavedAssetIds(new Set());
   };
 
+  // Background live price sync for a single newly added or modified holding
+  const refreshAssetLivePriceInBackground = async (
+    targetId: string,
+    assetName: string,
+    category: AssetCategory,
+    tempIdToClear?: string
+  ) => {
+    const queryKey =
+      category === "Mutual Funds"
+        ? assetName
+        : getStockTicker(assetName, category) || assetName;
+    const marketType =
+      category === "US Stocks"
+        ? "US"
+        : category === "Indian Equities"
+        ? "INDIA"
+        : "";
+    try {
+      const url =
+        category === "Mutual Funds"
+          ? `/api/stock-price?query=${encodeURIComponent(queryKey)}&category=Mutual%20Funds`
+          : `/api/stock-price?query=${encodeURIComponent(queryKey)}&symbol=${encodeURIComponent(queryKey)}&category=${encodeURIComponent(category)}${marketType ? `&market=${marketType}` : ""}`;
+      const priceRes = await fetch(url, { cache: "no-store" });
+      const priceJson = await priceRes.json().catch(() => null);
+      if (priceJson?.price && typeof priceJson.price === "number" && priceJson.price > 0) {
+        syncAssetCurrentPrice(targetId, priceJson.price);
+        if (!targetId.startsWith("temp-")) {
+          await flushPendingPricesToDb();
+        }
+      }
+    } catch {
+    } finally {
+      setUpdatingPriceAssetIds((prev) => {
+        const next = new Set(prev);
+        if (tempIdToClear) next.delete(tempIdToClear);
+        next.delete(targetId);
+        return next;
+      });
+    }
+  };
+
   // CRUD
   const addAsset = async (item: {
     name: string;
@@ -1369,6 +1412,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     });
     setFlashAssetId(tempId);
     setTimeout(() => setFlashAssetId(null), 2000);
+    setUpdatingPriceAssetIds((prev) => new Set(prev).add(tempId));
 
     // 1. Primary path: Persist via secure, server-side /api/assets endpoint
     setProcessingState({
@@ -1395,6 +1439,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       const realRow = resData.asset;
       const realId = String(realRow.id);
       dbBaselinePricesRef.current.set(realId, newPos.currentPrice);
+      setUpdatingPriceAssetIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tempId);
+        next.add(realId);
+        return next;
+      });
+      void refreshAssetLivePriceInBackground(realId, item.name, item.category, tempId);
 
       setAssets((prev) => {
         // If Realtime already received this item and added realId, remove tempId
@@ -1516,6 +1567,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           if (!insertRes.error && insertRes.data && insertRes.data[0]) {
             const realId = String(insertRes.data[0].id);
             dbBaselinePricesRef.current.set(realId, newPos.currentPrice);
+            setUpdatingPriceAssetIds((prev) => {
+              const next = new Set(prev);
+              next.delete(tempId);
+              next.add(realId);
+              return next;
+            });
+            void refreshAssetLivePriceInBackground(realId, item.name, item.category, tempId);
             setAssets((prev) => {
               const updated = prev.map((a) => (a.id === tempId ? { ...a, id: realId } : a));
               persistLocal(updated, uid);
@@ -1550,6 +1608,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           },
         });
       } else {
+        setUpdatingPriceAssetIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tempId);
+          return next;
+        });
         // Revert optimistic item so UI matches DB
         setAssets((prev) => {
           const reverted = prev.filter((a) => a.id !== tempId);
@@ -1586,6 +1649,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     });
     setFlashAssetId(updated.id);
     setTimeout(() => setFlashAssetId(null), 2000);
+    setUpdatingPriceAssetIds((prev) => new Set(prev).add(updated.id));
 
     if (!updated.id.startsWith("temp-")) {
       setProcessingState({
@@ -1607,6 +1671,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
         dbBaselinePricesRef.current.set(updated.id, updated.currentPrice);
         pendingDbPricesRef.current.delete(updated.id);
+        void refreshAssetLivePriceInBackground(updated.id, updated.name, updated.category);
 
         const inv = updated.investedAmount !== undefined && updated.investedAmount > 0
           ? updated.investedAmount
@@ -1685,6 +1750,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
             if (!sbRes.error) {
               directSaved = true;
+              void refreshAssetLivePriceInBackground(updated.id, updated.name, updated.category);
             }
           } catch (sbErr) {
             console.error("Direct Supabase update error:", sbErr);
@@ -1726,10 +1792,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             message: `Could not save updates for ${updated.name}: ${err?.message || "Database connection error"}`,
             assetName: updated.name,
           });
+          setUpdatingPriceAssetIds((prev) => {
+            const next = new Set(prev);
+            next.delete(updated.id);
+            return next;
+          });
         }
       } finally {
         setProcessingState(null);
       }
+    } else {
+      void refreshAssetLivePriceInBackground(updated.id, updated.name, updated.category);
     }
   };
 
@@ -1965,6 +2038,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       handleSavePricesToDb,
       handleDiscardRefreshedPrices,
       flashAssetId,
+      updatingPriceAssetIds,
       addAsset,
       updateAsset,
       deleteAsset,
@@ -2050,6 +2124,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       unsavedAssetIds,
       isSavingPrices,
       flashAssetId,
+      updatingPriceAssetIds,
       modal,
       editingAsset,
       deletingAsset,

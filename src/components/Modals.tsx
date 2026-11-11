@@ -20,6 +20,15 @@ import { getQuickBrokerOptions } from "@/utils/brokers";
 import { BrokerLogoAvatar, getStockTicker } from "@/components/Logos";
 import { SearchResultItem } from "@/app/api/search-assets/route";
 
+function IosMiniSpinner() {
+  return (
+    <span className="ios-spinner ios-spinner-sm" aria-hidden="true">
+      <div /><div /><div /><div /><div /><div />
+      <div /><div /><div /><div /><div /><div />
+    </span>
+  );
+}
+
 function calculateHoldings(investedAmount: string, buyPrice: string): number {
   const invested = Number(investedAmount);
   const price = Number(buyPrice);
@@ -925,21 +934,30 @@ export function AddAssetModal() {
                     🔒 Live AMFI / Exchange NAV
                   </span>
                 </div>
-                <input
-                  required
-                  type="number"
-                  min="0.0001"
-                  step="any"
-                  value={currentPrice || buyPrice}
-                  readOnly
-                  disabled
-                  style={{
-                    background: "rgba(0, 0, 0, 0.04)",
-                    color: "var(--foreground)",
-                    cursor: "not-allowed",
-                  }}
-                  placeholder="e.g. 85.50"
-                />
+                <div className="modal-price-field-wrap">
+                  <input
+                    required
+                    type="number"
+                    min="0.0001"
+                    step="any"
+                    value={currentPrice || buyPrice}
+                    readOnly
+                    disabled
+                    style={{
+                      background: "rgba(0, 0, 0, 0.04)",
+                      color: "var(--foreground)",
+                      cursor: "not-allowed",
+                      paddingRight: isFetchingPrice ? "170px" : undefined,
+                    }}
+                    placeholder={isFetchingPrice ? "Updating real-time price…" : "e.g. 85.50"}
+                  />
+                  {isFetchingPrice && (
+                    <span className="modal-price-loader-badge">
+                      <IosMiniSpinner />
+                      <span>Updating real-time price…</span>
+                    </span>
+                  )}
+                </div>
               </label>
             </div>
 
@@ -1087,20 +1105,35 @@ export function AddAssetModal() {
                     🔒 Live Market CMP
                   </span>
                 </div>
-                <input
-                  type="number"
-                  min="0.0001"
-                  step="any"
-                  value={currentPrice}
-                  readOnly
-                  disabled
-                  style={{
-                    background: "rgba(0, 0, 0, 0.04)",
-                    color: "var(--foreground)",
-                    cursor: "not-allowed",
-                  }}
-                  placeholder={buyPrice ? buyPrice : "Live CMP auto-fills on select"}
-                />
+                <div className="modal-price-field-wrap">
+                  <input
+                    type="number"
+                    min="0.0001"
+                    step="any"
+                    value={currentPrice}
+                    readOnly
+                    disabled
+                    style={{
+                      background: "rgba(0, 0, 0, 0.04)",
+                      color: "var(--foreground)",
+                      cursor: "not-allowed",
+                      paddingRight: isFetchingPrice ? "170px" : undefined,
+                    }}
+                    placeholder={
+                      isFetchingPrice
+                        ? "Updating real-time price…"
+                        : buyPrice
+                        ? buyPrice
+                        : "Live CMP auto-fills on select"
+                    }
+                  />
+                  {isFetchingPrice && (
+                    <span className="modal-price-loader-badge">
+                      <IosMiniSpinner />
+                      <span>Updating real-time price…</span>
+                    </span>
+                  )}
+                </div>
               </label>
 
               <label>
@@ -1110,28 +1143,39 @@ export function AddAssetModal() {
                     🔒 Units × CMP
                   </span>
                 </div>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  value={
-                    Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
-                      ? (Number(quantity) * Number(currentPrice || buyPrice)).toFixed(2)
-                      : currentValue
-                  }
-                  readOnly
-                  disabled
-                  style={{
-                    background: "rgba(0, 0, 0, 0.04)",
-                    color: "var(--foreground)",
-                    cursor: "not-allowed",
-                  }}
-                  placeholder={
-                    Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
-                      ? (Number(quantity) * Number(currentPrice || buyPrice)).toFixed(2)
-                      : "0.00"
-                  }
-                />
+                <div className="modal-price-field-wrap">
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={
+                      Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
+                        ? (Number(quantity) * Number(currentPrice || buyPrice)).toFixed(2)
+                        : currentValue
+                    }
+                    readOnly
+                    disabled
+                    style={{
+                      background: "rgba(0, 0, 0, 0.04)",
+                      color: "var(--foreground)",
+                      cursor: "not-allowed",
+                      paddingRight: isFetchingPrice ? "132px" : undefined,
+                    }}
+                    placeholder={
+                      isFetchingPrice
+                        ? "Waiting for price…"
+                        : Number(quantity) > 0 && Number(currentPrice || buyPrice) > 0
+                        ? (Number(quantity) * Number(currentPrice || buyPrice)).toFixed(2)
+                        : "0.00"
+                    }
+                  />
+                  {isFetchingPrice && (
+                    <span className="modal-price-loader-badge">
+                      <IosMiniSpinner />
+                      <span>Waiting for price…</span>
+                    </span>
+                  )}
+                </div>
               </label>
             </div>
 
@@ -1208,11 +1252,13 @@ export function EditAssetModal() {
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
   const [isFetchingEditTradePrice, setIsFetchingEditTradePrice] = useState(false);
   const [editTradeNote, setEditTradeNote] = useState("");
+  const [isFetchingEditLivePrice, setIsFetchingEditLivePrice] = useState(false);
   const editTradeRequestRef = useRef(0);
+  const editLiveRequestRef = useRef(0);
   const latestEditingRef = useRef(editingAsset);
   latestEditingRef.current = editingAsset;
 
-  // Synchronize state when opening or changing holding to edit
+  // Synchronize state when opening or changing holding to edit, and fetch latest real-time CMP
   useEffect(() => {
     if (editingAsset) {
       setIsSubmitting(false);
@@ -1226,6 +1272,48 @@ export function EditAssetModal() {
       } else {
         setIsEditCustomBroker(false);
       }
+
+      const targetId = editingAsset.id;
+      const symQuery =
+        editingAsset.category === "Mutual Funds"
+          ? editingAsset.name
+          : getStockTicker(editingAsset.name, editingAsset.category) || editingAsset.name;
+      if (symQuery) {
+        const liveReqId = ++editLiveRequestRef.current;
+        setIsFetchingEditLivePrice(true);
+        fetch(
+          `/api/stock-price?query=${encodeURIComponent(symQuery)}&category=${encodeURIComponent(
+            editingAsset.category
+          )}`
+        )
+          .then((r) => r.json())
+          .then((data) => {
+            if (liveReqId !== editLiveRequestRef.current) return;
+            const latest = latestEditingRef.current;
+            if (!latest || latest.id !== targetId) return;
+            if (data?.success && data?.price > 0) {
+              const decimals = latest.category === "Mutual Funds" ? 4 : 2;
+              const freshCmp = Number(Number(data.price).toFixed(decimals));
+              const qNum = Number(latest.quantity) || 0;
+              setEditingAsset({
+                ...latest,
+                currentPrice: String(freshCmp),
+                currentValue: qNum > 0 ? (qNum * freshCmp).toFixed(2) : latest.currentValue,
+              });
+            }
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (liveReqId === editLiveRequestRef.current) {
+              setIsFetchingEditLivePrice(false);
+            }
+          });
+      } else {
+        setIsFetchingEditLivePrice(false);
+      }
+    } else {
+      ++editLiveRequestRef.current;
+      setIsFetchingEditLivePrice(false);
     }
   }, [editingAsset?.id]);
 
@@ -1727,21 +1815,30 @@ export function EditAssetModal() {
                     🔒 Live AMFI / Market NAV
                   </span>
                 </div>
-                <input
-                  required
-                  type="number"
-                  min="0.0001"
-                  step="any"
-                  value={editingAsset.currentPrice || editingAsset.buyPrice}
-                  readOnly
-                  disabled
-                  style={{
-                    background: "rgba(0, 0, 0, 0.04)",
-                    color: "var(--foreground)",
-                    cursor: "not-allowed",
-                  }}
-                  placeholder="e.g. 85.50"
-                />
+                <div className="modal-price-field-wrap">
+                  <input
+                    required
+                    type="number"
+                    min="0.0001"
+                    step="any"
+                    value={editingAsset.currentPrice || editingAsset.buyPrice}
+                    readOnly
+                    disabled
+                    style={{
+                      background: "rgba(0, 0, 0, 0.04)",
+                      color: "var(--foreground)",
+                      cursor: "not-allowed",
+                      paddingRight: isFetchingEditLivePrice ? "170px" : undefined,
+                    }}
+                    placeholder="e.g. 85.50"
+                  />
+                  {isFetchingEditLivePrice && (
+                    <span className="modal-price-loader-badge">
+                      <IosMiniSpinner />
+                      <span>Updating real-time price…</span>
+                    </span>
+                  )}
+                </div>
               </label>
 
               <label>
@@ -1883,20 +1980,29 @@ export function EditAssetModal() {
                     🔒 Live Market CMP
                   </span>
                 </div>
-                <input
-                  type="number"
-                  min="0.0001"
-                  step="any"
-                  value={editingAsset.currentPrice}
-                  readOnly
-                  disabled
-                  style={{
-                    background: "rgba(0, 0, 0, 0.04)",
-                    color: "var(--foreground)",
-                    cursor: "not-allowed",
-                  }}
-                  placeholder="Live quote auto-fills"
-                />
+                <div className="modal-price-field-wrap">
+                  <input
+                    type="number"
+                    min="0.0001"
+                    step="any"
+                    value={editingAsset.currentPrice}
+                    readOnly
+                    disabled
+                    style={{
+                      background: "rgba(0, 0, 0, 0.04)",
+                      color: "var(--foreground)",
+                      cursor: "not-allowed",
+                      paddingRight: isFetchingEditLivePrice ? "170px" : undefined,
+                    }}
+                    placeholder="Live quote auto-fills"
+                  />
+                  {isFetchingEditLivePrice && (
+                    <span className="modal-price-loader-badge">
+                      <IosMiniSpinner />
+                      <span>Updating real-time price…</span>
+                    </span>
+                  )}
+                </div>
               </label>
             </div>
 
@@ -1908,24 +2014,33 @@ export function EditAssetModal() {
                     🔒 Units × CMP
                   </span>
                 </div>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="any"
-                  value={
-                    (Number(editingAsset.quantity) || computedEditHoldings) > 0 && Number(editingAsset.currentPrice || editingAsset.buyPrice) > 0
-                      ? ((Number(editingAsset.quantity) || computedEditHoldings) * Number(editingAsset.currentPrice || editingAsset.buyPrice)).toFixed(2)
-                      : editingAsset.currentValue
-                  }
-                  readOnly
-                  disabled
-                  style={{
-                    background: "rgba(0, 0, 0, 0.04)",
-                    color: "var(--foreground)",
-                    cursor: "not-allowed",
-                  }}
-                  placeholder="0.00"
-                />
+                <div className="modal-price-field-wrap">
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={
+                      (Number(editingAsset.quantity) || computedEditHoldings) > 0 && Number(editingAsset.currentPrice || editingAsset.buyPrice) > 0
+                        ? ((Number(editingAsset.quantity) || computedEditHoldings) * Number(editingAsset.currentPrice || editingAsset.buyPrice)).toFixed(2)
+                        : editingAsset.currentValue
+                    }
+                    readOnly
+                    disabled
+                    style={{
+                      background: "rgba(0, 0, 0, 0.04)",
+                      color: "var(--foreground)",
+                      cursor: "not-allowed",
+                      paddingRight: isFetchingEditLivePrice ? "132px" : undefined,
+                    }}
+                    placeholder="0.00"
+                  />
+                  {isFetchingEditLivePrice && (
+                    <span className="modal-price-loader-badge">
+                      <IosMiniSpinner />
+                      <span>Refreshing total…</span>
+                    </span>
+                  )}
+                </div>
               </label>
             </div>
 

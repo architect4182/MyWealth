@@ -2059,6 +2059,49 @@ tbody tr:hover td {
   height: 32px;
 }
 
+.ios-spinner.ios-spinner-sm {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.ios-price-inline-loader {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6d28d9;
+  line-height: 1.25;
+}
+
+.modal-price-field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.modal-price-field-wrap input {
+  width: 100%;
+}
+
+.modal-price-loader-badge {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(147, 102, 255, 0.12);
+  color: #6d28d9;
+  font-size: 10.5px;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .ios-spinner div {
   position: absolute;
   left: 45%;

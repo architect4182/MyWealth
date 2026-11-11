@@ -27,6 +27,18 @@ function formatQty(q: number): string {
   return Number(q.toFixed(8)).toString();
 }
 
+function IosPriceSyncInline({ label = "Updating real-time price…" }: { label?: string }) {
+  return (
+    <span className="ios-price-inline-loader" title={label}>
+      <span className="ios-spinner ios-spinner-sm" aria-hidden="true">
+        <div /><div /><div /><div /><div /><div />
+        <div /><div /><div /><div /><div /><div />
+      </span>
+      <span>{label}</span>
+    </span>
+  );
+}
+
 export interface FilterSubTab {
   key: string;
   label: string;
@@ -56,6 +68,7 @@ export function HoldingsTableAndCards({
   const {
     isLoading,
     unsavedAssetIds,
+    updatingPriceAssetIds,
     flashAssetId,
     money,
     showUsdInRupees,
@@ -236,6 +249,7 @@ export function HoldingsTableAndCards({
           {displayedAssets.map((item) => {
             const ticker = getStockTicker(item.name, item.category);
             const isUnsaved = unsavedAssetIds.has(item.id);
+            const isUpdatingPrice = updatingPriceAssetIds.has(item.id);
             const isFlashed = flashAssetId === item.id;
             const investedVal =
               item.investedAmount !== undefined && item.investedAmount > 0
@@ -322,17 +336,27 @@ export function HoldingsTableAndCards({
                     <div className="bento-card-hero-value">
                       {money(currentVal, item.currency)}
                     </div>
-                    {item.currency === "USD" && showUsdInRupees && (
-                      <span className="bento-card-usd-sub">
-                        ${currentVal.toFixed(2)} USD
-                      </span>
+                    {isUpdatingPrice ? (
+                      <IosPriceSyncInline label="Refreshing live total…" />
+                    ) : (
+                      item.currency === "USD" && showUsdInRupees && (
+                        <span className="bento-card-usd-sub">
+                          ${currentVal.toFixed(2)} USD
+                        </span>
+                      )
                     )}
                   </div>
                   <div className="bento-card-val-right">
                     <span className="bento-card-micro-label">
                       {item.category === "Mutual Funds" ? "NAV" : "CMP"}
                     </span>
-                    <div className="bento-card-cmp-value">{cmpStr}</div>
+                    {isUpdatingPrice ? (
+                      <div style={{ margin: "4px 0" }}>
+                        <IosPriceSyncInline />
+                      </div>
+                    ) : (
+                      <div className="bento-card-cmp-value">{cmpStr}</div>
+                    )}
                     <span
                       className={`bento-card-cmp-pct ${
                         unitGain >= 0 ? "is-positive" : "is-negative"
@@ -476,6 +500,7 @@ export function HoldingsTableAndCards({
                 {displayedAssets.map((item) => {
                   const ticker = getStockTicker(item.name, item.category);
                   const isUnsaved = unsavedAssetIds.has(item.id);
+                  const isUpdatingPrice = updatingPriceAssetIds.has(item.id);
                   const isFlashed = flashAssetId === item.id;
                   const investedVal = item.investedAmount !== undefined && item.investedAmount > 0
               ? item.investedAmount
@@ -583,16 +608,22 @@ export function HoldingsTableAndCards({
                         </div>
                       </td>
                       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                        <strong
-                          style={{
-                            color: "var(--foreground)",
-                            fontSize: "13px",
-                          }}
-                        >
-                          {item.currency === "USD"
-                            ? `$${item.currentPrice.toFixed(2)}`
-                            : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
-                        </strong>
+                        {isUpdatingPrice ? (
+                          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                            <IosPriceSyncInline />
+                          </div>
+                        ) : (
+                          <strong
+                            style={{
+                              color: "var(--foreground)",
+                              fontSize: "13px",
+                            }}
+                          >
+                            {item.currency === "USD"
+                              ? `$${item.currentPrice.toFixed(2)}`
+                              : `₹${item.category === "Mutual Funds" ? item.currentPrice.toFixed(4) : item.currentPrice.toFixed(2)}`}
+                          </strong>
+                        )}
                         <div style={{ fontSize: "11px", color: "var(--muted)" }}>
                           Avg{" "}
                           {item.currency === "USD"
