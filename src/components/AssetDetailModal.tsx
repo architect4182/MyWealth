@@ -72,6 +72,7 @@ export function AssetDetailModal() {
     usMarket,
     showUsdInRupees,
     openAddModalWithPrefill,
+    syncAssetCurrentPrice,
   } = usePortfolio();
 
   const [selectedPeriod, setSelectedPeriod] = useState<Period>("1M");
@@ -168,6 +169,15 @@ export function AssetDetailModal() {
           prevPriceRef.current = data.currentPrice;
           return data;
         });
+
+        if (
+          data.currentPrice &&
+          data.currentPrice > 0 &&
+          !viewingAsset.id.startsWith("trending-") &&
+          Math.abs(viewingAsset.currentPrice - data.currentPrice) > 0.0001
+        ) {
+          syncAssetCurrentPrice(viewingAsset.id, data.currentPrice);
+        }
       } catch (err: any) {
         if (!silent) {
           setChartError(err.message || "Failed to load live chart");
@@ -176,21 +186,26 @@ export function AssetDetailModal() {
         if (!silent) setIsLoadingChart(false);
       }
     },
-    [viewingAsset, marketStatus.isOpen]
+    [viewingAsset, marketStatus.isOpen, syncAssetCurrentPrice]
   );
 
-  // Initial load when modal opens or period changes (runs once on open or when switching period)
+  const fetchChartRef = useRef(fetchChart);
+  fetchChartRef.current = fetchChart;
+  const viewingAssetId = viewingAsset?.id || null;
+
+  // Initial load when modal opens or period changes (runs once per opened asset or period switch)
   useEffect(() => {
-    if (viewingAsset) {
-      prevPriceRef.current = viewingAsset.currentPrice;
-      fetchChart(selectedPeriod, false);
+    if (viewingAssetId) {
+      prevPriceRef.current = viewingAsset?.currentPrice ?? null;
+      void fetchChartRef.current(selectedPeriod, false);
     } else {
       setChartData(null);
       setHoveredPoint(null);
       setHoverPosition(null);
       setPriceFlash(null);
     }
-  }, [viewingAsset, selectedPeriod, fetchChart]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewingAssetId, selectedPeriod]);
 
   // Real-time live polling every 30 seconds ONLY while that specific market is open and tab is visible
   useEffect(() => {

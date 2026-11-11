@@ -155,6 +155,7 @@ interface PortfolioContextType {
   viewingAsset: AssetPosition | null;
   setViewingAsset: (asset: AssetPosition | null) => void;
   openAssetDetail: (asset: AssetPosition) => void;
+  syncAssetCurrentPrice: (assetId: string, livePrice: number) => void;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | null>(null);
@@ -982,27 +983,56 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Live price refresh — strictly market-aware:
-  // Calls Indian APIs only when Indian market is open; US APIs only when US market is open.
-  // UI updates live every 60s; DB writes happen on initial load, manual click, every 15m checkpoint, or tab hide/close.
+  // Live price refresh:
+  // - Initial sync on load and manual "Refresh Prices" sync ALL holdings (closing prices / latest NAVs even after hours)
+  // - Background 60s polling updates ONLY actively open markets (plus Crypto)
+  // - DB writes happen on initial sync, manual click, every 15m checkpoint, or tab hide/close
+  const syncInFlightRef = useRef<boolean>(false);
+
+  const syncAssetCurrentPrice = useCallback((assetId: string, livePrice: number) => {
+    if (!assetId || assetId.startsWith("trending-") || !Number.isFinite(livePrice) || livePrice <= 0) {
+      return;
+    }
+
+    setAssets((prev) => {
+      const target = prev.find((a) => a.id === assetId);
+      if (!target) return prev;
+      const decimals = target.category === "Mutual Funds" ? 4 : 2;
+      const rounded = Number(livePrice.toFixed(decimals));
+      if (Math.abs(target.currentPrice - rounded) <= 0.0001) return prev;
+
+      const updated = prev.map((a) => (a.id === assetId ? { ...a, currentPrice: rounded } : a));
+      const uid = (
+        currentUserId ||
+        (typeof window !== "undefined" ? localStorage.getItem("mywealth_current_user") : "") ||
+        ""
+      ).trim();
+      persistLocal(updated, uid);
+      if (!assetId.startsWith("temp-")) {
+        pendingDbPricesRef.current.set(assetId, rounded);
+      }
+      return updated;
+    });
+  }, [currentUserId]);
+
   const handleRefreshPrices = async (
     silentParam?: boolean | unknown,
     options?: { isInitialSync?: boolean }
   ) => {
     const silent = typeof silentParam === "boolean" ? silentParam : false;
     const isInitialSync = Boolean(options?.isInitialSync);
-    if (assets.length === 0 || isRefreshingPrices) return;
+    if (assets.length === 0 || isRefreshingPrices || (silent && syncInFlightRef.current)) return;
 
     const now = new Date();
     const indianOpen = getIndianMarketStatus(now, marketHolidays.in).isOpen;
     const usOpen = getUsMarketStatus(now, marketHolidays.us).isOpen;
+    const syncAllAssets = !silent || isInitialSync;
 
     const isEligibleForLiveCall = (asset: AssetPosition): boolean => {
+      if (syncAllAssets) return true;
       if (asset.category === "US Stocks") return usOpen;
       if (asset.category === "Indian Equities" || asset.category === "Gold & Fixed Income") return indianOpen;
       if (asset.category === "Crypto") return true;
-      // Mutual Funds update NAV once daily at EOD — never poll repeatedly in background
-      if (asset.category === "Mutual Funds") return !silent;
       return false;
     };
 
@@ -1012,12 +1042,13 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
     if (eligibleIds.size === 0) {
       if (!silent) {
-        setPriceRefreshMessage("All asset markets are currently closed — showing last synced prices.");
+        setPriceRefreshMessage("No eligible holdings to refresh.");
         setTimeout(() => setPriceRefreshMessage(""), 4000);
       }
       return;
     }
 
+    syncInFlightRef.current = true;
     if (!silent) {
       setIsRefreshingPrices(true);
       const activeMarkets = [
@@ -1026,8 +1057,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       ].filter(Boolean);
       setPriceRefreshMessage(
         activeMarkets.length > 0
-          ? `Syncing ${activeMarkets.join(" & ")} live prices…`
-          : "Syncing latest NAVs…"
+          ? `Syncing ${activeMarkets.join(" & ")} live valuations…`
+          : "Syncing latest closing prices & NAVs…"
       );
     }
 
@@ -1061,9 +1092,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
             const url = asset.category === "Mutual Funds"
               ? `/api/stock-price?query=${encodeURIComponent(ticker)}&category=Mutual%20Funds`
               : `/api/stock-price?query=${encodeURIComponent(ticker)}&symbol=${encodeURIComponent(ticker)}&category=${encodeURIComponent(asset.category)}&market=${marketType}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: "no-store" });
             const data = await res.json();
-            if (data.price && typeof data.price === "number") {
+            if (data.price && typeof data.price === "number" && data.price > 0) {
               const decimals = asset.category === "Mutual Funds" ? 4 : 2;
               return { ...asset, currentPrice: Number(data.price.toFixed(decimals)) };
             }
@@ -1077,10 +1108,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         const baseline = dbBaselinePricesRef.current.get(item.id);
         if (baseline === undefined) {
           const original = assets.find((a) => a.id === item.id);
-          if (original && Math.abs(original.currentPrice - item.currentPrice) > 0.001) {
+          if (original && Math.abs(original.currentPrice - item.currentPrice) > 0.0001) {
             changedIds.add(item.id);
           }
-        } else if (Math.abs(baseline - item.currentPrice) > 0.001) {
+        } else if (Math.abs(baseline - item.currentPrice) > 0.0001) {
           changedIds.add(item.id);
         }
       });
@@ -1109,7 +1140,11 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       setUnsavedAssetIds(new Set());
 
       if (!silent) {
-        setPriceRefreshMessage(`Successfully synced ${changedIds.size} market valuations.`);
+        setPriceRefreshMessage(
+          changedIds.size > 0
+            ? `Synced ${changedIds.size} latest market valuation${changedIds.size === 1 ? "" : "s"}.`
+            : "All valuations are already up to date."
+        );
         setTimeout(() => setPriceRefreshMessage(""), 4000);
       }
     } catch {
@@ -1118,6 +1153,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => setPriceRefreshMessage(""), 4000);
       }
     } finally {
+      syncInFlightRef.current = false;
       if (!silent) {
         setIsRefreshingPrices(false);
       }
@@ -1144,16 +1180,14 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     };
 
     let initTimer: ReturnType<typeof setTimeout> | undefined;
-    // 1. Initial sync once per user load (writes checkpoint to DB once if stale)
+    // 1. Initial sync once per user load: always sync ALL holdings (closing prices + NAVs) and persist to DB
     if (lastAutoSyncedUserRef.current !== currentUserId) {
       initTimer = setTimeout(() => {
         if (lastAutoSyncedUserRef.current !== currentUserId) {
           lastAutoSyncedUserRef.current = currentUserId;
-          if (shouldSyncAnyOpenMarket()) {
-            handleRefreshPricesRef.current(true, { isInitialSync: true });
-          }
+          handleRefreshPricesRef.current(true, { isInitialSync: true });
         }
-      }, 900);
+      }, 300);
     }
 
     // 2. Periodic background UI refresh every 60 seconds ONLY while tab is visible and market is open
@@ -1524,6 +1558,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
         if (!res.ok || !resData?.success) {
           throw new Error(resData?.error || "Failed to update asset in database");
         }
+
+        dbBaselinePricesRef.current.set(updated.id, updated.currentPrice);
+        pendingDbPricesRef.current.delete(updated.id);
 
         const inv = updated.investedAmount !== undefined && updated.investedAmount > 0
           ? updated.investedAmount
@@ -1909,6 +1946,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       viewingAsset,
       setViewingAsset,
       openAssetDetail,
+      syncAssetCurrentPrice,
     }),
     [
       safeAssets,
@@ -1968,6 +2006,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       viewingAsset,
       setViewingAsset,
       openAssetDetail,
+      syncAssetCurrentPrice,
     ]
   );
 

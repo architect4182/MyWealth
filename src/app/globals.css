@@ -7387,7 +7387,7 @@ tbody tr.flash-pulse td {
 .bento-avatar-circle {
   width: 42px !important;
   height: 42px !important;
-  border-radius: 50% !important;
+  border-radius: 10px !important;
   flex-shrink: 0;
 }
 

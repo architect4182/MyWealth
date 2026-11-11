@@ -489,7 +489,7 @@ export default function Home() {
                             }}
                           >
                             <div className="overview-highlight-left">
-                              <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "50%" }}>
+                              <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
                                 <StockLogoAvatar
                                   name={insights.topGainer.asset.name}
                                   ticker={insights.topGainer.ticker}
@@ -529,7 +529,7 @@ export default function Home() {
                               }}
                             >
                               <div className="overview-highlight-left">
-                                <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "50%" }}>
+                                <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
                                   <StockLogoAvatar
                                     name={insights.topLoser.asset.name}
                                     ticker={insights.topLoser.ticker}
@@ -724,7 +724,7 @@ export default function Home() {
                             }}
                           >
                             <div className="overview-leader-identity">
-                              <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "50%" }}>
+                              <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
                                 <StockLogoAvatar
                                   name={item.asset.name}
                                   ticker={item.ticker}
