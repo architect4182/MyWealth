@@ -56,6 +56,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @import "tailwindcss";
 
 /* ==========================================================================
@@ -145,6 +146,7 @@ body {
   position: relative;
   overflow-x: clip;
   overflow-y: auto;
+  overflow-y: visible;
   width: 100%;
   -webkit-overflow-scrolling: touch;
 }
@@ -283,6 +285,7 @@ button {
   flex-direction: column;
   align-items: stretch;
   padding: 16px 36px 100px;
+  padding: 88px 36px 100px;
   position: relative;
   box-sizing: border-box;
   background: #ffffff;
@@ -295,9 +298,14 @@ button {
    ========================================================================== */
 .apple-island-header {
   position: sticky;
+  position: fixed;
   top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 90;
   width: 100%;
+  width: min(calc(100% - 72px), 1528px);
+  max-width: 1528px;
   min-height: 56px;
   padding: 0 16px;
   border-radius: 9999px;
@@ -3180,6 +3188,12 @@ select:focus {
   .apple-portfolio-app,
   .apple-canvas {
     padding: 14px 20px 80px;
+    padding: 84px 20px 80px;
+  }
+
+  .apple-island-header {
+    top: 12px;
+    width: calc(100% - 40px);
   }
 
   /* Market capsule takes 220px; hide from floating island on screens <= 1280px to prevent overflow */
@@ -3258,6 +3272,12 @@ select:focus {
   .apple-portfolio-app,
   .apple-canvas {
     padding: 12px 16px 80px;
+    padding: 82px 16px 80px;
+  }
+
+  .apple-island-header {
+    top: 12px;
+    width: calc(100% - 32px);
   }
 
   .apple-side-panel,
@@ -3303,24 +3323,37 @@ select:focus {
   .apple-portfolio-app,
   .apple-canvas {
     padding: 0 12px 60px !important;
+    padding: 118px 12px 60px !important;
   }
 
-  /* Pinned Capsule Header: 2-Row Layout */
+  /* Pinned Capsule Header: 2-Row Liquid Glass Layout */
   .apple-island-header {
-    border-radius: 0 0 18px 18px !important;
+    border-radius: 0 0 20px 20px !important;
     padding: 10px 14px !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
     min-height: auto !important;
+    position: fixed !important;
     top: 0 !important;
     position: sticky !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
     z-index: 100 !important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.72) 0%,
+        rgba(248, 246, 255, 0.56) 100%) !important;
+    backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
     margin-top: 0 !important;
     margin-bottom: 16px !important;
     border-top: none !important;
+  }
+
+  .apple-dynamic-island-container {
+    top: 110px;
   }
 
   .apple-header-left {
@@ -3606,11 +3639,14 @@ select:focus {
   .apple-portfolio-app,
   .apple-canvas {
     padding: 6px 8px 48px;
+    padding: 110px 8px 48px !important;
   }
 
   .apple-island-header {
     padding: 8px 10px;
     border-radius: 18px;
+    padding: 8px 10px !important;
+    border-radius: 0 0 18px 18px !important;
     gap: 6px;
   }
 
@@ -5173,27 +5209,79 @@ body {
   box-shadow: none !important;
 }
 
-/* 2. Header Island & Action Controls */
+/* 2. Liquid Glass Top Navigation Bar & Action Controls */
 .apple-island-header {
-  background: #ffffff !important;
-  border: 1px solid rgba(147, 102, 255, 0.18) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.68) 0%,
+      rgba(255, 255, 255, 0.44) 52%,
+      rgba(245, 242, 255, 0.58) 100%) !important;
+  backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  border-bottom: 1px solid rgba(147, 102, 255, 0.16) !important;
+  box-shadow:
+    0 12px 36px -6px rgba(17, 17, 22, 0.1),
+    0 2px 10px rgba(147, 102, 255, 0.08),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.94),
+    inset 0 -1px 1px rgba(147, 102, 255, 0.06) !important;
+}
+
+.apple-island-header::before {
+  left: 36px !important;
+  right: 36px !important;
+  height: 1.5px !important;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.95) 25%,
+      rgba(255, 255, 255, 1) 50%,
+      rgba(255, 255, 255, 0.95) 75%,
+      transparent 100%) !important;
+  opacity: 0.95;
 }
 
 .apple-segmented-nav {
-  background: #f4f4f8 !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  background: rgba(242, 243, 249, 0.55) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+  box-shadow:
+    inset 0 1px 2px rgba(17, 17, 22, 0.06),
+    0 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+.apple-nav-pill {
+  color: #475569 !important;
+}
+
+.apple-nav-pill:hover {
+  color: #111116 !important;
+  background: rgba(255, 255, 255, 0.58) !important;
+}
+
+.apple-nav-pill.active {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(249, 247, 255, 0.88) 100%) !important;
+  color: #7c3aed !important;
+  border: 1px solid rgba(147, 102, 255, 0.24) !important;
+  box-shadow:
+    0 3px 10px rgba(147, 102, 255, 0.14),
+    inset 0 1px 0.5px rgba(255, 255, 255, 1) !important;
 }
 
 .apple-market-header-capsule {
-  background: #f8f9fc !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
 }
 
 .apple-market-header-capsule:hover {
-  background: #f1f2f8 !important;
-  border-color: rgba(147, 102, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 .apple-market-code {
@@ -5223,15 +5311,19 @@ body {
 
 /* Currency Toggle Pill */
 .ios-toggle-pill {
-  background: #f8f9fc !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
   color: #111116 !important;
 }
 
 .ios-toggle-pill:hover {
-  background: #f1f2f8 !important;
-  border-color: rgba(147, 102, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 .ios-toggle-symbol {
@@ -5257,43 +5349,61 @@ body {
 
 /* Add Asset & Circle Icon Buttons */
 .apple-add-btn {
-  background: #9366FF !important;
+  background: linear-gradient(145deg,
+      rgba(166, 136, 255, 0.96) 0%,
+      rgba(147, 102, 255, 0.98) 55%,
+      rgba(124, 58, 237, 0.98) 100%) !important;
   color: #ffffff !important;
-  border: none !important;
-  box-shadow: 0 4px 14px rgba(147, 102, 255, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow:
+    0 6px 16px rgba(147, 102, 255, 0.32),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.45) !important;
 }
 
 .apple-add-btn:hover {
-  background: #804dee !important;
+  background: linear-gradient(145deg,
+      rgba(155, 118, 255, 1) 0%,
+      rgba(132, 82, 248, 1) 55%,
+      rgba(109, 40, 217, 1) 100%) !important;
   color: #ffffff !important;
-  box-shadow: 0 6px 18px rgba(147, 102, 255, 0.45) !important;
+  box-shadow:
+    0 8px 20px rgba(147, 102, 255, 0.42),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.55) !important;
 }
 
 .apple-circle-icon-btn {
-  background: #f8f9fc !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
   color: #5e5e6e !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
 }
 
 .apple-circle-icon-btn:hover {
-  background: #f1f2f8 !important;
+  background: rgba(255, 255, 255, 0.8) !important;
   color: #9366FF !important;
-  border-color: rgba(147, 102, 255, 0.3) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 /* User Profile Pill */
 .apple-user-combo-pill,
 .apple-user-pill {
-  background: #f8f9fc !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  background: rgba(255, 255, 255, 0.52) !important;
+  backdrop-filter: blur(14px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.78) !important;
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(17, 17, 22, 0.04) !important;
   color: #111116 !important;
 }
 
 .apple-user-combo-pill:hover {
-  background: #f1f2f8 !important;
-  border-color: rgba(147, 102, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(147, 102, 255, 0.32) !important;
 }
 
 .apple-combo-user-part,
@@ -8256,6 +8366,7 @@ tbody tr.flash-pulse td {
 }
 
 @media (max-width: 600px) {
+
   .overview-insight-card,
   .overview-performance-card {
     padding: 16px;
@@ -8272,5 +8383,3 @@ tbody tr.flash-pulse td {
     order: 3;
   }
 }
-
-

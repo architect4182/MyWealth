@@ -10,7 +10,6 @@ import {
   Globe,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { Header } from "@/components/Header";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
@@ -85,11 +84,7 @@ export default function StocksPage() {
 
   return (
     <main className="apple-portfolio-app">
-      {/* 1. Capsule Header with Route Pill Switcher */}
-      <Header
-      />
-
-      {/* 2. Floating Session Live Prices Notification */}
+      {/* 1. Floating Session Live Prices Notification */}
       <DynamicIsland />
 
       {/* 3. Main Stage Layout */}
@@ -169,8 +164,8 @@ export default function StocksPage() {
                         indianStocksPnl > 0
                           ? "#16a34a"
                           : indianStocksPnl < 0
-                          ? "#dc2626"
-                          : undefined,
+                            ? "#dc2626"
+                            : undefined,
                     }}
                   >
                     {indianStocksPnl > 0
@@ -187,8 +182,8 @@ export default function StocksPage() {
                         usStocksPnl > 0
                           ? "#16a34a"
                           : usStocksPnl < 0
-                          ? "#dc2626"
-                          : undefined,
+                            ? "#dc2626"
+                            : undefined,
                     }}
                   >
                     {usStocksPnl > 0

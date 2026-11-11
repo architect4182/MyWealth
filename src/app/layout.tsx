@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { PortfolioProvider } from "@/context/PortfolioContext";
+import { PersistentHeader } from "@/components/PersistentHeader";
 
 export const metadata: Metadata = {
   title: "MyWealth",
@@ -21,10 +22,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
-        <PortfolioProvider>{children}</PortfolioProvider>
-      </body>
-    </html>
-  );
+        <html lang="en" className="antialiased">
+          <body className="min-h-screen flex flex-col">
+            <PortfolioProvider>
+              <PersistentHeader />
+              {children}
+            </PortfolioProvider>
+          </body>
+        </html>
+        );
 }

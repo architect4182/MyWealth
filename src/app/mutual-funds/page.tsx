@@ -11,7 +11,6 @@ import {
   Repeat,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
-import { Header } from "@/components/Header";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
@@ -110,11 +109,7 @@ export default function MutualFundsPage() {
 
   return (
     <main className="apple-portfolio-app">
-      {/* 1. Capsule Header with Route Pill Switcher */}
-      <Header
-      />
-
-      {/* 2. Floating Session Live Prices Notification */}
+      {/* 1. Floating Session Live Prices Notification */}
       <DynamicIsland />
 
       {/* 3. Main Stage Layout */}
@@ -200,8 +195,8 @@ export default function MutualFundsPage() {
                         mfSipPnl > 0
                           ? "#16a34a"
                           : mfSipPnl < 0
-                          ? "#dc2626"
-                          : undefined,
+                            ? "#dc2626"
+                            : undefined,
                     }}
                   >
                     {mfSipPnl > 0 ? `+${money(mfSipPnl, "INR")}` : money(mfSipPnl, "INR")}
@@ -216,8 +211,8 @@ export default function MutualFundsPage() {
                         mfLumpsumPnl > 0
                           ? "#16a34a"
                           : mfLumpsumPnl < 0
-                          ? "#dc2626"
-                          : undefined,
+                            ? "#dc2626"
+                            : undefined,
                     }}
                   >
                     {mfLumpsumPnl > 0
