@@ -6700,56 +6700,81 @@ select:focus {
 }
 
 /* ==========================================================================
-   Trending Stocks/MF Card Polish & Responsive Layout Overrides
+   Trending Stocks/MF Card 2-Tier Bento Design & Responsive Overrides
    ========================================================================== */
 .apple-trending-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
-  gap: 12px !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
   width: 100% !important;
 }
 
-@media (min-width: 1380px) {
+@media (max-width: 1180px) {
   .apple-trending-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
-@media (max-width: 1379px) and (min-width: 720px) {
-  .apple-trending-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-
-@media (max-width: 719px) {
+@media (max-width: 680px) {
   .apple-trending-grid {
     grid-template-columns: 1fr !important;
+    gap: 10px !important;
   }
+}
+
+.apple-trending-sub-block {
+  gap: 10px !important;
+}
+
+.apple-trending-sub-title {
+  font-size: 14.5px !important;
+  gap: 8px !important;
+}
+
+.apple-market-pill {
+  background: rgba(17, 17, 22, 0.05) !important;
+  color: #64748b !important;
+  border: 1px solid rgba(17, 17, 22, 0.07) !important;
+  border-radius: 8px !important;
+  padding: 2px 8px !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+.apple-count-caption {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 11.5px !important;
+  color: #64748b !important;
 }
 
 .apple-trending-card {
+  position: relative !important;
   display: flex !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   justify-content: space-between !important;
-  align-items: center !important;
-  padding: 12px 14px !important;
-  gap: 10px !important;
-  min-height: 64px !important;
+  align-items: stretch !important;
+  padding: 16px 18px !important;
+  gap: 12px !important;
+  min-height: auto !important;
   box-sizing: border-box !important;
   width: 100% !important;
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.76) 0%,
-    rgba(255, 255, 255, 0.52) 60%,
-    rgba(246, 244, 255, 0.64) 100%
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(255, 255, 255, 0.54) 55%,
+    rgba(246, 244, 255, 0.66) 100%
   ) !important;
-  backdrop-filter: blur(20px) saturate(180%) brightness(1.03) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) brightness(1.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.84) !important;
-  border-bottom: 1px solid rgba(147, 102, 255, 0.14) !important;
-  border-radius: 16px !important;
+  backdrop-filter: blur(22px) saturate(185%) brightness(1.03) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(185%) brightness(1.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  border-bottom: 1px solid rgba(147, 102, 255, 0.16) !important;
+  border-radius: 20px !important;
   box-shadow:
-    0 6px 20px -6px rgba(17, 17, 22, 0.07),
+    0 10px 28px -8px rgba(17, 17, 22, 0.08),
+    0 2px 8px rgba(147, 102, 255, 0.04),
     inset 0 1.5px 1px rgba(255, 255, 255, 0.96) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
   overflow: hidden !important;
@@ -6759,14 +6784,23 @@ select:focus {
   background: linear-gradient(
     145deg,
     rgba(255, 255, 255, 0.9) 0%,
-    rgba(249, 247, 255, 0.72) 100%
+    rgba(255, 255, 255, 0.68) 55%,
+    rgba(247, 245, 255, 0.78) 100%
   ) !important;
   border-color: rgba(147, 102, 255, 0.36) !important;
   transform: translateY(-2px) !important;
   box-shadow:
-    0 12px 26px -6px rgba(17, 17, 22, 0.09),
-    0 2px 10px rgba(147, 102, 255, 0.1),
+    0 14px 32px -8px rgba(17, 17, 22, 0.1),
+    0 4px 12px rgba(147, 102, 255, 0.1),
     inset 0 1.5px 1px rgba(255, 255, 255, 0.98) !important;
+}
+
+.apple-trending-card-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-width: 0 !important;
 }
 
 .apple-trending-card-left {
@@ -6778,10 +6812,26 @@ select:focus {
   overflow: hidden !important;
 }
 
+.apple-trending-rank {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 28px !important;
+  padding: 3px 6px !important;
+  border-radius: 7px !important;
+  background: rgba(17, 17, 22, 0.05) !important;
+  border: 1px solid rgba(17, 17, 22, 0.06) !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  flex-shrink: 0 !important;
+}
+
 .apple-trending-info {
   display: flex !important;
   flex-direction: column !important;
-  gap: 3px !important;
+  gap: 2px !important;
   min-width: 0 !important;
   flex: 1 1 auto !important;
   overflow: hidden !important;
@@ -6789,7 +6839,7 @@ select:focus {
 
 .apple-trending-name {
   margin: 0 !important;
-  font-size: 13.5px !important;
+  font-size: 14px !important;
   font-weight: 700 !important;
   color: #111116 !important;
   letter-spacing: -0.2px !important;
@@ -6800,85 +6850,99 @@ select:focus {
   max-width: 100% !important;
 }
 
-.apple-trending-meta-row {
+.apple-trending-submeta {
   display: flex !important;
   align-items: center !important;
   gap: 5px !important;
-  min-width: 0 !important;
-  flex-wrap: nowrap !important;
-  overflow: hidden !important;
-}
-
-.apple-trending-meta-row .apple-ticker-pill {
-  font-size: 10px !important;
-  padding: 1.5px 6px !important;
-  max-width: 90px !important;
+  font-size: 11.5px !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  flex-shrink: 0 !important;
 }
 
-.apple-trending-meta-row .apple-category-pill {
+.apple-trending-sub-ticker {
+  font-weight: 600 !important;
+  color: #64748b !important;
+}
+
+.apple-trending-sub-dot {
+  color: #94a3b8 !important;
+}
+
+.apple-trending-exchange-tag {
+  background: rgba(17, 17, 22, 0.045) !important;
+  padding: 1px 6px !important;
+  border-radius: 5px !important;
   font-size: 10px !important;
-  padding: 1.5px 6px !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
-.apple-trending-card-right {
+.apple-trending-divider {
+  height: 1px !important;
+  width: 100% !important;
+  background: linear-gradient(
+    90deg,
+    rgba(17, 17, 22, 0.03) 0%,
+    rgba(17, 17, 22, 0.08) 50%,
+    rgba(17, 17, 22, 0.03) 100%
+  ) !important;
+}
+
+.apple-trending-card-bottom {
   display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 8px !important;
-  flex-shrink: 0 !important;
-  margin-left: auto !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  min-width: 0 !important;
 }
 
-.apple-trending-price-group {
+.apple-trending-ltp-col {
   display: flex !important;
   flex-direction: column !important;
-  align-items: flex-end !important;
   gap: 2px !important;
-  flex-shrink: 0 !important;
+  min-width: 0 !important;
+}
+
+.apple-trending-ltp-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.4px !important;
+  color: #64748b !important;
 }
 
 .apple-trending-price-row {
   display: flex !important;
   align-items: baseline !important;
-  gap: 5px !important;
+  gap: 6px !important;
 }
 
 .apple-trending-price {
-  font-size: 13.5px !important;
+  font-size: 18px !important;
   font-weight: 800 !important;
   color: #111116 !important;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
-  letter-spacing: -0.2px !important;
-  line-height: 1.2 !important;
+  letter-spacing: -0.4px !important;
+  line-height: 1.15 !important;
+  font-variant-numeric: tabular-nums !important;
   white-space: nowrap !important;
-}
-
-.apple-trending-card-right .apple-return-pill {
-  margin: 0 !important;
-  padding: 2px 7px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  white-space: nowrap !important;
-  line-height: 1.2 !important;
-  flex-shrink: 0 !important;
 }
 
 .apple-trending-chevron {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 28px !important;
+  height: 28px !important;
   border-radius: 50% !important;
-  background: #f4f0ff !important;
-  color: #9366FF !important;
-  border: 1px solid rgba(147, 102, 255, 0.2) !important;
+  background: rgba(17, 17, 22, 0.04) !important;
+  color: #64748b !important;
+  border: 1px solid rgba(17, 17, 22, 0.07) !important;
   flex-shrink: 0 !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
@@ -6892,34 +6956,22 @@ select:focus {
 
 @media (max-width: 480px) {
   .apple-trending-card {
-    padding: 10px 10px !important;
-    gap: 8px !important;
-  }
-
-  .apple-trending-card-left {
-    gap: 7px !important;
+    padding: 14px 14px !important;
+    gap: 10px !important;
+    border-radius: 18px !important;
   }
 
   .apple-trending-name {
-    font-size: 12.5px !important;
-  }
-
-  .apple-trending-price {
     font-size: 13px !important;
   }
 
-  .apple-trending-card-right {
-    gap: 6px !important;
-  }
-
-  .apple-trending-card-right .apple-return-pill {
-    font-size: 10px !important;
-    padding: 1px 5px !important;
+  .apple-trending-price {
+    font-size: 16.5px !important;
   }
 
   .apple-trending-chevron {
-    width: 22px !important;
-    height: 22px !important;
+    width: 24px !important;
+    height: 24px !important;
   }
 }
 

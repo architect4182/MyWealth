@@ -124,6 +124,9 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
         const absChange = Math.abs(item.change || 0);
         const isUsd = item.currency === "USD";
         const isConverted = isUsd && showUsdInRupees;
+        const exchangeOrSub =
+          item.subCategory ||
+          (item.market ? item.market.replace(/\s*\(.*?\)/g, "").trim() : "");
 
         return (
           <div
@@ -141,55 +144,55 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
               }
             }}
           >
-            <div className="apple-trending-card-left">
-              <span
-                className={`apple-trending-rank ${
-                  item.rank === 1
-                    ? "rank-gold"
-                    : item.rank === 2
-                    ? "rank-silver"
-                    : item.rank === 3
-                    ? "rank-bronze"
-                    : ""
-                }`}
-              >
-                #{item.rank}
-              </span>
+            {/* Top Tier: Rank Pill + Square Logo + Name / Ticker · Market + Chevron */}
+            <div className="apple-trending-card-top">
+              <div className="apple-trending-card-left">
+                <span className="apple-trending-rank">#{item.rank}</span>
 
-              <div
-                className="apple-avatar-squircle"
-                style={{ width: "36px", height: "36px", minWidth: "36px" }}
-              >
-                <StockLogoAvatar
-                  name={item.name}
-                  ticker={ticker}
-                  category={item.category}
-                />
+                <div
+                  className="apple-avatar-squircle"
+                  style={{ width: "38px", height: "38px", minWidth: "38px", borderRadius: "10px" }}
+                >
+                  <StockLogoAvatar
+                    name={item.name}
+                    ticker={ticker}
+                    category={item.category}
+                  />
+                </div>
+
+                <div className="apple-trending-info">
+                  <h4 className="apple-trending-name" title={item.name}>
+                    {item.name}
+                  </h4>
+                  <div className="apple-trending-submeta">
+                    <span className="apple-trending-sub-ticker">{ticker}</span>
+                    {exchangeOrSub && (
+                      <>
+                        <span className="apple-trending-sub-dot">•</span>
+                        <span className="apple-trending-exchange-tag">{exchangeOrSub}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="apple-trending-info">
-                <h4 className="apple-trending-name" title={item.name}>
-                  {item.name}
-                </h4>
-                <div className="apple-trending-meta-row">
-                  <span className="apple-ticker-pill">{ticker}</span>
-                  {item.subCategory ? (
-                    <span className="apple-category-pill">
-                      {item.subCategory}
-                    </span>
-                  ) : (
-                    item.market && (
-                      <span className="apple-category-pill">
-                        {item.market}
-                      </span>
-                    )
-                  )}
-                </div>
+              <div className="apple-trending-chevron" title="Click to view live chart & details">
+                <ChevronRight size={14} />
               </div>
             </div>
 
-            <div className="apple-trending-card-right">
-              <div className="apple-trending-price-group">
+            <div className="apple-trending-divider" />
+
+            {/* Bottom Tier: LTP Micro-Label + Bold Price (Left) | Return Badge (Right) */}
+            <div className="apple-trending-card-bottom">
+              <div className="apple-trending-ltp-col">
+                <span className="apple-trending-ltp-label">
+                  {type === "mf"
+                    ? "NAV (INR)"
+                    : isConverted
+                    ? "LTP (INR)"
+                    : `LTP (${item.currency})`}
+                </span>
                 <div className="apple-trending-price-row">
                   <span className="apple-trending-price">
                     {money(item.price, item.currency)}
@@ -197,30 +200,25 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
                   {isConverted && (
                     <span
                       className="apple-val-usd-pill"
-                      style={{ margin: 0, fontSize: "9px", padding: "1px 5px", lineHeight: "1.2" }}
+                      style={{ margin: 0, fontSize: "9.5px", padding: "1.5px 6px", lineHeight: "1.2" }}
                       title={`Original: $${item.price.toFixed(2)} USD (converted at live 1 USD = ₹${usdInrRate.toFixed(2)})`}
                     >
                       ${item.price.toFixed(2)}
                     </span>
                   )}
                 </div>
-                <div
-                  className={`apple-return-pill ${
-                    isPos ? "positive" : "negative"
-                  }`}
-                  style={{ margin: 0, padding: "2px 7px", fontSize: "11px" }}
-                >
-                  {isPos ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                  <span>
-                    {isPos ? "+" : "-"}
-                    {money(absChange, item.currency)}{" "}
-                    ({isPos ? "+" : ""}{item.changePercent.toFixed(2)}%)
-                  </span>
-                </div>
               </div>
 
-              <div className="apple-trending-chevron" title="Click to view live chart & details">
-                <ChevronRight size={13} />
+              <div
+                className={`apple-return-pill ${isPos ? "positive" : "negative"}`}
+                style={{ margin: 0, padding: "4px 10px", fontSize: "11.5px", fontWeight: 700 }}
+              >
+                {isPos ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                <span>
+                  {isPos ? "+" : "-"}
+                  {money(absChange, item.currency)}{" "}
+                  ({isPos ? "+" : ""}{item.changePercent.toFixed(2)}%)
+                </span>
               </div>
             </div>
           </div>
@@ -240,9 +238,7 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
           <div>
             <div className="apple-trending-title-row">
               <h3 className="apple-trending-title">{title}</h3>
-              <span className="apple-trending-top-badge">
-                {type === "stocks" ? "Top 10" : "Top 10"}
-              </span>
+              <span className="apple-trending-top-badge">Top 10</span>
               {(isLoading || isRefreshing) && (
                 <span className="apple-trending-live-sync-pill">
                   <span className="apple-sync-pulse-dot" />
@@ -314,7 +310,19 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
           ))}
         </div>
       ) : type === "mf" ? (
-        renderGrid(items)
+        <div className="apple-trending-sub-block">
+          <div className="apple-trending-sub-header">
+            <div className="apple-trending-sub-title">
+              <strong>Top 10 Mutual Funds</strong>
+              <span className="apple-market-pill">AMFI</span>
+            </div>
+            <span className="apple-count-caption">
+              <TrendingUp size={12} />
+              <span>10 Most Popular Schemes Today</span>
+            </span>
+          </div>
+          {renderGrid(items)}
+        </div>
       ) : (
         <div className="apple-trending-markets-stack">
           {/* 1. India Top 10 Section */}
@@ -322,11 +330,13 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
             <div className="apple-trending-sub-block">
               <div className="apple-trending-sub-header">
                 <div className="apple-trending-sub-title">
-                  <span className="apple-market-flag">🇮🇳</span>
                   <strong>Top 10 Indian Stocks</strong>
                   <span className="apple-market-pill">NSE / BSE</span>
                 </div>
-                <span className="apple-count-caption">10 Most Active Today</span>
+                <span className="apple-count-caption">
+                  <TrendingUp size={12} />
+                  <span>10 Most Active Today by Traded Volume</span>
+                </span>
               </div>
               {renderGrid(
                 indiaItems.length > 0
@@ -340,11 +350,10 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
           {(marketTab === "both" || marketTab === "us") && (
             <div
               className="apple-trending-sub-block"
-              style={{ marginTop: marketTab === "both" ? "10px" : "0" }}
+              style={{ marginTop: marketTab === "both" ? "14px" : "0" }}
             >
               <div className="apple-trending-sub-header">
                 <div className="apple-trending-sub-title">
-                  <span className="apple-market-flag">🇺🇸</span>
                   <strong>Top 10 US Equities</strong>
                   <span className="apple-market-pill">NASDAQ / NYSE</span>
                   {showUsdInRupees && (
@@ -363,7 +372,10 @@ export const TrendingSection = React.memo(function TrendingSection({ type }: { t
                     </span>
                   )}
                 </div>
-                <span className="apple-count-caption">10 Most Active Today</span>
+                <span className="apple-count-caption">
+                  <TrendingUp size={12} />
+                  <span>10 Most Active Today by Traded Volume</span>
+                </span>
               </div>
               {renderGrid(
                 usItems.length > 0
