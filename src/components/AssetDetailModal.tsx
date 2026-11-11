@@ -489,21 +489,6 @@ export function AssetDetailModal() {
                       {viewingAsset.currency === "USD" ? "$" : "₹"}
                       {referencePrice.toFixed(2)}
                     </span>
-                    {!marketStatus.isOpen && viewingAsset.category !== "Mutual Funds" && (
-                      <span className="stock-market-closed-notice-pill">
-                        ● Market is {marketStatus.status === "HOLIDAY" ? "on holiday" : "closed"} • {marketStatus.detail} (Single call made)
-                      </span>
-                    )}
-                    {marketStatus.isOpen && viewingAsset.category !== "Mutual Funds" && (
-                      <span className="stock-market-live-notice-pill">
-                        ● Market is open • Live polling active
-                      </span>
-                    )}
-                    {viewingAsset.category === "Mutual Funds" && (
-                      <span className="stock-market-closed-notice-pill">
-                        ● Daily NAV • Loaded once
-                      </span>
-                    )}
                   </div>
                 )}
               </div>

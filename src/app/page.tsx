@@ -1,23 +1,41 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   TrendingUp,
   TrendingDown,
   RefreshCw,
-  LayoutDashboard,
-  ChartNoAxesCombined,
-  Wallet,
+  Award,
+  Layers,
+  Building2,
+  Scale,
+  ArrowUpRight,
+  Plus,
+  BarChart3,
   Repeat,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { Header } from "@/components/Header";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
-import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
 import { MarketTimingBadge } from "@/components/MarketBadge";
+import { StockLogoAvatar, BrokerLogoAvatar, getStockTicker } from "@/components/Logos";
+import { getNextSipDate } from "@/utils/sip";
 import { Footer } from "@/components/Footer";
+import { AssetPosition } from "@/types/portfolio";
+
+interface EnrichedAssetMetric {
+  asset: AssetPosition;
+  ticker: string;
+  investedLocal: number;
+  currentLocal: number;
+  pnlLocal: number;
+  pnlPct: number;
+  currentInr: number;
+  investedInr: number;
+  weightPct: number;
+}
 
 export default function Home() {
   const {
@@ -37,6 +55,7 @@ export default function Home() {
     pctUS,
     pctMF,
     pctGold,
+    usdInrRate,
     indianMarket,
     usMarket,
     money,
@@ -45,54 +64,113 @@ export default function Home() {
     priceRefreshMessage,
     totalMonthlySipINR,
     activeSipCount,
+    openAssetDetail,
+    setModal,
   } = usePortfolio();
-  const [overviewSubTab, setOverviewSubTab] = useState<"all" | "stocks" | "mf" | "sip">("all");
 
-  const sipAssets = useMemo(() => assets.filter((a) => a.isSip), [assets]);
+  // Compute rich portfolio intelligence metrics directly from user's real investments
+  const insights = useMemo(() => {
+    if (assets.length === 0) {
+      return {
+        enriched: [] as EnrichedAssetMetric[],
+        topGainer: null as EnrichedAssetMetric | null,
+        topLoser: null as EnrichedAssetMetric | null,
+        largestPosition: null as EnrichedAssetMetric | null,
+        winnersCount: 0,
+        losersCount: 0,
+        winRatePct: 0,
+        brokerGroups: [] as { name: string; count: number; totalInr: number; sharePct: number }[],
+        inrTotal: 0,
+        usdTotalInr: 0,
+        usdTotalNative: 0,
+        sipAssets: [] as AssetPosition[],
+      };
+    }
 
-  const displayedAssets = useMemo(() => {
-    if (overviewSubTab === "stocks") return equities;
-    if (overviewSubTab === "mf") return mutualFunds;
-    if (overviewSubTab === "sip") return sipAssets;
-    return assets;
-  }, [overviewSubTab, equities, mutualFunds, sipAssets, assets]);
+    const enriched: EnrichedAssetMetric[] = assets.map((asset) => {
+      const investedLocal =
+        asset.investedAmount !== undefined && asset.investedAmount > 0
+          ? asset.investedAmount
+          : asset.quantity * asset.buyPrice;
+      const currentLocal = asset.quantity * asset.currentPrice;
+      const pnlLocal = currentLocal - investedLocal;
+      const pnlPct = investedLocal > 0 ? (pnlLocal / investedLocal) * 100 : 0;
+      const mult = asset.currency === "USD" ? usdInrRate : 1;
+      const currentInr = currentLocal * mult;
+      const investedInr = investedLocal * mult;
+      const weightPct = totalCurrentINR > 0 ? (currentInr / totalCurrentINR) * 100 : 0;
 
-  const filterTabs = [
-    {
-      key: "all",
-      label: "All Assets",
-      count: assets.length,
-      icon: <LayoutDashboard size={13} />,
-    },
-    {
-      key: "stocks",
-      label: "Stocks",
-      count: equities.length,
-      icon: <ChartNoAxesCombined size={13} />,
-    },
-    {
-      key: "mf",
-      label: "Mutual Funds",
-      count: mutualFunds.length,
-      icon: <Wallet size={13} />,
-    },
-    ...(sipAssets.length > 0
-      ? [
-        {
-          key: "sip",
-          label: "Active SIPs",
-          count: sipAssets.length,
-          icon: <Repeat size={13} />,
-        },
-      ]
-      : []),
-  ];
+      return {
+        asset,
+        ticker: getStockTicker(asset.name, asset.category),
+        investedLocal,
+        currentLocal,
+        pnlLocal,
+        pnlPct,
+        currentInr,
+        investedInr,
+        weightPct,
+      };
+    });
+
+    const sortedByReturn = [...enriched].sort((a, b) => b.pnlPct - a.pnlPct);
+    const sortedByWeight = [...enriched].sort((a, b) => b.currentInr - a.currentInr);
+
+    const winners = enriched.filter((e) => e.pnlLocal > 0);
+    const losers = enriched.filter((e) => e.pnlLocal < 0);
+    const winRatePct = enriched.length > 0 ? (winners.length / enriched.length) * 100 : 0;
+
+    // Group by Broker / Platform
+    const brokerMap = new Map<string, { count: number; totalInr: number }>();
+    for (const item of enriched) {
+      const brokerKey = item.asset.brokerApp?.trim() || "Direct / Unassigned";
+      const prev = brokerMap.get(brokerKey) || { count: 0, totalInr: 0 };
+      brokerMap.set(brokerKey, {
+        count: prev.count + 1,
+        totalInr: prev.totalInr + item.currentInr,
+      });
+    }
+    const brokerGroups = Array.from(brokerMap.entries())
+      .map(([name, info]) => ({
+        name,
+        count: info.count,
+        totalInr: info.totalInr,
+        sharePct: totalCurrentINR > 0 ? (info.totalInr / totalCurrentINR) * 100 : 0,
+      }))
+      .sort((a, b) => b.totalInr - a.totalInr);
+
+    const inrTotal = enriched
+      .filter((e) => e.asset.currency === "INR")
+      .reduce((s, e) => s + e.currentInr, 0);
+    const usdItems = enriched.filter((e) => e.asset.currency === "USD");
+    const usdTotalInr = usdItems.reduce((s, e) => s + e.currentInr, 0);
+    const usdTotalNative = usdItems.reduce((s, e) => s + e.currentLocal, 0);
+
+    return {
+      enriched: sortedByReturn,
+      topGainer: sortedByReturn[0] || null,
+      topLoser: sortedByReturn[sortedByReturn.length - 1] || null,
+      largestPosition: sortedByWeight[0] || null,
+      winnersCount: winners.length,
+      losersCount: losers.length,
+      winRatePct,
+      brokerGroups,
+      inrTotal,
+      usdTotalInr,
+      usdTotalNative,
+      sipAssets: assets.filter((a) => a.isSip),
+    };
+  }, [assets, totalCurrentINR, usdInrRate]);
+
+  const maxAbsPnlPct = useMemo(() => {
+    if (insights.enriched.length === 0) return 10;
+    return Math.max(5, ...insights.enriched.map((e) => Math.abs(e.pnlPct)));
+  }, [insights.enriched]);
 
   return (
     <main className="apple-portfolio-app">
       {/* 1. Apple Floating Capsule Header with Route Nav */}
-      <Header
-      />
+      <Header />
 
       {/* 2. Floating Session Live Prices Notification */}
       <DynamicIsland />
@@ -100,13 +178,15 @@ export default function Home() {
       {/* 3. Main Stage Layout */}
       <div className="apple-stage-layout full-width">
         <section className="apple-content-stage">
-          {/* OVERVIEW BENTO HERO STAGE */}
+          {/* OVERVIEW BENTO HERO STAGE: Portfolio Valuation + Asset Allocation */}
           <div className="apple-bento-hero">
             {/* Bento Card 1: Apple Wallet Net Worth Showcase */}
             <div className="apple-wallet-hero">
               <div className="apple-wallet-header">
-                <div className="apple-eyebrow-rwhow" style={{ flexWrap: "wrap", gap: "6px" }}>
+                <div className="apple-eyebrow-row" style={{ flexWrap: "wrap", gap: "6px" }}>
                   <span className="apple-hero-eyebrow">PORTFOLIO VALUATION</span>
+                  <MarketTimingBadge status={indianMarket} />
+                  <MarketTimingBadge status={usMarket} />
                 </div>
                 <button
                   type="button"
@@ -133,8 +213,7 @@ export default function Home() {
 
               <div className="apple-hero-return-row">
                 <div
-                  className={`apple-hero-return-badge ${totalPnlINR >= 0 ? "positive" : "negative"
-                    }`}
+                  className={`apple-hero-return-badge ${totalPnlINR >= 0 ? "positive" : "negative"}`}
                 >
                   {totalPnlINR >= 0 ? (
                     <TrendingUp size={15} />
@@ -324,18 +403,355 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 4. APPLE HOLDINGS SECTION */}
-          <HoldingsTableAndCards
-            assets={displayedAssets}
-            filterTabs={filterTabs}
-            activeFilterTab={overviewSubTab}
-            onFilterTabChange={(key) =>
-              setOverviewSubTab(key as "all" | "stocks" | "mf")
-            }
-            emptyTitle="No investments recorded"
-            emptyDescription="Add an Indian stock, US equity, or mutual fund position to start tracking."
-            defaultAddCategory="Indian Equities"
-          />
+          {/* 4. PORTFOLIO INTELLIGENCE & INSIGHTS (Derived from user's real investments) */}
+          {assets.length === 0 ? (
+            <div className="empty-state" style={{ marginTop: "8px" }}>
+              <div className="empty-icon">
+                <BarChart3 size={24} />
+              </div>
+              <strong>No Portfolio Insights Yet</strong>
+              <p>Add stocks or mutual funds to unlock performance analytics, broker breakdown, and diversification health.</p>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => setModal(true)}
+              >
+                <Plus size={15} /> Add your first investment
+              </button>
+            </div>
+          ) : (
+            <div className="overview-insights-stack">
+              {/* Row 1: 3-Column Portfolio Analytics Cards */}
+              <div className="overview-insights-grid">
+                {/* Insight Card 1: Winners vs Losers & Top Performers */}
+                <div className="overview-insight-card">
+                  <div className="overview-card-head">
+                    <div className="overview-card-title-row">
+                      <span className="overview-card-icon purple">
+                        <Award size={15} />
+                      </span>
+                      <div>
+                        <h3 className="overview-card-title">Performance Insights</h3>
+                        <p className="overview-card-sub">Holdings profitability & leaders</p>
+                      </div>
+                    </div>
+                    <span className="overview-chip-badge">
+                      {insights.winRatePct.toFixed(0)}% Win Rate
+                    </span>
+                  </div>
+
+                  {/* Win / Loss Ratio Bar */}
+                  <div className="overview-ratio-block">
+                    <div className="overview-ratio-labels">
+                      <span style={{ color: "#15803d", fontWeight: 600 }}>
+                        {insights.winnersCount} Profitable
+                      </span>
+                      <span style={{ color: "#dc2626", fontWeight: 600 }}>
+                        {insights.losersCount} In Loss
+                      </span>
+                    </div>
+                    <div className="overview-ratio-bar">
+                      <div
+                        className="overview-ratio-fill"
+                        style={{ width: `${insights.winRatePct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Top Performer & Laggard */}
+                  <div className="overview-highlight-rows">
+                    {insights.topGainer && (
+                      <div
+                        className="overview-highlight-item"
+                        onClick={() => openAssetDetail(insights.topGainer!.asset)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openAssetDetail(insights.topGainer!.asset);
+                          }
+                        }}
+                      >
+                        <div className="overview-highlight-left">
+                          <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "50%" }}>
+                            <StockLogoAvatar
+                              name={insights.topGainer.asset.name}
+                              ticker={insights.topGainer.ticker}
+                              category={insights.topGainer.asset.category}
+                            />
+                          </div>
+                          <div>
+                            <span className="overview-micro-tag">TOP GAINER</span>
+                            <div className="overview-item-name">{insights.topGainer.asset.name}</div>
+                          </div>
+                        </div>
+                        <div className="overview-highlight-right positive">
+                          <span>
+                            {insights.topGainer.pnlLocal >= 0 ? "+" : ""}
+                            {money(insights.topGainer.pnlLocal, insights.topGainer.asset.currency)}
+                          </span>
+                          <small>
+                            {insights.topGainer.pnlPct >= 0 ? "+" : ""}
+                            {insights.topGainer.pnlPct.toFixed(2)}%
+                          </small>
+                        </div>
+                      </div>
+                    )}
+
+                    {insights.topLoser &&
+                      insights.topLoser.asset.id !== insights.topGainer?.asset.id && (
+                        <div
+                          className="overview-highlight-item"
+                          onClick={() => openAssetDetail(insights.topLoser!.asset)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              openAssetDetail(insights.topLoser!.asset);
+                            }
+                          }}
+                        >
+                          <div className="overview-highlight-left">
+                            <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "50%" }}>
+                              <StockLogoAvatar
+                                name={insights.topLoser.asset.name}
+                                ticker={insights.topLoser.ticker}
+                                category={insights.topLoser.asset.category}
+                              />
+                            </div>
+                            <div>
+                              <span className="overview-micro-tag">
+                                {insights.topLoser.pnlLocal < 0 ? "LARGEST DRAG" : "STEADY GAINER"}
+                              </span>
+                              <div className="overview-item-name">{insights.topLoser.asset.name}</div>
+                            </div>
+                          </div>
+                          <div
+                            className={`overview-highlight-right ${
+                              insights.topLoser.pnlLocal >= 0 ? "positive" : "negative"
+                            }`}
+                          >
+                            <span>
+                              {insights.topLoser.pnlLocal >= 0 ? "+" : ""}
+                              {money(insights.topLoser.pnlLocal, insights.topLoser.asset.currency)}
+                            </span>
+                            <small>
+                              {insights.topLoser.pnlPct >= 0 ? "+" : ""}
+                              {insights.topLoser.pnlPct.toFixed(2)}%
+                            </small>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                </div>
+
+                {/* Insight Card 2: Portfolio Concentration & Currency Exposure */}
+                <div className="overview-insight-card">
+                  <div className="overview-card-head">
+                    <div className="overview-card-title-row">
+                      <span className="overview-card-icon blue">
+                        <Scale size={15} />
+                      </span>
+                      <div>
+                        <h3 className="overview-card-title">Concentration & FX Mix</h3>
+                        <p className="overview-card-sub">Single-stock risk & currency exposure</p>
+                      </div>
+                    </div>
+                    {insights.largestPosition && (
+                      <span
+                        className={`overview-chip-badge ${
+                          insights.largestPosition.weightPct >= 40 ? "warn" : "ok"
+                        }`}
+                      >
+                        {insights.largestPosition.weightPct >= 40
+                          ? "Concentrated"
+                          : insights.largestPosition.weightPct >= 25
+                          ? "Balanced"
+                          : "Well Spread"}
+                      </span>
+                    )}
+                  </div>
+
+                  {insights.largestPosition && (
+                    <div
+                      className="overview-concentration-box"
+                      onClick={() => openAssetDetail(insights.largestPosition!.asset)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openAssetDetail(insights.largestPosition!.asset);
+                        }
+                      }}
+                    >
+                      <div className="overview-conc-top">
+                        <span className="overview-micro-tag">HEAVIEST POSITION</span>
+                        <strong>{insights.largestPosition.weightPct.toFixed(1)}% of Net Worth</strong>
+                      </div>
+                      <div className="overview-conc-name">
+                        <span>{insights.largestPosition.asset.name}</span>
+                        <span>{money(insights.largestPosition.currentInr)}</span>
+                      </div>
+                      <div className="overview-ratio-bar">
+                        <div
+                          className="overview-ratio-fill purple"
+                          style={{ width: `${Math.min(100, insights.largestPosition.weightPct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="overview-kv-list">
+                    <div className="overview-kv-row">
+                      <span>Domestic Currency (INR)</span>
+                      <strong>
+                        {money(insights.inrTotal)} ({totalCurrentINR > 0 ? ((insights.inrTotal / totalCurrentINR) * 100).toFixed(1) : "0.0"}%)
+                      </strong>
+                    </div>
+                    <div className="overview-kv-row">
+                      <span>Foreign Exposure (USD)</span>
+                      <strong>
+                        ${insights.usdTotalNative.toFixed(2)} ({totalCurrentINR > 0 ? ((insights.usdTotalInr / totalCurrentINR) * 100).toFixed(1) : "0.0"}%)
+                      </strong>
+                    </div>
+                    <div className="overview-kv-row">
+                      <span>Live USD / INR Rate</span>
+                      <strong>1 USD = ₹{usdInrRate.toFixed(2)}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Insight Card 3: Broker / App Platform Custody */}
+                <div className="overview-insight-card">
+                  <div className="overview-card-head">
+                    <div className="overview-card-title-row">
+                      <span className="overview-card-icon emerald">
+                        <Building2 size={15} />
+                      </span>
+                      <div>
+                        <h3 className="overview-card-title">Broker Custody Split</h3>
+                        <p className="overview-card-sub">Where your investments are held</p>
+                      </div>
+                    </div>
+                    <span className="overview-chip-badge">
+                      {insights.brokerGroups.length}{" "}
+                      {insights.brokerGroups.length === 1 ? "Platform" : "Platforms"}
+                    </span>
+                  </div>
+
+                  <div className="overview-broker-list">
+                    {insights.brokerGroups.map((b) => (
+                      <div key={b.name} className="overview-broker-row">
+                        <div className="overview-broker-left">
+                          <BrokerLogoAvatar brokerName={b.name} size={22} />
+                          <div>
+                            <div className="overview-broker-name">{b.name}</div>
+                            <div className="overview-broker-meta">
+                              {b.count} {b.count === 1 ? "holding" : "holdings"} · {b.sharePct.toFixed(1)}%
+                            </div>
+                          </div>
+                        </div>
+                        <strong className="overview-broker-val">{money(b.totalInr)}</strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  {insights.sipAssets.length > 0 && (
+                    <div className="overview-sip-summary-bar">
+                      <Repeat size={13} style={{ color: "#7c3aed", flexShrink: 0 }} />
+                      <span>
+                        <strong>{insights.sipAssets.length} Active SIP</strong> · Next auto-debit on{" "}
+                        {getNextSipDate(insights.sipAssets[0].sipDay || 5)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 2: Returns Leaderboard Strip + Quick Navigation */}
+              <div className="overview-performance-card">
+                <div className="overview-perf-header">
+                  <div>
+                    <h3 className="overview-card-title" style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                      <Layers size={15} style={{ color: "#7c3aed" }} /> Holding Return Leaderboard
+                    </h3>
+                    <p className="overview-card-sub">
+                      Click any investment to inspect live chart & ledger, or open dedicated category tabs
+                    </p>
+                  </div>
+                  <div className="overview-quick-links">
+                    <Link href="/stocks" className="overview-route-pill">
+                      Stocks ({equities.length}) <ArrowUpRight size={13} />
+                    </Link>
+                    <Link href="/mutual-funds" className="overview-route-pill">
+                      Mutual Funds ({mutualFunds.length}) <ArrowUpRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="overview-leaderboard-list">
+                  {insights.enriched.map((item) => {
+                    const isPos = item.pnlPct >= 0;
+                    const barWidth = Math.min(100, Math.max(6, (Math.abs(item.pnlPct) / maxAbsPnlPct) * 100));
+                    return (
+                      <div
+                        key={item.asset.id}
+                        className="overview-leader-row"
+                        onClick={() => openAssetDetail(item.asset)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            openAssetDetail(item.asset);
+                          }
+                        }}
+                      >
+                        <div className="overview-leader-identity">
+                          <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "50%" }}>
+                            <StockLogoAvatar
+                              name={item.asset.name}
+                              ticker={item.ticker}
+                              category={item.asset.category}
+                            />
+                          </div>
+                          <div className="overview-leader-text">
+                            <span className="overview-leader-name">{item.asset.name}</span>
+                            <span className="overview-leader-meta">
+                              {item.ticker} · {item.weightPct.toFixed(1)}% weight
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="overview-leader-bar-wrap">
+                          <div className="overview-leader-bar-track">
+                            <div
+                              className={`overview-leader-bar-fill ${isPos ? "positive" : "negative"}`}
+                              style={{ width: `${barWidth}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className={`overview-leader-pnl ${isPos ? "positive" : "negative"}`}>
+                          <span>
+                            {isPos ? "+" : ""}
+                            {money(item.pnlLocal, item.asset.currency)}
+                          </span>
+                          <small>
+                            {isPos ? "+" : ""}
+                            {item.pnlPct.toFixed(2)}%
+                          </small>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
