@@ -35,12 +35,20 @@ export default function MutualFundsPage() {
   } = usePortfolio();
   const [mfSubTab, setMfSubTab] = useState<"all" | "equity" | "focused" | "sip">("all");
 
-  const totalUnits = useMemo(
-    () => mutualFunds.reduce((sum, a) => sum + a.quantity, 0),
-    [mutualFunds]
-  );
-
   const mfSipList = useMemo(() => mutualFunds.filter((f) => f.isSip), [mutualFunds]);
+  const mfLumpsumList = useMemo(() => mutualFunds.filter((f) => !f.isSip), [mutualFunds]);
+
+  const calcNetPnl = (list: typeof mutualFunds) =>
+    list.reduce((sum, a) => {
+      const invested =
+        a.investedAmount !== undefined && a.investedAmount > 0
+          ? a.investedAmount
+          : a.quantity * a.buyPrice;
+      return sum + (a.quantity * a.currentPrice - invested);
+    }, 0);
+
+  const mfSipPnl = useMemo(() => calcNetPnl(mfSipList), [mfSipList]);
+  const mfLumpsumPnl = useMemo(() => calcNetPnl(mfLumpsumList), [mfLumpsumList]);
 
   const displayedFunds = useMemo(() => {
     if (mfSubTab === "sip") return mfSipList;
@@ -184,15 +192,37 @@ export default function MutualFundsPage() {
                   </span>
                 </div>
                 <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Total Units</span>
-                  <span className="apple-stat-chip-val">
-                    {totalUnits.toFixed(2)} units
+                  <span className="apple-stat-chip-label">SIP P&L</span>
+                  <span
+                    className="apple-stat-chip-val"
+                    style={{
+                      color:
+                        mfSipPnl > 0
+                          ? "#16a34a"
+                          : mfSipPnl < 0
+                          ? "#dc2626"
+                          : undefined,
+                    }}
+                  >
+                    {mfSipPnl > 0 ? `+${money(mfSipPnl, "INR")}` : money(mfSipPnl, "INR")}
                   </span>
                 </div>
                 <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Avg NAV Cost</span>
-                  <span className="apple-stat-chip-val">
-                    ₹{(totalUnits > 0 ? mfInvested / totalUnits : 0).toFixed(2)}
+                  <span className="apple-stat-chip-label">Lumpsum P&L</span>
+                  <span
+                    className="apple-stat-chip-val"
+                    style={{
+                      color:
+                        mfLumpsumPnl > 0
+                          ? "#16a34a"
+                          : mfLumpsumPnl < 0
+                          ? "#dc2626"
+                          : undefined,
+                    }}
+                  >
+                    {mfLumpsumPnl > 0
+                      ? `+${money(mfLumpsumPnl, "INR")}`
+                      : money(mfLumpsumPnl, "INR")}
                   </span>
                 </div>
               </div>
