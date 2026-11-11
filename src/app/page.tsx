@@ -177,21 +177,39 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">Indian Profits</span>
+                  <span className="apple-stat-chip-label">Indian P&L</span>
                   <span
                     className="apple-stat-chip-val"
-                    style={{ color: indianProfitsOnly > 0 ? "#16a34a" : undefined }}
+                    style={{
+                      color:
+                        indianProfitsOnly > 0
+                          ? "#16a34a"
+                          : indianProfitsOnly < 0
+                          ? "#dc2626"
+                          : undefined,
+                    }}
                   >
-                    {indianProfitsOnly > 0 ? `+${money(indianProfitsOnly, "INR")}` : money(0, "INR")}
+                    {indianProfitsOnly > 0
+                      ? `+${money(indianProfitsOnly, "INR")}`
+                      : money(indianProfitsOnly, "INR")}
                   </span>
                 </div>
                 <div className="apple-stat-chip">
-                  <span className="apple-stat-chip-label">US Profits</span>
+                  <span className="apple-stat-chip-label">US P&L</span>
                   <span
                     className="apple-stat-chip-val"
-                    style={{ color: usProfitsOnly > 0 ? "#16a34a" : undefined }}
+                    style={{
+                      color:
+                        usProfitsOnly > 0
+                          ? "#16a34a"
+                          : usProfitsOnly < 0
+                          ? "#dc2626"
+                          : undefined,
+                    }}
                   >
-                    {usProfitsOnly > 0 ? `+${money(usProfitsOnly, "USD")}` : money(0, "USD")}
+                    {usProfitsOnly > 0
+                      ? `+${money(usProfitsOnly, "USD")}`
+                      : money(usProfitsOnly, "USD")}
                   </span>
                 </div>
               </div>

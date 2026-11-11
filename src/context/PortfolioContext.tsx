@@ -768,34 +768,23 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     [assets, usdInrRate]
   );
 
-  // Sum of positive profits only (pnl > 0), separated for Indian (INR) and US (USD) holdings
+  // Net Profit / Loss (gains minus losses), separated for Indian (INR) and US (USD) holdings
+  const calcNetPnl = (list: AssetPosition[]) =>
+    list.reduce((sum, a) => {
+      const invested =
+        a.investedAmount !== undefined && a.investedAmount > 0
+          ? a.investedAmount
+          : a.quantity * a.buyPrice;
+      return sum + (a.quantity * a.currentPrice - invested);
+    }, 0);
+
   const indianProfitsOnly = useMemo(
-    () =>
-      assets
-        .filter((a) => a.category !== "US Stocks" && a.currency === "INR")
-        .reduce((sum, a) => {
-          const invested =
-            a.investedAmount !== undefined && a.investedAmount > 0
-              ? a.investedAmount
-              : a.quantity * a.buyPrice;
-          const pnl = a.quantity * a.currentPrice - invested;
-          return pnl > 0 ? sum + pnl : sum;
-        }, 0),
+    () => calcNetPnl(assets.filter((a) => a.category !== "US Stocks" && a.currency === "INR")),
     [assets]
   );
 
   const usProfitsOnly = useMemo(
-    () =>
-      assets
-        .filter((a) => a.category === "US Stocks" || a.currency === "USD")
-        .reduce((sum, a) => {
-          const invested =
-            a.investedAmount !== undefined && a.investedAmount > 0
-              ? a.investedAmount
-              : a.quantity * a.buyPrice;
-          const pnl = a.quantity * a.currentPrice - invested;
-          return pnl > 0 ? sum + pnl : sum;
-        }, 0),
+    () => calcNetPnl(assets.filter((a) => a.category === "US Stocks" || a.currency === "USD")),
     [assets]
   );
   const mfVal = useMemo(
