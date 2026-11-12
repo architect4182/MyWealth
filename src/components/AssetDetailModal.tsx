@@ -637,7 +637,7 @@ function AssetDetailModalInner({
                           cy={lastCoordinate.y}
                           r={3.5}
                           fill={strokeColor}
-                          stroke="#F5F2EA"
+                          stroke="#FFFFFF"
                           strokeWidth={1.8}
                         />
                       </g>
@@ -668,7 +668,7 @@ function AssetDetailModalInner({
                           cy={hoverPosition.y}
                           r={4}
                           fill={strokeColor}
-                          stroke="#F5F2EA"
+                          stroke="#FFFFFF"
                           strokeWidth={2}
                         />
                       </g>
