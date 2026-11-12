@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { PortfolioProvider } from "@/context/PortfolioContext";
 import { PersistentHeader } from "@/components/PersistentHeader";
+import { PageTransition } from "@/components/PageTransition";
 
 export const metadata: Metadata = {
   title: "MyWealth",
@@ -26,7 +27,7 @@ export default function RootLayout({
           <body className="min-h-screen flex flex-col">
             <PortfolioProvider>
               <PersistentHeader />
-              {children}
+              <PageTransition>{children}</PageTransition>
             </PortfolioProvider>
           </body>
         </html>

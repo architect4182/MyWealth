@@ -2236,17 +2236,21 @@ tbody tr:hover td {
   place-items: center;
   padding: 20px;
   z-index: 1000;
-  animation: overlayFadeIn 0.2s ease;
+  animation: overlayFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
   overscroll-behavior: contain;
 }
 
 @keyframes overlayFadeIn {
   from {
     opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
   }
 
   to {
     opacity: 1;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 }
 
@@ -2269,7 +2273,9 @@ tbody tr:hover td {
   overflow-y: auto;
   scrollbar-width: thin;
   overscroll-behavior: contain;
-  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: center 55%;
+  animation: modalPopIn 0.36s cubic-bezier(0.22, 1.18, 0.36, 1) both;
+  will-change: opacity, transform;
 }
 
 .investment-modal::before {
@@ -2285,14 +2291,65 @@ tbody tr:hover td {
 }
 
 @keyframes modalPopIn {
-  from {
+  0% {
     opacity: 0;
-    transform: scale(0.96) translateY(8px);
+    transform: scale(0.9) translateY(22px);
   }
 
-  to {
+  65% {
+    opacity: 1;
+    transform: scale(1.012) translateY(-2px);
+  }
+
+  100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalSheetUp {
+  0% {
+    opacity: 0;
+    transform: translateY(42px) scale(0.96);
+  }
+
+  68% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.004);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.investment-modal .modal-heading {
+  animation: modalContentFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+}
+
+.investment-modal .stock-modal-panoramic-body {
+  animation: modalContentFadeIn 0.34s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+}
+
+.investment-modal .modal-actions {
+  animation: modalContentFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+@media (max-width: 640px) {
+  .investment-modal {
+    animation: modalSheetUp 0.36s cubic-bezier(0.22, 1.12, 0.36, 1) both;
   }
 }
 
@@ -2685,11 +2742,12 @@ select:focus {
 @keyframes applePageStageEnter {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.996);
-    filter: blur(4px);
+    transform: translateY(20px) scale(0.986);
+    filter: blur(5px);
   }
 
-  60% {
+  55% {
+    opacity: 1;
     filter: blur(0px);
   }
 
@@ -2703,13 +2761,51 @@ select:focus {
 @keyframes appleSectionFadeUp {
   0% {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(16px) scale(0.992);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+@keyframes appleRouteSweep {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.95;
+  }
+
+  65% {
+    transform: scaleX(0.92);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+.apple-route-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  z-index: 2000;
+  pointer-events: none;
+  transform-origin: left center;
+  background: linear-gradient(90deg, #9366ff 0%, #c084fc 55%, #38bdf8 100%);
+  box-shadow: 0 0 12px rgba(147, 102, 255, 0.65);
+  animation: appleRouteSweep 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.apple-route-stage {
+  width: 100%;
+  flex: 1 0 auto;
+  animation: applePageStageEnter 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity, transform, filter;
 }
 
 @keyframes headerGlowSweep {
@@ -2765,8 +2861,37 @@ select:focus {
 
 /* Staggered entrance for content sections on route navigation */
 .apple-bento-hero {
-  animation: appleSectionFadeUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) 0.03s both;
+  animation: appleSectionFadeUp 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
   will-change: opacity, transform;
+}
+
+.apple-bento-grid {
+  animation: appleSectionFadeUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.09s both;
+  will-change: opacity, transform;
+}
+
+.apple-holdings-section,
+.apple-trending-section {
+  animation: appleSectionFadeUp 0.46s cubic-bezier(0.16, 1, 0.3, 1) 0.13s both;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .investment-modal,
+  .investment-modal .modal-heading,
+  .investment-modal .stock-modal-panoramic-body,
+  .investment-modal .modal-actions,
+  .apple-route-stage,
+  .apple-route-progress-bar,
+  .apple-stage-layout,
+  .apple-bento-hero,
+  .apple-bento-grid,
+  .apple-holdings-section,
+  .apple-trending-section {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 .apple-holdings-card {
