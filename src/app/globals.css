@@ -9017,7 +9017,7 @@ tbody tr.flash-pulse td {
 
 .overview-leaderboard-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
   gap: 10px;
 }
 
@@ -9041,7 +9041,7 @@ tbody tr.flash-pulse td {
 
 .overview-leader-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
@@ -9049,15 +9049,20 @@ tbody tr.flash-pulse td {
 
 .overview-leader-identity {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.overview-leader-identity .apple-avatar-squircle {
+  flex-shrink: 0;
 }
 
 .overview-leader-text {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -9065,9 +9070,9 @@ tbody tr.flash-pulse td {
   font-size: 13.5px;
   font-weight: 700;
   color: #111116;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.28;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .overview-leader-meta {
