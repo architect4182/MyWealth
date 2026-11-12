@@ -471,18 +471,7 @@ export default function Home() {
                       {/* Top Performer & Laggard */}
                       <div className="overview-highlight-rows">
                         {insights.topGainer && (
-                          <div
-                            className="overview-highlight-item"
-                            onClick={() => openAssetDetail(insights.topGainer!.asset)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                openAssetDetail(insights.topGainer!.asset);
-                              }
-                            }}
-                          >
+                          <div className="overview-highlight-item">
                             <div className="overview-highlight-left">
                               <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
                                 <StockLogoAvatar
@@ -511,18 +500,7 @@ export default function Home() {
 
                         {insights.topLoser &&
                           insights.topLoser.asset.id !== insights.topGainer?.asset.id && (
-                            <div
-                              className="overview-highlight-item"
-                              onClick={() => openAssetDetail(insights.topLoser!.asset)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  openAssetDetail(insights.topLoser!.asset);
-                                }
-                              }}
-                            >
+                            <div className="overview-highlight-item">
                               <div className="overview-highlight-left">
                                 <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
                                   <StockLogoAvatar
@@ -687,7 +665,7 @@ export default function Home() {
                           <Layers size={15} style={{ color: "#7c3aed" }} /> Holding Return Leaderboard
                         </h3>
                         <p className="overview-card-sub">
-                          Click any investment to inspect live chart & ledger, or open dedicated category tabs
+                          Performance snapshot across your portfolio
                         </p>
                       </div>
                       <div className="overview-quick-links">
@@ -703,55 +681,43 @@ export default function Home() {
                     <div className="overview-leaderboard-list">
                       {insights.enriched.map((item) => {
                         const isPos = item.pnlPct >= 0;
-                        const barWidth = Math.min(100, Math.max(6, (Math.abs(item.pnlPct) / maxAbsPnlPct) * 100));
+                        const barWidth = Math.min(100, Math.max(8, (Math.abs(item.pnlPct) / maxAbsPnlPct) * 100));
                         return (
-                          <div
-                            key={item.asset.id}
-                            className="overview-leader-row"
-                            onClick={() => openAssetDetail(item.asset)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                openAssetDetail(item.asset);
-                              }
-                            }}
-                          >
-                            <div className="overview-leader-identity">
-                              <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
-                                <StockLogoAvatar
-                                  name={item.asset.name}
-                                  ticker={item.ticker}
-                                  category={item.asset.category}
-                                />
+                          <div key={item.asset.id} className="overview-leader-row">
+                            <div className="overview-leader-top">
+                              <div className="overview-leader-identity">
+                                <div className="apple-avatar-squircle" style={{ width: "34px", height: "34px", borderRadius: "10px" }}>
+                                  <StockLogoAvatar
+                                    name={item.asset.name}
+                                    ticker={item.ticker}
+                                    category={item.asset.category}
+                                  />
+                                </div>
+                                <div className="overview-leader-text">
+                                  <span className="overview-leader-name" title={item.asset.name}>
+                                    {item.asset.name}
+                                  </span>
+                                  <span className="overview-leader-meta">{item.ticker}</span>
+                                </div>
                               </div>
-                              <div className="overview-leader-text">
-                                <span className="overview-leader-name">{item.asset.name}</span>
-                                <span className="overview-leader-meta">
-                                  {item.ticker} · {item.weightPct.toFixed(1)}% weight
+
+                              <div className={`overview-leader-pnl ${isPos ? "positive" : "negative"}`}>
+                                <span className={`overview-leader-pct-pill ${isPos ? "positive" : "negative"}`}>
+                                  {isPos ? "+" : ""}
+                                  {item.pnlPct.toFixed(2)}%
                                 </span>
+                                <small>
+                                  {isPos ? "+" : ""}
+                                  {money(item.pnlLocal, item.asset.currency)}
+                                </small>
                               </div>
                             </div>
 
-                            <div className="overview-leader-bar-wrap">
-                              <div className="overview-leader-bar-track">
-                                <div
-                                  className={`overview-leader-bar-fill ${isPos ? "positive" : "negative"}`}
-                                  style={{ width: `${barWidth}%` }}
-                                />
-                              </div>
-                            </div>
-
-                            <div className={`overview-leader-pnl ${isPos ? "positive" : "negative"}`}>
-                              <span>
-                                {isPos ? "+" : ""}
-                                {money(item.pnlLocal, item.asset.currency)}
-                              </span>
-                              <small>
-                                {isPos ? "+" : ""}
-                                {item.pnlPct.toFixed(2)}%
-                              </small>
+                            <div className="overview-leader-bar-track">
+                              <div
+                                className={`overview-leader-bar-fill ${isPos ? "positive" : "negative"}`}
+                                style={{ width: `${barWidth}%` }}
+                              />
                             </div>
                           </div>
                         );
