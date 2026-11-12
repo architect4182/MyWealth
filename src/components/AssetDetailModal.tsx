@@ -418,7 +418,7 @@ function AssetDetailModalInner({
               <>
                 <button
                   type="button"
-                  className="stock-header-btn edit"
+                  className="stock-header-btn edit ios-liquid-btn ios-liquid-btn--edit"
                   onClick={() => {
                     const assetToEdit = viewingAsset;
                     setViewingAsset(null);
@@ -431,7 +431,7 @@ function AssetDetailModalInner({
                 </button>
                 <button
                   type="button"
-                  className="stock-header-btn delete"
+                  className="stock-header-btn delete ios-liquid-btn ios-liquid-btn--delete"
                   onClick={() => {
                     const assetToDelete = viewingAsset;
                     setViewingAsset(null);
@@ -446,7 +446,7 @@ function AssetDetailModalInner({
             ) : (
               <button
                 type="button"
-                className="stock-header-btn add-pos"
+                className="stock-header-btn add-pos ios-liquid-btn ios-liquid-btn--add"
                 onClick={() => {
                   const toAdd = {
                     name: chartData?.name || viewingAsset.name,

@@ -1153,7 +1153,7 @@ export function AddAssetModal() {
           >
             Cancel
           </button>
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
+          <button type="submit" className="primary-button ios-liquid-btn ios-liquid-btn--add" disabled={isSubmitting}>
             {isSubmitting ? "Saving…" : "Save Asset"}
           </button>
         </div>
@@ -1931,7 +1931,7 @@ function EditAssetModalInner({
           >
             Cancel
           </button>
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
+          <button type="submit" className="primary-button ios-liquid-btn ios-liquid-btn--edit" disabled={isSubmitting}>
             {isSubmitting ? "Updating…" : "Update Asset"}
           </button>
         </div>
@@ -1986,8 +1986,7 @@ export function DeleteAssetModal() {
           </button>
           <button
             type="button"
-            className="primary-button"
-            style={{ background: "var(--rose)" }}
+            className="primary-button ios-liquid-btn ios-liquid-btn--delete"
             onClick={() => {
               deleteAsset(deletingAsset.id);
               setDeletingAsset(null);

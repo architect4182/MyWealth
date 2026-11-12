@@ -208,7 +208,7 @@ export const Header = React.memo(function Header({
         />
         <button
           type="button"
-          className="apple-add-btn"
+          className="apple-add-btn ios-liquid-btn ios-liquid-btn--add"
           onClick={() => {
             if (pathname === "/stocks") setDefaultCategory("Indian Equities");
             else if (pathname === "/mutual-funds") setDefaultCategory("Mutual Funds");

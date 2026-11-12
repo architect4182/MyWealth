@@ -9165,3 +9165,141 @@ tbody tr.flash-pulse td {
     order: 3;
   }
 }
+
+/* ==========================================================================
+   iOS Clear Liquid Glass Action Buttons (Add / Edit / Delete)
+   ========================================================================== */
+.ios-liquid-btn {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  border-radius: 9999px 10px 9999px 9999px !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  border: 1.5px solid rgba(245, 242, 234, 0.9) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.015em !important;
+  cursor: pointer !important;
+  overflow: hidden !important;
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1.25, 0.36, 1),
+    box-shadow 0.22s ease,
+    filter 0.22s ease !important;
+}
+
+.ios-liquid-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(245, 242, 234, 0.52) 0%,
+    rgba(245, 242, 234, 0.08) 48%,
+    rgba(245, 242, 234, 0.24) 100%
+  );
+  pointer-events: none;
+}
+
+.ios-liquid-btn:hover {
+  transform: translateY(-1px) scale(1.015) !important;
+}
+
+.ios-liquid-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Add Asset — Cyprus Clear Liquid Glass */
+.ios-liquid-btn--add {
+  background: radial-gradient(
+    ellipse 88% 70% at 50% 6%,
+    rgba(11, 122, 114, 0.46) 0%,
+    rgba(0, 70, 67, 0.2) 55%,
+    rgba(245, 242, 234, 0.72) 100%
+  ) !important;
+  color: #003532 !important;
+  box-shadow:
+    0 6px 18px rgba(0, 70, 67, 0.18),
+    inset 0 2px 3px rgba(245, 242, 234, 0.96),
+    inset 0 -2px 6px rgba(0, 70, 67, 0.14) !important;
+}
+
+.ios-liquid-btn--add:hover {
+  background: radial-gradient(
+    ellipse 92% 76% at 50% 6%,
+    rgba(11, 122, 114, 0.58) 0%,
+    rgba(0, 70, 67, 0.28) 58%,
+    rgba(245, 242, 234, 0.78) 100%
+  ) !important;
+  color: #002927 !important;
+  box-shadow:
+    0 9px 22px rgba(0, 70, 67, 0.25),
+    inset 0 2px 3px rgba(245, 242, 234, 0.98),
+    inset 0 -2px 6px rgba(0, 70, 67, 0.18) !important;
+}
+
+/* Edit — Warm Amber Sand-Gold Clear Liquid Glass */
+.ios-liquid-btn--edit {
+  background: radial-gradient(
+    ellipse 88% 70% at 50% 6%,
+    rgba(217, 119, 6, 0.42) 0%,
+    rgba(180, 83, 9, 0.18) 55%,
+    rgba(245, 242, 234, 0.72) 100%
+  ) !important;
+  color: #78350F !important;
+  box-shadow:
+    0 6px 18px rgba(180, 83, 9, 0.18),
+    inset 0 2px 3px rgba(245, 242, 234, 0.96),
+    inset 0 -2px 6px rgba(180, 83, 9, 0.14) !important;
+}
+
+.ios-liquid-btn--edit:hover {
+  background: radial-gradient(
+    ellipse 92% 76% at 50% 6%,
+    rgba(217, 119, 6, 0.54) 0%,
+    rgba(180, 83, 9, 0.26) 58%,
+    rgba(245, 242, 234, 0.78) 100%
+  ) !important;
+  color: #5C280A !important;
+  box-shadow:
+    0 9px 22px rgba(180, 83, 9, 0.24),
+    inset 0 2px 3px rgba(245, 242, 234, 0.98),
+    inset 0 -2px 6px rgba(180, 83, 9, 0.18) !important;
+}
+
+/* Delete — Crimson Clear Liquid Glass */
+.ios-liquid-btn--delete {
+  background: radial-gradient(
+    ellipse 88% 70% at 50% 6%,
+    rgba(220, 38, 38, 0.4) 0%,
+    rgba(185, 28, 28, 0.18) 55%,
+    rgba(245, 242, 234, 0.72) 100%
+  ) !important;
+  color: #7F1D1D !important;
+  box-shadow:
+    0 6px 18px rgba(220, 38, 38, 0.18),
+    inset 0 2px 3px rgba(245, 242, 234, 0.96),
+    inset 0 -2px 6px rgba(220, 38, 38, 0.14) !important;
+}
+
+.ios-liquid-btn--delete:hover {
+  background: radial-gradient(
+    ellipse 92% 76% at 50% 6%,
+    rgba(220, 38, 38, 0.52) 0%,
+    rgba(185, 28, 28, 0.26) 58%,
+    rgba(245, 242, 234, 0.78) 100%
+  ) !important;
+  color: #631313 !important;
+  box-shadow:
+    0 9px 22px rgba(220, 38, 38, 0.25),
+    inset 0 2px 3px rgba(245, 242, 234, 0.98),
+    inset 0 -2px 6px rgba(220, 38, 38, 0.18) !important;
+}
+
+@media (max-width: 480px) {
+  .apple-add-btn.ios-liquid-btn {
+    border-radius: 9999px 8px 9999px 9999px !important;
+  }
+}
