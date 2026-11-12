@@ -2353,6 +2353,59 @@ tbody tr:hover td {
   }
 }
 
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  to {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+}
+
+@keyframes modalPopOut {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.93) translateY(14px);
+  }
+}
+
+@keyframes modalSheetDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(36px) scale(0.97);
+  }
+}
+
+.modal-overlay.closing {
+  pointer-events: none;
+  animation: overlayFadeOut 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+}
+
+.modal-overlay.closing .investment-modal {
+  animation: modalPopOut 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+}
+
+@media (max-width: 640px) {
+  .modal-overlay.closing .investment-modal {
+    animation: modalSheetDown 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+  }
+}
+
 .modal-heading {
   display: flex;
   align-items: flex-start;

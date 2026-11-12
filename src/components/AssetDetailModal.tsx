@@ -27,6 +27,8 @@ import { StockLogoAvatar, getStockTicker, BrokerLogoAvatar } from "@/components/
 import { getBrokersForCategory, getBrokerDestinationUrl } from "@/utils/brokers";
 import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate } from "@/utils/sip";
+import { AssetPosition } from "@/types/portfolio";
+import { useAnimatedModal } from "@/hooks/useAnimatedModal";
 
 interface ChartPoint {
   timestamp: number;
@@ -62,8 +64,21 @@ const PERIODS = ["1D", "1W", "1M", "3M", "1Y", "ALL"] as const;
 type Period = (typeof PERIODS)[number];
 
 export function AssetDetailModal() {
+  const { viewingAsset } = usePortfolio();
+  const { shouldRender, isClosing, displayValue } = useAnimatedModal(viewingAsset);
+
+  if (!shouldRender || !displayValue) return null;
+  return <AssetDetailModalInner viewingAsset={displayValue} isClosing={isClosing} />;
+}
+
+function AssetDetailModalInner({
+  viewingAsset,
+  isClosing,
+}: {
+  viewingAsset: AssetPosition;
+  isClosing: boolean;
+}) {
   const {
-    viewingAsset,
     setViewingAsset,
     startEditing,
     setDeletingAsset,
@@ -365,7 +380,7 @@ export function AssetDetailModal() {
 
   return (
     <div
-      className="modal-overlay"
+      className={`modal-overlay${isClosing ? " closing" : ""}`}
       onClick={() => setViewingAsset(null)}
       role="dialog"
       aria-modal="true"

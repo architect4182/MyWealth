@@ -11,8 +11,9 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-import { AssetCategory, AssetPosition } from "@/types/portfolio";
+import { AssetCategory, AssetPosition, EditAssetForm } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
+import { useAnimatedModal } from "@/hooks/useAnimatedModal";
 import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate, formatLocalDate } from "@/utils/sip";
 import { AssetDetailModal } from "@/components/AssetDetailModal";
@@ -46,6 +47,7 @@ export function AddAssetModal() {
     prefillAsset,
     setPrefillAsset,
   } = usePortfolio();
+  const { shouldRender: shouldRenderAdd, isClosing: isClosingAdd } = useAnimatedModal(modal, modal);
 
   // 1. Ask User First: "stock" | "mf"
   const [assetType, setAssetType] = useState<"stock" | "mf">(() => {
@@ -385,7 +387,7 @@ export function AddAssetModal() {
     return () => window.clearTimeout(timeoutId);
   }, [modal, name, category, isStockSelected]);
 
-  if (!modal) return null;
+  if (!shouldRenderAdd) return null;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -497,7 +499,10 @@ export function AddAssetModal() {
   }
 
   return (
-    <div className="modal-overlay" onClick={() => setModal(false)}>
+    <div
+      className={`modal-overlay${isClosingAdd ? " closing" : ""}`}
+      onClick={() => setModal(false)}
+    >
       <form
         className="investment-modal"
         onClick={(e) => e.stopPropagation()}
@@ -1159,6 +1164,31 @@ export function AddAssetModal() {
 
 export function EditAssetModal() {
   const { editingAsset, setEditingAsset, updateAsset } = usePortfolio();
+  const { shouldRender, isClosing, displayValue } = useAnimatedModal(editingAsset);
+
+  if (!shouldRender || !displayValue) return null;
+
+  return (
+    <EditAssetModalInner
+      editingAsset={displayValue}
+      setEditingAsset={setEditingAsset}
+      updateAsset={updateAsset}
+      isClosing={isClosing}
+    />
+  );
+}
+
+function EditAssetModalInner({
+  editingAsset,
+  setEditingAsset,
+  updateAsset,
+  isClosing,
+}: {
+  editingAsset: EditAssetForm;
+  setEditingAsset: React.Dispatch<React.SetStateAction<EditAssetForm | null>>;
+  updateAsset: (asset: AssetPosition) => Promise<void>;
+  isClosing: boolean;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
   const [isFetchingEditLivePrice, setIsFetchingEditLivePrice] = useState(false);
@@ -1301,15 +1331,11 @@ export function EditAssetModal() {
     }
   }
 
-  if (!editingAsset) return null;
-
-  const computedEditHoldings = calculateHoldings(
-    editingAsset.investedAmount,
-    editingAsset.buyPrice
-  );
-
   return (
-    <div className="modal-overlay" onClick={() => setEditingAsset(null)}>
+    <div
+      className={`modal-overlay${isClosing ? " closing" : ""}`}
+      onClick={() => setEditingAsset(null)}
+    >
       <form
         className="investment-modal"
         onClick={(e) => e.stopPropagation()}
@@ -1910,12 +1936,16 @@ export function EditAssetModal() {
 }
 
 export function DeleteAssetModal() {
-  const { deletingAsset, setDeletingAsset, deleteAsset } = usePortfolio();
+  const { deletingAsset: rawDeletingAsset, setDeletingAsset, deleteAsset } = usePortfolio();
+  const { shouldRender, isClosing, displayValue: deletingAsset } = useAnimatedModal(rawDeletingAsset);
 
-  if (!deletingAsset) return null;
+  if (!shouldRender || !deletingAsset) return null;
 
   return (
-    <div className="modal-overlay" onClick={() => setDeletingAsset(null)}>
+    <div
+      className={`modal-overlay${isClosing ? " closing" : ""}`}
+      onClick={() => setDeletingAsset(null)}
+    >
       <div className="investment-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-heading">
           <div>
@@ -1968,11 +1998,15 @@ export function DeleteAssetModal() {
 
 export function DbConfigModal() {
   const { dbModal, setDbModal, syncStatus, assets, currentUserId } = usePortfolio();
+  const { shouldRender, isClosing } = useAnimatedModal(dbModal, dbModal);
 
-  if (!dbModal) return null;
+  if (!shouldRender) return null;
 
   return (
-    <div className="modal-overlay" onClick={() => setDbModal(false)}>
+    <div
+      className={`modal-overlay${isClosing ? " closing" : ""}`}
+      onClick={() => setDbModal(false)}
+    >
       <div
         className="investment-modal"
         style={{ width: "min(100%, 540px)", maxHeight: "90vh", overflowY: "auto", scrollbarWidth: "none" }}
@@ -2145,11 +2179,15 @@ export function DbConfigModal() {
 
 export function MarketSessionsModal() {
   const { marketModal, setMarketModal, indianMarket, usMarket } = usePortfolio();
+  const { shouldRender, isClosing } = useAnimatedModal(marketModal, marketModal);
 
-  if (!marketModal) return null;
+  if (!shouldRender) return null;
 
   return (
-    <div className="modal-overlay" onClick={() => setMarketModal(false)}>
+    <div
+      className={`modal-overlay${isClosing ? " closing" : ""}`}
+      onClick={() => setMarketModal(false)}
+    >
       <div
         className="investment-modal"
         style={{ width: "min(100%, 560px)" }}
@@ -2351,14 +2389,21 @@ export function MarketSessionsModal() {
 }
 
 export function OperationResultModal() {
-  const { operationResult, closeOperationResult } = usePortfolio();
+  const { operationResult: rawOperationResult, closeOperationResult } = usePortfolio();
+  const { shouldRender, isClosing, displayValue: operationResult } = useAnimatedModal(
+    rawOperationResult,
+    Boolean(rawOperationResult?.isOpen)
+  );
 
-  if (!operationResult || !operationResult.isOpen) return null;
+  if (!shouldRender || !operationResult) return null;
 
   const isSuccess = operationResult.type === "success";
 
   return (
-    <div className="modal-overlay" onClick={closeOperationResult}>
+    <div
+      className={`modal-overlay${isClosing ? " closing" : ""}`}
+      onClick={closeOperationResult}
+    >
       <div
         className="investment-modal"
         style={{
