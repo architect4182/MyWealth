@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import {
   X,
   Sparkles,
@@ -39,6 +40,10 @@ function calculateHoldings(investedAmount: string, buyPrice: string): number {
 }
 
 export function AddAssetModal() {
+  const pathname = usePathname();
+  const isStocksPage = pathname === "/stocks";
+  const isMfPage = pathname === "/mutual-funds";
+
   const {
     modal,
     setModal,
@@ -49,13 +54,19 @@ export function AddAssetModal() {
   } = usePortfolio();
   const { shouldRender: shouldRenderAdd, isClosing: isClosingAdd } = useAnimatedModal(modal, modal);
 
-  // 1. Ask User First: "stock" | "mf"
+  // 1. Ask User First: "stock" | "mf" (strictly contextual: on /stocks lock to stock, on /mf lock to mf)
   const [assetType, setAssetType] = useState<"stock" | "mf">(() => {
+    if (isMfPage) return "mf";
+    if (isStocksPage) return "stock";
     return defaultCategory === "Mutual Funds" ? "mf" : "stock";
   });
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<AssetCategory>(defaultCategory);
+  const [category, setCategory] = useState<AssetCategory>(() => {
+    if (isMfPage) return "Mutual Funds";
+    if (isStocksPage) return defaultCategory === "US Stocks" ? "US Stocks" : "Indian Equities";
+    return defaultCategory;
+  });
   const [quantity, setQuantity] = useState("");
   const [investedAmount, setInvestedAmount] = useState("");
   const [buyPrice, setBuyPrice] = useState("");
@@ -67,7 +78,7 @@ export function AddAssetModal() {
   const [isFetchingPrice, setIsFetchingPrice] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditCustomBroker, setIsEditCustomBroker] = useState(false);
-  const [isSip, setIsSip] = useState(defaultCategory === "Mutual Funds");
+  const [isSip, setIsSip] = useState(defaultCategory === "Mutual Funds" || isMfPage);
   const [sipAmount, setSipAmount] = useState("");
   const [sipDay, setSipDay] = useState("");
   const [sipStartDate, setSipStartDate] = useState("");
@@ -123,11 +134,23 @@ export function AddAssetModal() {
         }
         setSelectedSymbol(prefillAsset.name);
       } else {
-        const at: "stock" | "mf" = defaultCategory === "Mutual Funds" ? "mf" : "stock";
+        const at: "stock" | "mf" = isMfPage
+          ? "mf"
+          : isStocksPage
+            ? "stock"
+            : defaultCategory === "Mutual Funds"
+              ? "mf"
+              : "stock";
+        const cat: AssetCategory = isMfPage
+          ? "Mutual Funds"
+          : isStocksPage
+            ? (defaultCategory === "US Stocks" ? "US Stocks" : "Indian Equities")
+            : defaultCategory;
+
         setAssetType(at);
-        setCategory(defaultCategory);
-        setCurrency(defaultCategory === "US Stocks" ? "USD" : "INR");
-        setIsSip(defaultCategory === "Mutual Funds");
+        setCategory(cat);
+        setCurrency(cat === "US Stocks" ? "USD" : "INR");
+        setIsSip(cat === "Mutual Funds");
         setBrokerApp("");
         setIsCustomBroker(false);
         setSelectedSymbol("");
@@ -510,8 +533,20 @@ export function AddAssetModal() {
       >
         <div className="modal-heading">
           <div>
-            <h2>Add investment</h2>
-            <p>Select Stock or Mutual Fund, search relatable words, and record holdings.</p>
+            <h2>
+              {isMfPage
+                ? "Add Mutual Fund"
+                : isStocksPage
+                  ? "Add Stock / Equity"
+                  : "Add investment"}
+            </h2>
+            <p>
+              {isMfPage
+                ? "Search AMFI schemes by fund house or keyword, and record your SIP or lumpsum investment."
+                : isStocksPage
+                  ? "Search Indian (NSE/BSE) or US tickers, auto-fill live price, and record your position."
+                  : "Select Stock or Mutual Fund, search relatable words, and record holdings."}
+            </p>
           </div>
           <button
             type="button"
@@ -522,35 +557,37 @@ export function AddAssetModal() {
           </button>
         </div>
 
-        {/* 1. Ask User First: Stock or MF? */}
-        <div className="add-asset-type-selector">
-          <button
-            type="button"
-            className={`add-type-btn ${assetType === "stock" ? "active" : ""}`}
-            onClick={() => handleSelectAssetType("stock")}
-          >
-            <span className="add-type-icon">📈</span>
-            <div className="add-type-text">
-              <strong>Stocks & Equities</strong>
-              <span>Indian & US Stocks</span>
-            </div>
-          </button>
+        {/* 1. Ask User First: Stock or MF? (Hidden on /stocks and /mutual-funds so each page is distraction-free) */}
+        {!isStocksPage && !isMfPage && (
+          <div className="add-asset-type-selector">
+            <button
+              type="button"
+              className={`add-type-btn ${assetType === "stock" ? "active" : ""}`}
+              onClick={() => handleSelectAssetType("stock")}
+            >
+              <span className="add-type-icon">📈</span>
+              <div className="add-type-text">
+                <strong>Stocks & Equities</strong>
+                <span>Indian & US Stocks</span>
+              </div>
+            </button>
 
-          <button
-            type="button"
-            className={`add-type-btn ${assetType === "mf" ? "active" : ""}`}
-            onClick={() => handleSelectAssetType("mf")}
-          >
-            <span className="add-type-icon">🏦</span>
-            <div className="add-type-text">
-              <strong>Mutual Funds</strong>
-              <span>SIP & Lumpsum (AMFI)</span>
-            </div>
-          </button>
-        </div>
+            <button
+              type="button"
+              className={`add-type-btn ${assetType === "mf" ? "active" : ""}`}
+              onClick={() => handleSelectAssetType("mf")}
+            >
+              <span className="add-type-icon">🏦</span>
+              <div className="add-type-text">
+                <strong>Mutual Funds</strong>
+                <span>SIP & Lumpsum (AMFI)</span>
+              </div>
+            </button>
+          </div>
+        )}
 
-        {/* Sub-toggle for Stocks: India vs US */}
-        {assetType === "stock" && (
+        {/* Sub-toggle for Stocks: India vs US (shown on /stocks or when assetType === 'stock' and not on mutual funds page) */}
+        {assetType === "stock" && !isMfPage && (
           <div className="add-stock-market-pills">
             <button
               type="button"
@@ -733,11 +770,22 @@ export function AddAssetModal() {
                 }
               }}
             >
-              <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
-              <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
-              <option value="Mutual Funds">Mutual Funds (AMFI)</option>
-              <option value="Gold & Fixed Income">Gold & Fixed Income</option>
-              <option value="Crypto">Crypto</option>
+              {isMfPage ? (
+                <option value="Mutual Funds">Mutual Funds (AMFI)</option>
+              ) : isStocksPage ? (
+                <>
+                  <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
+                  <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
+                </>
+              ) : (
+                <>
+                  <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
+                  <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
+                  <option value="Mutual Funds">Mutual Funds (AMFI)</option>
+                  <option value="Gold & Fixed Income">Gold & Fixed Income</option>
+                  <option value="Crypto">Crypto</option>
+                </>
+              )}
             </select>
           </label>
 

@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   ChartNoAxesCombined,
   Wallet,
-  Plus,
   Database,
   LogOut,
   User,
@@ -60,10 +59,8 @@ export const Header = React.memo(function Header({
     showUsdInRupees,
     toggleUsdInRupees,
     usdInrRate,
-    setModal,
     setDbModal,
     setMarketModal,
-    setDefaultCategory,
     currentUserId,
     isLoggingOut,
     handleLogout,
@@ -199,25 +196,13 @@ export const Header = React.memo(function Header({
         })}
       </nav>
 
-      {/* Right: Currency Toggle + Add Asset Button + DB Setup */}
+      {/* Right: Currency Toggle + DB Setup */}
       <div className="apple-header-right">
         <IosCurrencyToggle
           checked={showUsdInRupees}
           onToggle={toggleUsdInRupees}
           rate={usdInrRate}
         />
-        <button
-          type="button"
-          className="apple-add-btn ios-liquid-btn ios-liquid-btn--add"
-          onClick={() => {
-            if (pathname === "/stocks") setDefaultCategory("Indian Equities");
-            else if (pathname === "/mutual-funds") setDefaultCategory("Mutual Funds");
-            setModal(true);
-          }}
-        >
-          <Plus size={15} strokeWidth={2.5} />
-          <span>Add Asset</span>
-        </button>
         <button
           type="button"
           className="apple-circle-icon-btn"
