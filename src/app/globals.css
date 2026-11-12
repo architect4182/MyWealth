@@ -2987,13 +2987,13 @@ select:focus {
 .apple-trending-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .apple-trending-icon-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: linear-gradient(135deg, rgba(147, 102, 255, 0.24), rgba(120, 68, 235, 0.16));
   color: #9366FF;
   display: grid;
@@ -3011,18 +3011,19 @@ select:focus {
 
 .apple-trending-title {
   margin: 0;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--foreground);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .apple-trending-top-badge {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   background: linear-gradient(135deg, #b28eff, #9366FF);
   color: #111116;
-  padding: 1px 6px;
+  padding: 2px 8px;
   border-radius: 9999px;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -3030,8 +3031,8 @@ select:focus {
 }
 
 .apple-trending-subtitle {
-  margin: 1px 0 0;
-  font-size: 11.5px;
+  margin: 2px 0 0;
+  font-size: 13px;
   color: var(--foreground-muted);
 }
 
@@ -7184,6 +7185,20 @@ select:focus {
 }
 
 @media (max-width: 480px) {
+  .apple-trending-title {
+    font-size: 18px !important;
+  }
+
+  .apple-trending-subtitle {
+    font-size: 12px !important;
+  }
+
+  .apple-trending-icon-badge {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 10px !important;
+  }
+
   .apple-trending-card {
     padding: 14px 14px !important;
     gap: 10px !important;
