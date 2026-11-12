@@ -1185,7 +1185,7 @@ function EditAssetModalInner({
   isClosing,
 }: {
   editingAsset: EditAssetForm;
-  setEditingAsset: React.Dispatch<React.SetStateAction<EditAssetForm | null>>;
+  setEditingAsset: (v: EditAssetForm | null) => void;
   updateAsset: (asset: AssetPosition) => Promise<void>;
   isClosing: boolean;
 }) {
@@ -1330,6 +1330,11 @@ function EditAssetModalInner({
       setIsSubmitting(false);
     }
   }
+
+  const computedEditHoldings = calculateHoldings(
+    editingAsset.investedAmount,
+    editingAsset.buyPrice
+  );
 
   return (
     <div
