@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AssetCategory } from "@/types/portfolio";
 
 /**
@@ -37,15 +37,108 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
 
   // 3. Known alternate TLDs, brand prefixes, or parent brand entities
   const domainOverrides: Record<string, string> = {
+    // Indian Banks & Financials
     sbi: "sbi.co.in",
     statebankofindia: "sbi.co.in",
     sbin: "sbi.co.in",
+    hdfcbank: "hdfcbank.com",
+    icicibank: "icicibank.com",
+    axisbank: "axisbank.com",
+    kotakbank: "kotak.com",
+    kotakmahindrabank: "kotak.com",
+    bajfinance: "bajajfinserv.in",
+    bajajfinance: "bajajfinserv.in",
+    jiofin: "jio.com",
+    jiofinancialservices: "jio.com",
+    ireda: "ireda.in",
+    indianrenewableenergydev: "ireda.in",
+    indianrenewabledev: "ireda.in",
+    irfc: "irfc.co.in",
+    indianrailwayfinance: "irfc.co.in",
+    // Indian Equities
     airtel: "airtel.in",
     bhartiairtel: "airtel.in",
+    bhartiartl: "airtel.in",
     reliance: "ril.com",
     relianceindustries: "ril.com",
     jio: "jio.com",
     jioplatforms: "jio.com",
+    tcs: "tcs.com",
+    tataconsultancyservices: "tcs.com",
+    tatamotors: "tatamotors.com",
+    tmpv: "tatamotors.com",
+    tmcv: "tatamotors.com",
+    tatapower: "tatapower.com",
+    tatasteel: "tatasteel.com",
+    tataconsum: "tataconsumer.com",
+    tataconsumerproducts: "tataconsumer.com",
+    infy: "infosys.com",
+    infosys: "infosys.com",
+    wipro: "wipro.com",
+    zomato: "zomato.com",
+    eternal: "zomato.com",
+    swiggy: "swiggy.com",
+    paytm: "paytm.com",
+    one97communicationspaytm: "paytm.com",
+    one97commpaytm: "paytm.com",
+    itc: "itcportal.com",
+    lt: "larsentoubro.com",
+    larsentoubro: "larsentoubro.com",
+    hindunilvr: "hul.co.in",
+    hindustanunilever: "hul.co.in",
+    sunpharma: "sunpharma.com",
+    sunpharmaceutical: "sunpharma.com",
+    maruti: "marutisuzuki.com",
+    marutisuzuki: "marutisuzuki.com",
+    titan: "titan.co.in",
+    mm: "mahindra.com",
+    mahindramahindra: "mahindra.com",
+    adanient: "adani.com",
+    adanienterprises: "adani.com",
+    adaniports: "adaniports.com",
+    adaniportssez: "adaniports.com",
+    powergrid: "powergrid.in",
+    ntpc: "ntpc.co.in",
+    ongc: "ongcindia.com",
+    coalindia: "coalindia.in",
+    hal: "hal-india.co.in",
+    hindustanaeronautics: "hal-india.co.in",
+    bel: "bel-india.in",
+    bharatelectronics: "bel-india.in",
+    irctc: "irctc.co.in",
+    // Indian Mutual Fund AMCs
+    navi: "navi.com",
+    ppfas: "ppfas.com",
+    paragparikh: "ppfas.com",
+    quant: "quantmutual.com",
+    mirae: "miraeassetmf.co.in",
+    miraeasset: "miraeassetmf.co.in",
+    sbimf: "sbimf.com",
+    nippon: "nipponindiaim.com",
+    nipponindia: "nipponindiaim.com",
+    icicipru: "icicipruamc.com",
+    iciciprudential: "icicipruamc.com",
+    hdfcmf: "hdfcfund.com",
+    axismf: "axismf.com",
+    moswal: "motilaloswalmf.com",
+    motilaloswal: "motilaloswalmf.com",
+    utimf: "utimf.com",
+    uti: "utimf.com",
+    tatamf: "tatamutualfund.com",
+    kotakmf: "kotakmf.com",
+    dspmf: "dspim.com",
+    dsp: "dspim.com",
+    bandhan: "bandhanmutual.com",
+    edelweiss: "edelweissmf.com",
+    canararobeco: "canararobeco.com",
+    adityabirla: "adityabirlacapital.com",
+    whiteoak: "whiteoakamc.com",
+    sundaram: "sundarammutual.com",
+    franklin: "franklintempletonindia.com",
+    helios: "heliosmf.in",
+    zerodha: "zerodhafundhouse.com",
+    groww: "groww.in",
+    // US Equities & ETFs
     alphabet: "google.com",
     google: "google.com",
     googl: "google.com",
@@ -56,8 +149,6 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     jpmorgan: "jpmorganchase.com",
     jpm: "jpmorganchase.com",
     jpmorganchase: "jpmorganchase.com",
-    tcs: "tcs.com",
-    tataconsultancyservices: "tcs.com",
     berkshirehathaway: "berkshirehathaway.com",
     brkb: "berkshirehathaway.com",
     brka: "berkshirehathaway.com",
@@ -88,14 +179,66 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
   if (domainOverrides[tKey]) return domainOverrides[tKey];
   if (domainOverrides[clean]) return domainOverrides[clean];
 
-  // Match well-known ETF / fund house prefixes when full fund title includes index words
+  // Match well-known Mutual Fund AMC & ETF prefixes when full scheme title includes index/plan words
   const lowerName = trimmed.toLowerCase();
-  if (lowerName.includes("vanguard")) return "corporate.vanguard.com";
-  if (lowerName.includes("ishares")) return "ishares.com";
-  if (lowerName.includes("spdr")) return "ssga.com";
-  if (lowerName.includes("invesco")) return "invesco.com";
-  if (lowerName.includes("charles schwab") || lowerName.startsWith("schwab")) return "schwab.com";
-  if (lowerName.includes("berkshire hathaway")) return "berkshirehathaway.com";
+  const prefixRules: Array<[string, string]> = [
+    ["parag parikh", "ppfas.com"],
+    ["ppfas", "ppfas.com"],
+    ["navi ", "navi.com"],
+    ["quant ", "quantmutual.com"],
+    ["mirae asset", "miraeassetmf.co.in"],
+    ["sbi ", "sbimf.com"],
+    ["nippon india", "nipponindiaim.com"],
+    ["icici prudential", "icicipruamc.com"],
+    ["hdfc ", "hdfcfund.com"],
+    ["axis ", "axismf.com"],
+    ["motilal oswal", "motilaloswalmf.com"],
+    ["uti ", "utimf.com"],
+    ["kotak ", "kotakmf.com"],
+    ["dsp ", "dspim.com"],
+    ["bandhan ", "bandhanmutual.com"],
+    ["edelweiss ", "edelweissmf.com"],
+    ["aditya birla", "adityabirlacapital.com"],
+    ["canara robeco", "canararobeco.com"],
+    ["franklin ", "franklintempletonindia.com"],
+    ["sundaram ", "sundarammutual.com"],
+    ["whiteoak", "whiteoakamc.com"],
+    ["bajaj finserv", "bajajamc.com"],
+    ["hsbc ", "hsbc.com"],
+    ["pgim ", "pgim.com"],
+    ["zerodha ", "zerodhafundhouse.com"],
+    ["groww ", "groww.in"],
+    ["360 one", "360.one"],
+    ["helios ", "heliosmf.in"],
+    ["union ", "unionmf.com"],
+    ["lic mf", "licmf.com"],
+    ["tata digital", "tatamutualfund.com"],
+    ["tata nifty", "tatamutualfund.com"],
+    ["tata small", "tatamutualfund.com"],
+    ["tata mid", "tatamutualfund.com"],
+    ["tata flexi", "tatamutualfund.com"],
+    ["zomato", "zomato.com"],
+    ["eternal", "zomato.com"],
+    ["paytm", "paytm.com"],
+    ["one 97", "paytm.com"],
+    ["mahindra & mahindra", "mahindra.com"],
+    ["adani ports", "adaniports.com"],
+    ["adani enterprises", "adani.com"],
+    ["indian renewable", "ireda.in"],
+    ["indian railway finance", "irfc.co.in"],
+    ["vanguard", "corporate.vanguard.com"],
+    ["ishares", "ishares.com"],
+    ["spdr", "ssga.com"],
+    ["invesco", "invesco.com"],
+    ["charles schwab", "schwab.com"],
+    ["berkshire hathaway", "berkshirehathaway.com"],
+  ];
+
+  for (const [needle, targetDomain] of prefixRules) {
+    if (lowerName.startsWith(needle) || lowerName.includes(needle)) {
+      return targetDomain;
+    }
+  }
 
   if (clean.length >= 2) return `${clean}.com`;
   if (tKey.length >= 2) return `${tKey}.com`;
@@ -237,10 +380,25 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
       ? `https://financialmodelingprep.com/image-stock/${FMP_LOGO_TICKER_OVERRIDES[domain]}.png`
       : "";
   const companyEnrichUrl = domain ? `${COMPANY_LOGO_API}/${domain}` : "";
-  const primaryLogoUrl = fmpLogoUrl || companyEnrichUrl;
-  const fallbackLogoUrl = fmpLogoUrl && companyEnrichUrl && fmpLogoUrl !== companyEnrichUrl ? companyEnrichUrl : "";
+  const googleFaviconUrl = domain
+    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
+    : "";
+  const primaryLogoUrl =
+    fmpLogoUrl ||
+    (category === "Mutual Funds" ? googleFaviconUrl : companyEnrichUrl);
+  const fallbackLogoUrl = fmpLogoUrl
+    ? companyEnrichUrl
+    : category === "Mutual Funds"
+    ? companyEnrichUrl
+    : googleFaviconUrl;
   const [useFallbackLogo, setUseFallbackLogo] = useState(false);
   const logoUrl = useFallbackLogo ? fallbackLogoUrl : primaryLogoUrl;
+
+  useEffect(() => {
+    setImgError(false);
+    setUseFallbackLogo(false);
+    setIsLoaded(domain ? loadedLogosCache.has(domain) : false);
+  }, [domain, primaryLogoUrl]);
 
   return (
     <div

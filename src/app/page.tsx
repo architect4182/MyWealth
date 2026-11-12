@@ -678,15 +678,31 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="overview-leaderboard-list">
-                      {insights.enriched.map((item) => {
+                    {(() => {
+                      const stockLeaders = insights.enriched.filter(
+                        (item) => item.asset.category !== "Mutual Funds"
+                      );
+                      const mfLeaders = insights.enriched.filter(
+                        (item) => item.asset.category === "Mutual Funds"
+                      );
+
+                      const renderLeaderCard = (
+                        item: (typeof insights.enriched)[number],
+                        groupMaxAbsPct: number
+                      ) => {
                         const isPos = item.pnlPct >= 0;
-                        const barWidth = Math.min(100, Math.max(8, (Math.abs(item.pnlPct) / maxAbsPnlPct) * 100));
+                        const barWidth = Math.min(
+                          100,
+                          Math.max(8, (Math.abs(item.pnlPct) / groupMaxAbsPct) * 100)
+                        );
                         return (
                           <div key={item.asset.id} className="overview-leader-row">
                             <div className="overview-leader-top">
                               <div className="overview-leader-identity">
-                                <div className="apple-avatar-squircle" style={{ width: "34px", height: "34px", borderRadius: "10px" }}>
+                                <div
+                                  className="apple-avatar-squircle"
+                                  style={{ width: "34px", height: "34px", borderRadius: "10px" }}
+                                >
                                   <StockLogoAvatar
                                     name={item.asset.name}
                                     ticker={item.ticker}
@@ -702,7 +718,9 @@ export default function Home() {
                               </div>
 
                               <div className={`overview-leader-pnl ${isPos ? "positive" : "negative"}`}>
-                                <span className={`overview-leader-pct-pill ${isPos ? "positive" : "negative"}`}>
+                                <span
+                                  className={`overview-leader-pct-pill ${isPos ? "positive" : "negative"}`}
+                                >
                                   {isPos ? "+" : ""}
                                   {item.pnlPct.toFixed(2)}%
                                 </span>
@@ -721,8 +739,49 @@ export default function Home() {
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
+                      };
+
+                      const stockMaxPct = Math.max(
+                        ...stockLeaders.map((item) => Math.abs(item.pnlPct)),
+                        1
+                      );
+                      const mfMaxPct = Math.max(
+                        ...mfLeaders.map((item) => Math.abs(item.pnlPct)),
+                        1
+                      );
+
+                      return (
+                        <div className="overview-leader-groups">
+                          {stockLeaders.length > 0 && (
+                            <div className="overview-leader-group">
+                              <div className="overview-leader-group-head">
+                                <span className="overview-leader-group-title">Stocks & ETFs</span>
+                                <span className="overview-leader-group-count">
+                                  {stockLeaders.length}
+                                </span>
+                              </div>
+                              <div className="overview-leaderboard-list">
+                                {stockLeaders.map((item) => renderLeaderCard(item, stockMaxPct))}
+                              </div>
+                            </div>
+                          )}
+
+                          {mfLeaders.length > 0 && (
+                            <div className="overview-leader-group">
+                              <div className="overview-leader-group-head">
+                                <span className="overview-leader-group-title">Mutual Funds</span>
+                                <span className="overview-leader-group-count">
+                                  {mfLeaders.length}
+                                </span>
+                              </div>
+                              <div className="overview-leaderboard-list">
+                                {mfLeaders.map((item) => renderLeaderCard(item, mfMaxPct))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
