@@ -361,7 +361,7 @@ button {
   display: grid;
   place-items: center;
   background: linear-gradient(145deg, #0B635E 0%, #004643 50%, #003835 100%);
-  color: #0E2422;
+  color: #F5F2EA;
   font-size: 15px;
   font-weight: 800;
   box-shadow: 0 4px 16px rgba(0, 70, 67, 0.35), inset 0 1px 1px rgba(245, 242, 234, 0.4), inset 0 -1px 1px rgba(0, 0, 0, 0.3);
@@ -5600,9 +5600,9 @@ body {
 
 .apple-add-btn:hover {
   background: linear-gradient(145deg,
-      rgba(155, 118, 255, 1) 0%,
-      rgba(132, 82, 248, 1) 55%,
-      rgba(109, 40, 217, 1) 100%) !important;
+      rgba(16, 114, 108, 1) 0%,
+      rgba(0, 70, 67, 1) 55%,
+      rgba(0, 48, 46, 1) 100%) !important;
   color: #F5F2EA !important;
   box-shadow:
     0 8px 20px rgba(0, 70, 67, 0.42),
