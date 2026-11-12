@@ -2742,12 +2742,21 @@ select:focus {
 @keyframes applePageStageEnter {
   0% {
     opacity: 0;
-    transform: translateY(20px) scale(0.986);
-    filter: blur(5px);
   }
 
-  55% {
+  100% {
     opacity: 1;
+  }
+}
+
+@keyframes appleSectionFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+    filter: blur(4px);
+  }
+
+  60% {
     filter: blur(0px);
   }
 
@@ -2755,18 +2764,6 @@ select:focus {
     opacity: 1;
     transform: translateY(0) scale(1);
     filter: blur(0);
-  }
-}
-
-@keyframes appleSectionFadeUp {
-  0% {
-    opacity: 0;
-    transform: translateY(16px) scale(0.992);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
@@ -2801,11 +2798,11 @@ select:focus {
   animation: appleRouteSweep 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* Keep opacity-only on route/stage wrappers so position:fixed modals always anchor to the viewport */
 .apple-route-stage {
   width: 100%;
   flex: 1 0 auto;
-  animation: applePageStageEnter 0.46s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity, transform, filter;
+  animation: applePageStageEnter 0.36s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 @keyframes headerGlowSweep {
@@ -2855,25 +2852,21 @@ select:focus {
   margin-bottom: 48px;
   display: block;
   position: relative;
-  animation: applePageStageEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity, transform, filter;
+  animation: applePageStageEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 /* Staggered entrance for content sections on route navigation */
 .apple-bento-hero {
-  animation: appleSectionFadeUp 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
-  will-change: opacity, transform;
+  animation: appleSectionFadeUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.04s backwards;
 }
 
 .apple-bento-grid {
-  animation: appleSectionFadeUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) 0.09s both;
-  will-change: opacity, transform;
+  animation: appleSectionFadeUp 0.46s cubic-bezier(0.16, 1, 0.3, 1) 0.09s backwards;
 }
 
 .apple-holdings-section,
 .apple-trending-section {
-  animation: appleSectionFadeUp 0.46s cubic-bezier(0.16, 1, 0.3, 1) 0.13s both;
-  will-change: opacity, transform;
+  animation: appleSectionFadeUp 0.48s cubic-bezier(0.16, 1, 0.3, 1) 0.13s backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
