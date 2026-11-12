@@ -19,6 +19,37 @@ const inrDecFormatter = new Intl.NumberFormat("en-IN", { style: "currency", curr
 const usdIntFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const usdDecFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
+function normalizeAssetName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function findMatchingAsset(
+  items: AssetPosition[],
+  incoming: { name: string; category: AssetCategory; currency: "INR" | "USD" }
+): AssetPosition | undefined {
+  const incomingNorm = normalizeAssetName(incoming.name);
+  const incomingTicker =
+    incoming.category !== "Mutual Funds"
+      ? (getStockTicker(incoming.name, incoming.category) || "").toUpperCase()
+      : "";
+
+  return items.find((existing) => {
+    if (existing.category !== incoming.category || existing.currency !== incoming.currency) {
+      return false;
+    }
+    if (normalizeAssetName(existing.name) === incomingNorm) {
+      return true;
+    }
+    if (incomingTicker) {
+      const existingTicker = (getStockTicker(existing.name, existing.category) || "").toUpperCase();
+      if (existingTicker && existingTicker === incomingTicker) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+
 // Comprehensive asset deduplication safeguard
 export function dedupeAssets(items: AssetPosition[]): AssetPosition[] {
   if (!items || !items.length) return [];
@@ -1382,6 +1413,62 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     recentAddsRef.current.set(lockKey, now);
+
+    // If user already holds this asset, merge quantity & invested amount into the existing holding instead of creating a duplicate card
+    const existingMatch = findMatchingAsset(assets, item);
+    if (existingMatch) {
+      const existingQty = Number(existingMatch.quantity) || 0;
+      const existingInv =
+        existingMatch.investedAmount !== undefined && existingMatch.investedAmount > 0
+          ? Number(existingMatch.investedAmount)
+          : existingQty * Number(existingMatch.buyPrice || 0);
+      const addedQty = Number(item.quantity) || 0;
+      const addedInv =
+        item.investedAmount !== undefined && item.investedAmount > 0
+          ? Number(item.investedAmount)
+          : addedQty * Number(item.buyPrice || 0);
+
+      let mergedQty = existingQty + addedQty;
+      if (Math.abs(mergedQty - Math.round(mergedQty)) < 0.00001) {
+        mergedQty = Math.round(mergedQty);
+      } else {
+        mergedQty = Number(mergedQty.toFixed(8));
+      }
+
+      const mergedInvested = Number((existingInv + addedInv).toFixed(2));
+      const mergedBuyPrice =
+        mergedQty > 0
+          ? mergedInvested / mergedQty
+          : Number(item.buyPrice || existingMatch.buyPrice || 0);
+      const mergedCurrentPrice =
+        Number(item.currentPrice) > 0
+          ? Number(item.currentPrice)
+          : Number(existingMatch.currentPrice);
+
+      const mergedAsset: AssetPosition = {
+        ...existingMatch,
+        quantity: mergedQty,
+        investedAmount: mergedInvested,
+        buyPrice: mergedBuyPrice,
+        currentPrice: mergedCurrentPrice,
+        date: formatLocalDate(),
+        brokerApp: item.brokerApp?.trim() || existingMatch.brokerApp,
+        tradeDate: item.tradeDate?.trim() || existingMatch.tradeDate,
+        isSip: Boolean(existingMatch.isSip || item.isSip),
+        sipAmount: item.sipAmount ?? existingMatch.sipAmount,
+        sipDay: item.sipDay ?? existingMatch.sipDay,
+        sipStartDate: item.sipStartDate || existingMatch.sipStartDate,
+        sipInstallments:
+          existingMatch.isSip || item.isSip
+            ? (Number(existingMatch.sipInstallments) || 0) + (Number(item.sipInstallments) || (item.isSip ? 1 : 0))
+            : existingMatch.sipInstallments,
+        lastSipDate: item.lastSipDate || existingMatch.lastSipDate,
+        sipStatus: existingMatch.sipStatus || item.sipStatus,
+      };
+
+      await updateAsset(mergedAsset);
+      return;
+    }
 
     if (assetNotificationTimerRef.current) {
       clearTimeout(assetNotificationTimerRef.current);
