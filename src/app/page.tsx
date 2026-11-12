@@ -647,7 +647,7 @@ export default function Home() {
 
                       {insights.sipAssets.length > 0 && (
                         <div className="overview-sip-summary-bar">
-                          <Repeat size={13} style={{ color: "#7c3aed", flexShrink: 0 }} />
+                          <Repeat size={13} style={{ color: "#004643", flexShrink: 0 }} />
                           <span>
                             <strong>{insights.sipAssets.length} Active SIP</strong> · Next auto-debit on{" "}
                             {getNextSipDate(insights.sipAssets[0].sipDay || 5)}
@@ -662,7 +662,7 @@ export default function Home() {
                     <div className="overview-perf-header">
                       <div>
                         <h3 className="overview-card-title" style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                          <Layers size={15} style={{ color: "#7c3aed" }} /> Holding Return Leaderboard
+                          <Layers size={15} style={{ color: "#004643" }} /> Holding Return Leaderboard
                         </h3>
                         <p className="overview-card-sub">
                           Performance snapshot across your portfolio

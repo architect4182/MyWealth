@@ -242,7 +242,7 @@ export default function MutualFundsPage() {
                         : mf.quantity * mf.buyPrice;
                     const pct = mfInvested > 0 ? (mfInv / mfInvested) * 100 : 0;
                     if (pct <= 0) return null;
-                    const bgColors = ["#9366FF", "#b28eff", "#7844eb", "#c5aaff", "#6032d6"];
+                    const bgColors = ["#004643", "#0B635E", "#147A74", "#2B8C85", "#003532"];
                     return (
                       <div
                         key={mf.id}

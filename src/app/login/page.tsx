@@ -226,7 +226,7 @@ export default function LoginPage() {
       <div className="apple-auth-card-wrap">
         <Suspense fallback={
           <div className="apple-auth-card" style={{ minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Loader2 size={24} className="apple-auth-spin" style={{ color: "#9366FF" }} />
+            <Loader2 size={24} className="apple-auth-spin" style={{ color: "#004643" }} />
           </div>
         }>
           <LoginForm />

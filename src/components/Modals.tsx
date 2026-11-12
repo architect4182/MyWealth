@@ -658,8 +658,8 @@ export function AddAssetModal() {
                   right: "10px",
                   top: "50%",
                   transform: "translateY(-50%)",
-                  background: "rgba(147, 102, 255, 0.12)",
-                  color: "#9366FF",
+                  background: "rgba(0, 70, 67, 0.12)",
+                  color: "#004643",
                   border: "none",
                   borderRadius: "6px",
                   padding: "4px 8px",
@@ -936,7 +936,7 @@ export function AddAssetModal() {
                       style={{
                         border: "none",
                         background: "none",
-                        color: "#7c3aed",
+                        color: "#004643",
                         fontSize: "10.5px",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -1745,7 +1745,7 @@ function EditAssetModalInner({
                       style={{
                         border: "none",
                         background: "none",
-                        color: "#7c3aed",
+                        color: "#004643",
                         fontSize: "10.5px",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -2057,7 +2057,7 @@ export function DbConfigModal() {
           >
             <div
               style={{
-                background: "#f8f9fc",
+                background: "#ECE7DB",
                 border: "1px solid rgba(0, 0, 0, 0.08)",
                 padding: "12px 14px",
                 borderRadius: "14px",
@@ -2090,7 +2090,7 @@ export function DbConfigModal() {
             </div>
             <div
               style={{
-                background: "#f8f9fc",
+                background: "#ECE7DB",
                 border: "1px solid rgba(0, 0, 0, 0.08)",
                 padding: "12px 14px",
                 borderRadius: "14px",
@@ -2465,7 +2465,7 @@ export function OperationResultModal() {
           <div
             style={{
               width: "100%",
-              background: "#f8f9fc",
+              background: "#ECE7DB",
               border: "1px solid rgba(0, 0, 0, 0.08)",
               borderRadius: "14px",
               padding: "12px 14px",
@@ -2486,8 +2486,8 @@ export function OperationResultModal() {
                     fontWeight: 600,
                     padding: "2px 8px",
                     borderRadius: "6px",
-                    background: "rgba(147, 102, 255, 0.12)",
-                    color: "#9366FF",
+                    background: "rgba(0, 70, 67, 0.12)",
+                    color: "#004643",
                   }}
                 >
                   {operationResult.details.category}

@@ -399,7 +399,7 @@ export function HoldingsTableAndCards({
                   {item.isSip && (
                     <div className="bento-card-metric-row">
                       <span className="bento-card-metric-label">SIP Schedule</span>
-                      <span className="bento-card-metric-val" style={{ color: "#7c3aed" }}>
+                      <span className="bento-card-metric-val" style={{ color: "#004643" }}>
                         {money(item.sipAmount || 0, item.currency)}/mo · Next {getNextSipDate(item.sipDay || 5)}
                       </span>
                     </div>

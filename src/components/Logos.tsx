@@ -266,11 +266,11 @@ const FMP_LOGO_TICKER_OVERRIDES: Record<string, string> = {
 };
 
 const AVATAR_PALETTES = [
-  { bg: "#ede9fe", color: "#6d28d9", border: "transparent" },
-  { bg: "#f3e8ff", color: "#7e22ce", border: "transparent" },
-  { bg: "#e0e7ff", color: "#4338ca", border: "transparent" },
-  { bg: "#f5f3ff", color: "#5b21b6", border: "transparent" },
-  { bg: "#fae8ff", color: "#a21caf", border: "transparent" },
+  { bg: "#E0E8E5", color: "#004643", border: "transparent" },
+  { bg: "#E6E0D3", color: "#003532", border: "transparent" },
+  { bg: "#DAE5E1", color: "#0B635E", border: "transparent" },
+  { bg: "#ECE6D9", color: "#0E2422", border: "transparent" },
+  { bg: "#DCE6E2", color: "#147A74", border: "transparent" },
 ];
 
 export function getCompanyMonogram(name: string, ticker: string = ""): string {
@@ -332,7 +332,7 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
           background: "linear-gradient(135deg, #FFD700, #FFA500)",
           display: "grid",
           placeItems: "center",
-          color: "#ffffff",
+          color: "#F5F2EA",
           fontWeight: 800,
           fontSize: "11px",
           boxShadow: "inset 0 1px 0.5px rgba(255, 255, 255, 0.6)",
@@ -353,7 +353,7 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
           background: "linear-gradient(135deg, #F7931A, #E07B00)",
           display: "grid",
           placeItems: "center",
-          color: "#ffffff",
+          color: "#F5F2EA",
           fontWeight: 800,
           fontSize: "12px",
           boxShadow: "inset 0 1px 0.5px rgba(255, 255, 255, 0.6)",
@@ -472,7 +472,7 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
             height: "100%",
             objectFit: "contain",
             borderRadius: "inherit",
-            background: "#ffffff",
+            background: "#F5F2EA",
             padding: "1px",
             opacity: isLoaded ? 1 : 0,
             transition: "opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -536,8 +536,8 @@ export const BrokerLogoAvatar = React.memo(function BrokerLogoAvatar({
         overflow: "hidden",
         flexShrink: 0,
         boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-        background: "#f4f0ff",
-        border: "1px solid rgba(147, 102, 255, 0.2)",
+        background: "#E4EBE8",
+        border: "1px solid rgba(0, 70, 67, 0.2)",
       }}
     >
       <div
@@ -548,7 +548,7 @@ export const BrokerLogoAvatar = React.memo(function BrokerLogoAvatar({
           placeItems: "center",
           fontWeight: 800,
           fontSize: `${Math.max(9, Math.round(size * 0.36))}px`,
-          color: "#9366FF",
+          color: "#004643",
           userSelect: "none",
         }}
       >
@@ -571,7 +571,7 @@ export const BrokerLogoAvatar = React.memo(function BrokerLogoAvatar({
             height: "100%",
             objectFit: "contain",
             borderRadius: "inherit",
-            background: "#ffffff",
+            background: "#F5F2EA",
             padding: "2px",
             opacity: isLoaded ? 1 : 0,
             transition: "opacity 0.2s ease-in-out",
