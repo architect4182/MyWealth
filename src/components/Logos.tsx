@@ -113,7 +113,7 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     quant: "quantmutual.com",
     mirae: "miraeassetmf.co.in",
     miraeasset: "miraeassetmf.co.in",
-    sbimf: "sbi.co.in",
+    sbimf: "sbi.bank.in",
     nippon: "nipponindiaim.com",
     nipponindia: "nipponindiaim.com",
     icicipru: "icicibank.com",
@@ -187,8 +187,8 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     ["navi ", "navi.com"],
     ["quant ", "quantmutual.com"],
     ["mirae asset", "miraeassetmf.co.in"],
-    ["sbi ", "sbi.co.in"],
-    ["nippon india", "nipponindiaim.com"],
+    ["sbi ", "sbimf.com"],
+    ["nippon india", "mf.nipponindiaim.com"],
     ["icici prudential", "icicibank.com"],
     ["hdfc ", "hdfcbank.com"],
     ["axis ", "axisbank.com"],
@@ -196,7 +196,7 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     ["uti ", "utimf.com"],
     ["kotak ", "kotak.com"],
     ["dsp ", "dspim.com"],
-    ["bandhan ", "bandhanbank.com"],
+    ["bandhan ", "bandhanmutual.com"],
     ["edelweiss ", "edelweissmf.com"],
     ["aditya birla", "adityabirlacapital.com"],
     ["canara robeco", "canararobeco.com"],
@@ -373,12 +373,11 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
     .replace(/\./g, "-");
   const fmpLogoUrl =
     normalizedUsTicker && (category === "US Stocks" || FMP_LOGO_TICKER_OVERRIDES[domain])
-      ? `https://financialmodelingprep.com/image-stock/${
-          normalizedUsTicker || FMP_LOGO_TICKER_OVERRIDES[domain]
-        }.png`
+      ? `https://financialmodelingprep.com/image-stock/${normalizedUsTicker || FMP_LOGO_TICKER_OVERRIDES[domain]
+      }.png`
       : domain && FMP_LOGO_TICKER_OVERRIDES[domain]
-      ? `https://financialmodelingprep.com/image-stock/${FMP_LOGO_TICKER_OVERRIDES[domain]}.png`
-      : "";
+        ? `https://financialmodelingprep.com/image-stock/${FMP_LOGO_TICKER_OVERRIDES[domain]}.png`
+        : "";
   const companyEnrichUrl = domain ? `${COMPANY_LOGO_API}/${domain}` : "";
   const googleFaviconUrl = domain
     ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
@@ -389,8 +388,8 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
   const fallbackLogoUrl = fmpLogoUrl
     ? companyEnrichUrl
     : category === "Mutual Funds"
-    ? companyEnrichUrl
-    : googleFaviconUrl;
+      ? companyEnrichUrl
+      : googleFaviconUrl;
   const [useFallbackLogo, setUseFallbackLogo] = useState(false);
   const logoUrl = useFallbackLogo ? fallbackLogoUrl : primaryLogoUrl;
 
@@ -441,7 +440,21 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
           height="100%"
           loading="lazy"
           decoding="async"
-          onLoad={() => {
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            // Reject Google S2's 16x16 default globe placeholder and fall back cleanly
+            if (
+              logoUrl.includes("google.com/s2/favicons") &&
+              img.naturalWidth <= 16 &&
+              img.naturalHeight <= 16
+            ) {
+              if (!useFallbackLogo && fallbackLogoUrl && fallbackLogoUrl !== logoUrl) {
+                setUseFallbackLogo(true);
+              } else {
+                setImgError(true);
+              }
+              return;
+            }
             loadedLogosCache.add(domain);
             setIsLoaded(true);
           }}
