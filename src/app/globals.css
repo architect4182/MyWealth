@@ -10278,18 +10278,20 @@ tbody tr.flash-pulse td {
 /* Speed-Dial Options Menu */
 .speed-dial-menu {
   position: fixed !important;
-  bottom: 100px !important;
+  bottom: 102px !important;
   right: 28px !important;
   z-index: 855 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 12px !important;
+  gap: 10px !important;
   align-items: flex-end !important;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(22px) scale(0.92);
+  transform: translateY(18px) scale(0.93);
   transform-origin: bottom right;
-  transition: all 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transition:
+    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1);
 }
 
 .speed-dial-menu.is-open {
@@ -10298,104 +10300,171 @@ tbody tr.flash-pulse td {
   transform: translateY(0) scale(1) !important;
 }
 
-/* Speed-Dial Option Cards (Stocks & MF) */
+/* Speed-Dial Option Cards (Stocks & MF) - Apple Optical Liquid Glass */
 .speed-dial-option {
+  position: relative;
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
-  padding: 12px 18px 12px 14px !important;
-  min-width: 260px !important;
-  background: rgba(255, 255, 255, 0.96) !important;
-  backdrop-filter: blur(24px) saturate(190%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
-  border: 1px solid rgba(0, 70, 67, 0.18) !important;
-  border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  gap: 13px !important;
+  padding: 10px 14px 10px 12px !important;
+  min-width: 275px !important;
   border-radius: 20px !important;
-  box-shadow: 0 14px 34px -4px rgba(0, 70, 67, 0.18), 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 1px 1px #FFFFFF !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.74) 50%,
+      rgba(242, 250, 248, 0.82) 100%) !important;
+  backdrop-filter: blur(32px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.95) !important;
+  border-top: 1.5px solid #FFFFFF !important;
+  box-shadow:
+    0 18px 40px -6px rgba(0, 50, 48, 0.14),
+    0 6px 16px -2px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 70, 67, 0.06),
+    inset 0 1.5px 2px rgba(255, 255, 255, 1),
+    inset 0 -1.5px 2px rgba(0, 70, 67, 0.03) !important;
   cursor: pointer !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition:
+    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease !important;
   text-align: left !important;
   user-select: none !important;
   -webkit-tap-highlight-color: transparent !important;
+  overflow: hidden;
+}
+
+/* Specular Light Sweep across card top edge */
+.speed-dial-option::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  pointer-events: none;
+}
+
+/* Staggered entrance animation when menu opens */
+.speed-dial-menu.is-open .speed-dial-option:nth-child(1) {
+  animation: speedDialCardPop 0.3s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+.speed-dial-menu.is-open .speed-dial-option:nth-child(2) {
+  animation: speedDialCardPop 0.34s 0.04s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
+@keyframes speedDialCardPop {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .speed-dial-option:hover {
   transform: translateX(-6px) scale(1.02) !important;
-  background: #FFFFFF !important;
-  border-color: rgba(0, 70, 67, 0.38) !important;
-  box-shadow: 0 18px 42px -4px rgba(0, 70, 67, 0.26), 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 1px 1px #FFFFFF !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(246, 253, 251, 0.92) 100%) !important;
+  border-color: rgba(0, 70, 67, 0.28) !important;
+  border-top-color: #FFFFFF !important;
+  box-shadow:
+    0 22px 46px -6px rgba(0, 70, 67, 0.2),
+    0 8px 22px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 70, 67, 0.12),
+    inset 0 2px 3px #FFFFFF,
+    inset 0 -2px 3px rgba(0, 70, 67, 0.05) !important;
 }
 
 .speed-dial-option:active {
-  transform: translateX(-3px) scale(0.97) !important;
+  transform: translateX(-3px) scale(0.98) !important;
 }
 
 .speed-dial-icon-wrap {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 14px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 13px !important;
   display: grid !important;
   place-items: center !important;
   flex-shrink: 0 !important;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease !important;
 }
 
 .speed-dial-option:hover .speed-dial-icon-wrap {
-  transform: scale(1.1) rotate(-3deg) !important;
+  transform: scale(1.08) rotate(-2deg) !important;
 }
 
 .speed-dial-icon--stocks {
-  background: linear-gradient(135deg, #005A55 0%, #004643 100%) !important;
+  background: linear-gradient(140deg, #005652 0%, #004643 65%, #003330 100%) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(0, 70, 67, 0.32) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow:
+    0 4px 14px rgba(0, 70, 67, 0.32),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
 }
 
 .speed-dial-icon--mf {
-  background: linear-gradient(135deg, #10B981 0%, #008775 100%) !important;
+  background: linear-gradient(140deg, #059669 0%, #047857 65%, #065f46 100%) !important;
   color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.32) !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  box-shadow:
+    0 4px 14px rgba(5, 150, 105, 0.32),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
 }
 
 .speed-dial-text {
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 3px !important;
   flex: 1 1 auto !important;
+  min-width: 0;
 }
 
 .speed-dial-title {
-  font-size: 14.5px !important;
+  font-size: 13.5px !important;
   font-weight: 700 !important;
-  color: #004643 !important;
-  letter-spacing: -0.01em !important;
+  color: #0c2624 !important;
+  letter-spacing: -0.015em !important;
+  line-height: 1.25;
 }
 
 .speed-dial-desc {
-  font-size: 11.5px !important;
+  font-size: 11px !important;
   font-weight: 500 !important;
-  color: #526764 !important;
+  color: #55726e !important;
   letter-spacing: -0.005em !important;
+  line-height: 1.2;
 }
 
-.speed-dial-arrow {
+.speed-dial-action {
   display: grid !important;
   place-items: center !important;
-  width: 26px !important;
-  height: 26px !important;
+  width: 28px !important;
+  height: 28px !important;
   border-radius: 50% !important;
-  background: rgba(0, 70, 67, 0.06) !important;
+  background: rgba(0, 70, 67, 0.05) !important;
+  border: 1px solid rgba(0, 70, 67, 0.08) !important;
   color: #004643 !important;
   flex-shrink: 0 !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-.speed-dial-option:hover .speed-dial-arrow {
+.speed-dial-option:hover .speed-dial-action {
   background: #004643 !important;
+  border-color: #004643 !important;
   color: #FFFFFF !important;
-  transform: translate(2px, -2px) !important;
+  transform: translateX(3px) !important;
+  box-shadow: 0 4px 12px rgba(0, 70, 67, 0.26) !important;
 }
 
-/* Floating Action Button (Positioned at Bottom Right) */
+/* Floating Action Button (Positioned at Bottom Right - Clear Optical Liquid Glass) */
 .apple-floating-add-btn {
   position: fixed !important;
   bottom: 28px !important;
@@ -10413,25 +10482,28 @@ tbody tr.flash-pulse td {
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  background: radial-gradient(circle at 50% 24%,
-      rgba(22, 168, 158, 0.96) 0%,
-      rgba(12, 120, 114, 0.98) 35%,
-      rgba(0, 70, 67, 1) 70%,
-      rgba(0, 42, 40, 1) 100%) !important;
-  backdrop-filter: blur(28px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
-  border: 2px solid rgba(255, 255, 255, 0.72) !important;
+  /* Pristine Transparent Liquid Glass */
+  background: radial-gradient(circle at 50% 20%,
+      rgba(255, 255, 255, 0.76) 0%,
+      rgba(255, 255, 255, 0.32) 32%,
+      rgba(255, 255, 255, 0.12) 65%,
+      rgba(255, 255, 255, 0.22) 100%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(240, 248, 246, 0.18) 50%, rgba(0, 70, 67, 0.06) 100%) !important;
+  backdrop-filter: blur(24px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.88) !important;
   box-shadow:
-    0 16px 38px -4px rgba(0, 70, 67, 0.52),
-    0 6px 18px -2px rgba(0, 42, 40, 0.35),
-    0 0 0 1px rgba(0, 70, 67, 0.4),
-    inset 0 2.5px 4.5px rgba(255, 255, 255, 0.75),
-    inset 0 -3px 6px rgba(0, 28, 26, 0.6) !important;
+    0 14px 34px -4px rgba(0, 70, 67, 0.18),
+    0 4px 14px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.65),
+    inset 0 2px 4px rgba(255, 255, 255, 0.95),
+    inset 0 -2px 5px rgba(0, 70, 67, 0.09) !important;
   transition:
     transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.28s ease,
-    background 0.28s ease !important;
+    background 0.28s ease,
+    border-color 0.28s ease !important;
   animation: floatingFabEnterRight 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -10441,17 +10513,19 @@ tbody tr.flash-pulse td {
 /* Open State (Rotates Plus by 45deg to morph into an X) */
 .apple-floating-add-btn.is-open {
   background: radial-gradient(circle at 50% 24%,
-      rgba(0, 68, 65, 1) 0%,
-      rgba(0, 48, 46, 1) 60%,
-      rgba(0, 32, 30, 1) 100%) !important;
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(235, 246, 244, 0.5) 45%,
+      rgba(0, 70, 67, 0.12) 100%) !important;
+  border-color: rgba(0, 70, 67, 0.28) !important;
   box-shadow:
-    0 18px 42px -4px rgba(0, 70, 67, 0.68),
-    0 0 0 3px rgba(255, 255, 255, 0.85),
-    inset 0 2px 4px rgba(255, 255, 255, 0.5) !important;
+    0 16px 36px -4px rgba(0, 70, 67, 0.22),
+    0 0 0 3px rgba(255, 255, 255, 0.95),
+    inset 0 2px 4px #FFFFFF !important;
 }
 
 .apple-floating-add-btn.is-open .glass-plus-icon {
   transform: rotate(45deg) scale(1.08) !important;
+  color: #004643 !important;
 }
 
 /* Hiding animation (when scrolling down): smooth spring glide down */
@@ -10466,36 +10540,41 @@ tbody tr.flash-pulse td {
     box-shadow 0.24s ease !important;
 }
 
-/* Hover animation */
+/* Hover animation: radiant crystalline glass gleam */
 .apple-floating-add-btn:hover:not(.is-hidden):not(.is-open) {
   transform: translateY(-4px) scale(1.08) !important;
-  background: radial-gradient(circle at 50% 22%,
-      rgba(28, 185, 174, 1) 0%,
-      rgba(14, 135, 128, 1) 35%,
-      rgba(0, 78, 75, 1) 70%,
-      rgba(0, 48, 46, 1) 100%) !important;
-  border-color: rgba(255, 255, 255, 0.95) !important;
+  background: radial-gradient(circle at 50% 20%,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.52) 32%,
+      rgba(255, 255, 255, 0.2) 65%,
+      rgba(0, 70, 67, 0.08) 100%) !important;
+  border-color: #FFFFFF !important;
   box-shadow:
-    0 22px 48px -4px rgba(0, 70, 67, 0.65),
-    0 8px 22px -2px rgba(0, 42, 40, 0.42),
-    0 0 0 2px rgba(255, 255, 255, 0.85),
-    inset 0 3px 6px #FFFFFF,
-    inset 0 -3.5px 7px rgba(0, 28, 26, 0.6) !important;
+    0 20px 42px -4px rgba(0, 70, 67, 0.24),
+    0 8px 20px rgba(0, 0, 0, 0.08),
+    0 0 0 2px rgba(255, 255, 255, 0.95),
+    inset 0 3px 5px #FFFFFF,
+    inset 0 -2.5px 5px rgba(0, 70, 67, 0.12) !important;
 }
 
 .apple-floating-add-btn:hover:not(.is-hidden):not(.is-open) .glass-plus-icon {
   transform: rotate(90deg) scale(1.1);
+  color: #004643 !important;
 }
 
 /* Clicking animation */
 .apple-floating-add-btn:active:not(.is-hidden),
 .apple-floating-add-btn.is-clicked {
-  transform: translateY(2px) scale(0.9) !important;
+  transform: translateY(2px) scale(0.92) !important;
+  background: radial-gradient(circle at 50% 24%,
+      rgba(255, 255, 255, 0.8) 0%,
+      rgba(235, 246, 244, 0.45) 45%,
+      rgba(0, 70, 67, 0.1) 100%) !important;
   box-shadow:
-    0 6px 16px -2px rgba(0, 70, 67, 0.5),
-    0 0 0 4px rgba(0, 70, 67, 0.25),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 -2.5px 5px rgba(0, 24, 22, 0.75) !important;
+    0 6px 18px -2px rgba(0, 70, 67, 0.18),
+    0 0 0 4px rgba(0, 70, 67, 0.12),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px rgba(0, 70, 67, 0.15) !important;
   transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease !important;
 }
 
@@ -10504,7 +10583,7 @@ tbody tr.flash-pulse td {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2.5px solid rgba(22, 168, 158, 0.8);
+  border: 2px solid rgba(0, 70, 67, 0.32);
   opacity: 0;
   transform: scale(0.85);
   pointer-events: none;
@@ -10516,9 +10595,9 @@ tbody tr.flash-pulse td {
 
 @keyframes glassClickPulse {
   0% {
-    opacity: 0.95;
+    opacity: 0.85;
     transform: scale(0.9);
-    border-color: rgba(22, 168, 158, 0.9);
+    border-color: rgba(0, 70, 67, 0.4);
   }
 
   100% {
@@ -10536,8 +10615,8 @@ tbody tr.flash-pulse td {
   height: 44%;
   border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%;
   background: linear-gradient(180deg,
-      rgba(255, 255, 255, 0.75) 0%,
-      rgba(255, 255, 255, 0.15) 60%,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.3) 55%,
       transparent 100%);
   pointer-events: none;
 }
@@ -10546,18 +10625,18 @@ tbody tr.flash-pulse td {
   position: absolute;
   inset: 1px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   mask-image: radial-gradient(circle at 50% 12%, black 45%, transparent 82%);
   -webkit-mask-image: radial-gradient(circle at 50% 12%, black 45%, transparent 82%);
   pointer-events: none;
 }
 
 .apple-floating-add-btn .glass-plus-icon {
-  color: #FFFFFF !important;
+  color: #004643 !important;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 2px 4px rgba(0, 30, 28, 0.6));
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.85));
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
 }
 
 @keyframes floatingFabEnterRight {

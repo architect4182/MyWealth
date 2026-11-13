@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { Plus, TrendingUp, Landmark, ArrowUpRight } from "lucide-react";
+import { Plus, TrendingUp, Landmark, ChevronRight } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 export function FloatingAddButton() {
@@ -104,14 +104,14 @@ export function FloatingAddButton() {
           tabIndex={isOpen ? 0 : -1}
         >
           <div className="speed-dial-icon-wrap speed-dial-icon--stocks">
-            <TrendingUp size={20} strokeWidth={2.4} />
+            <TrendingUp size={19} strokeWidth={2.4} />
           </div>
           <div className="speed-dial-text">
             <strong className="speed-dial-title">Stocks & Equities</strong>
-            <span className="speed-dial-desc">NSE / BSE • US NASDAQ / NYSE</span>
+            <span className="speed-dial-desc">NSE · BSE · NASDAQ · NYSE</span>
           </div>
-          <span className="speed-dial-arrow" aria-hidden="true">
-            <ArrowUpRight size={16} strokeWidth={2.4} />
+          <span className="speed-dial-action" aria-hidden="true">
+            <ChevronRight size={16} strokeWidth={2.6} />
           </span>
         </button>
 
@@ -124,14 +124,14 @@ export function FloatingAddButton() {
           tabIndex={isOpen ? 0 : -1}
         >
           <div className="speed-dial-icon-wrap speed-dial-icon--mf">
-            <Landmark size={20} strokeWidth={2.4} />
+            <Landmark size={19} strokeWidth={2.4} />
           </div>
           <div className="speed-dial-text">
             <strong className="speed-dial-title">Mutual Funds</strong>
-            <span className="speed-dial-desc">SIP & Lumpsum • AMFI Schemes</span>
+            <span className="speed-dial-desc">SIP · Lumpsum · AMFI Funds</span>
           </div>
-          <span className="speed-dial-arrow" aria-hidden="true">
-            <ArrowUpRight size={16} strokeWidth={2.4} />
+          <span className="speed-dial-action" aria-hidden="true">
+            <ChevronRight size={16} strokeWidth={2.6} />
           </span>
         </button>
       </div>
