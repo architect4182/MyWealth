@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { Plus, TrendingUp, Landmark, ChevronRight } from "lucide-react";
+import { Plus, TrendingUp, Landmark } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 export function FloatingAddButton() {
@@ -106,13 +106,7 @@ export function FloatingAddButton() {
           <div className="speed-dial-icon-wrap speed-dial-icon--stocks">
             <TrendingUp size={19} strokeWidth={2.4} />
           </div>
-          <div className="speed-dial-text">
-            <strong className="speed-dial-title">Stocks & Equities</strong>
-            <span className="speed-dial-desc">NSE · BSE · NASDAQ · NYSE</span>
-          </div>
-          <span className="speed-dial-action" aria-hidden="true">
-            <ChevronRight size={16} strokeWidth={2.6} />
-          </span>
+          <strong className="speed-dial-title">Stocks & Equities</strong>
         </button>
 
         {/* Option 2: Mutual Funds */}
@@ -126,13 +120,7 @@ export function FloatingAddButton() {
           <div className="speed-dial-icon-wrap speed-dial-icon--mf">
             <Landmark size={19} strokeWidth={2.4} />
           </div>
-          <div className="speed-dial-text">
-            <strong className="speed-dial-title">Mutual Funds</strong>
-            <span className="speed-dial-desc">SIP · Lumpsum · AMFI Funds</span>
-          </div>
-          <span className="speed-dial-action" aria-hidden="true">
-            <ChevronRight size={16} strokeWidth={2.6} />
-          </span>
+          <strong className="speed-dial-title">Mutual Funds</strong>
         </button>
       </div>
 

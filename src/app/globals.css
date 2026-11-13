@@ -10300,29 +10300,29 @@ tbody tr.flash-pulse td {
   transform: translateY(0) scale(1) !important;
 }
 
-/* Speed-Dial Option Cards (Stocks & MF) - Apple Optical Liquid Glass */
+/* Speed-Dial Option Cards (Stocks & MF) - Compact Clear Liquid Glass */
 .speed-dial-option {
   position: relative;
   display: flex !important;
   align-items: center !important;
-  gap: 13px !important;
-  padding: 10px 14px 10px 12px !important;
-  min-width: 275px !important;
-  border-radius: 20px !important;
+  gap: 11px !important;
+  padding: 10px 12px 10px 10px !important;
+  min-width: 200px !important;
+  border-radius: 18px !important;
+  /* Fully transparent liquid glass */
   background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.92) 0%,
-      rgba(255, 255, 255, 0.74) 50%,
-      rgba(242, 250, 248, 0.82) 100%) !important;
-  backdrop-filter: blur(32px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.95) !important;
-  border-top: 1.5px solid #FFFFFF !important;
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(240, 248, 246, 0.18) 100%) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.95) !important;
   box-shadow:
-    0 18px 40px -6px rgba(0, 50, 48, 0.14),
-    0 6px 16px -2px rgba(0, 0, 0, 0.04),
-    0 0 0 1px rgba(0, 70, 67, 0.06),
-    inset 0 1.5px 2px rgba(255, 255, 255, 1),
-    inset 0 -1.5px 2px rgba(0, 70, 67, 0.03) !important;
+    0 12px 32px -6px rgba(0, 50, 48, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.85),
+    inset 0 -1px 2px rgba(0, 70, 67, 0.04) !important;
   cursor: pointer !important;
   transition:
     transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
@@ -10335,19 +10335,19 @@ tbody tr.flash-pulse td {
   overflow: hidden;
 }
 
-/* Specular Light Sweep across card top edge */
+/* Specular edge shimmer */
 .speed-dial-option::before {
   content: "";
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
+  left: 15%;
+  right: 15%;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
   pointer-events: none;
 }
 
-/* Staggered entrance animation when menu opens */
+/* Staggered entrance animation */
 .speed-dial-menu.is-open .speed-dial-option:nth-child(1) {
   animation: speedDialCardPop 0.3s cubic-bezier(0.34, 1.45, 0.64, 1) both;
 }
@@ -10368,28 +10368,28 @@ tbody tr.flash-pulse td {
 }
 
 .speed-dial-option:hover {
-  transform: translateX(-6px) scale(1.02) !important;
+  transform: translateX(-5px) scale(1.03) !important;
   background: linear-gradient(135deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(246, 253, 251, 0.92) 100%) !important;
-  border-color: rgba(0, 70, 67, 0.28) !important;
+      rgba(255, 255, 255, 0.52) 0%,
+      rgba(255, 255, 255, 0.28) 50%,
+      rgba(240, 250, 248, 0.38) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.95) !important;
   border-top-color: #FFFFFF !important;
   box-shadow:
-    0 22px 46px -6px rgba(0, 70, 67, 0.2),
-    0 8px 22px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(0, 70, 67, 0.12),
-    inset 0 2px 3px #FFFFFF,
-    inset 0 -2px 3px rgba(0, 70, 67, 0.05) !important;
+    0 18px 40px -6px rgba(0, 70, 67, 0.22),
+    0 6px 18px rgba(0, 0, 0, 0.06),
+    inset 0 2px 3px rgba(255, 255, 255, 0.95),
+    inset 0 -1.5px 2px rgba(0, 70, 67, 0.04) !important;
 }
 
 .speed-dial-option:active {
-  transform: translateX(-3px) scale(0.98) !important;
+  transform: translateX(-2px) scale(0.98) !important;
 }
 
 .speed-dial-icon-wrap {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 13px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 11px !important;
   display: grid !important;
   place-items: center !important;
   flex-shrink: 0 !important;
@@ -10406,8 +10406,8 @@ tbody tr.flash-pulse td {
   color: #FFFFFF !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   box-shadow:
-    0 4px 14px rgba(0, 70, 67, 0.32),
-    inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+    0 3px 10px rgba(0, 70, 67, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
 }
 
 .speed-dial-icon--mf {
@@ -10415,53 +10415,47 @@ tbody tr.flash-pulse td {
   color: #FFFFFF !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   box-shadow:
-    0 4px 14px rgba(5, 150, 105, 0.32),
-    inset 0 1px 1px rgba(255, 255, 255, 0.45) !important;
+    0 3px 10px rgba(5, 150, 105, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
 }
 
+/* Remove old .speed-dial-text, flatten layout */
 .speed-dial-text {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 3px !important;
-  flex: 1 1 auto !important;
-  min-width: 0;
+  display: none !important;
 }
 
 .speed-dial-title {
+  flex: 1 1 auto !important;
   font-size: 13.5px !important;
-  font-weight: 700 !important;
-  color: #0c2624 !important;
+  font-weight: 650 !important;
+  color: #0a2220 !important;
   letter-spacing: -0.015em !important;
   line-height: 1.25;
 }
 
 .speed-dial-desc {
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: #55726e !important;
-  letter-spacing: -0.005em !important;
-  line-height: 1.2;
+  display: none !important;
 }
 
 .speed-dial-action {
   display: grid !important;
   place-items: center !important;
-  width: 28px !important;
-  height: 28px !important;
+  width: 24px !important;
+  height: 24px !important;
   border-radius: 50% !important;
-  background: rgba(0, 70, 67, 0.05) !important;
-  border: 1px solid rgba(0, 70, 67, 0.08) !important;
-  color: #004643 !important;
+  background: rgba(0, 70, 67, 0.07) !important;
+  border: 1px solid rgba(0, 70, 67, 0.09) !important;
+  color: rgba(0, 70, 67, 0.65) !important;
   flex-shrink: 0 !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .speed-dial-option:hover .speed-dial-action {
-  background: #004643 !important;
-  border-color: #004643 !important;
+  background: rgba(0, 70, 67, 0.88) !important;
+  border-color: transparent !important;
   color: #FFFFFF !important;
-  transform: translateX(3px) !important;
-  box-shadow: 0 4px 12px rgba(0, 70, 67, 0.26) !important;
+  transform: translateX(2px) !important;
+  box-shadow: 0 3px 10px rgba(0, 70, 67, 0.28) !important;
 }
 
 /* Floating Action Button (Positioned at Bottom Right - Clear Optical Liquid Glass) */
@@ -10670,21 +10664,17 @@ tbody tr.flash-pulse td {
   }
 
   .speed-dial-option {
-    min-width: 230px !important;
-    padding: 10px 14px 10px 12px !important;
+    min-width: 190px !important;
+    padding: 9px 11px 9px 9px !important;
   }
 
   .speed-dial-icon-wrap {
-    width: 38px !important;
-    height: 38px !important;
-    border-radius: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
   }
 
   .speed-dial-title {
-    font-size: 13.5px !important;
-  }
-
-  .speed-dial-desc {
-    font-size: 10.5px !important;
+    font-size: 12.5px !important;
   }
 }
