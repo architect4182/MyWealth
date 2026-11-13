@@ -322,28 +322,40 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  // Body Scroll Lock: Prevent background page from scrolling while any modal is active
+  // Body Scroll Lock: pin scroll position while any modal is open,
+  // using position:fixed trick so the page stays exactly where it was
+  // (no layout shift, no scroll-bar disappearing, no content jump).
   const isAnyModalOpen = Boolean(
     modal || editingAsset || deletingAsset || dbModal || marketModal || viewingAsset
   );
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    if (isAnyModalOpen) {
-      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.overflow = "hidden";
-      if (scrollBarWidth > 0) {
-        document.body.style.paddingRight = `${scrollBarWidth}px`;
-      }
+    if (!isAnyModalOpen) return;
 
-      return () => {
-        document.body.style.overflow = "";
-        document.body.style.paddingRight = "";
-      };
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
+    const scrollY = window.scrollY;
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    // Pin body at current scroll position
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
     }
+
+    return () => {
+      // Restore: remove pin, jump back to saved position instantly
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.paddingRight = "";
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    };
   }, [isAnyModalOpen]);
 
   const openAddModalWithPrefill = (data: PrefillAssetData) => {

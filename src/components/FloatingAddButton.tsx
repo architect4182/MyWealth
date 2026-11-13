@@ -50,6 +50,35 @@ export function FloatingAddButton() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isOpen]);
 
+  // Lock background scroll when speed-dial menu is open
+  // Uses position:fixed trick to preserve scroll position without layout shift
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (!isOpen) return;
+
+    const scrollY = window.scrollY;
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.width = "";
+      document.body.style.paddingRight = "";
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    };
+  }, [isOpen]);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
