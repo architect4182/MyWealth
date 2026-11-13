@@ -6,35 +6,18 @@ import {
   TrendingUp,
   TrendingDown,
   RefreshCw,
-  Award,
-  Layers,
-  Building2,
-  Scale,
-  ArrowUpRight,
+  ShieldCheck,
+  Globe,
+  Target,
   Plus,
   BarChart3,
-  Repeat,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { MarketTimingBadge } from "@/components/MarketBadge";
-import { StockLogoAvatar, BrokerLogoAvatar, getStockTicker } from "@/components/Logos";
 import { getNextSipDate } from "@/utils/sip";
 import { Footer } from "@/components/Footer";
-import { AssetPosition } from "@/types/portfolio";
-
-interface EnrichedAssetMetric {
-  asset: AssetPosition;
-  ticker: string;
-  investedLocal: number;
-  currentLocal: number;
-  pnlLocal: number;
-  pnlPct: number;
-  currentInr: number;
-  investedInr: number;
-  weightPct: number;
-}
 
 export default function Home() {
   const {
@@ -69,104 +52,117 @@ export default function Home() {
     setModal,
   } = usePortfolio();
 
-  // Compute rich portfolio intelligence metrics directly from user's real investments
-  const insights = useMemo(() => {
+  // Dynamic Macro Portfolio Intelligence (High-level asset health, currency balance, and wealth trajectory)
+  const macroInsights = useMemo(() => {
     if (assets.length === 0) {
       return {
-        enriched: [] as EnrichedAssetMetric[],
-        topGainer: null as EnrichedAssetMetric | null,
-        topLoser: null as EnrichedAssetMetric | null,
-        largestPosition: null as EnrichedAssetMetric | null,
-        winnersCount: 0,
-        losersCount: 0,
-        winRatePct: 0,
-        brokerGroups: [] as { name: string; count: number; totalInr: number; sharePct: number }[],
+        healthScore: 0,
+        healthLabel: "No Assets",
+        maxWeightPct: 0,
+        isConcentrated: false,
+        nextMilestone: 25000,
+        milestoneProgressPct: 0,
+        milestoneRemaining: 0,
         inrTotal: 0,
-        usdTotalInr: 0,
+        inrPct: 0,
         usdTotalNative: 0,
-        sipAssets: [] as AssetPosition[],
+        usdTotalInr: 0,
+        usdPct: 0,
+        brokerCount: 0,
+        activeSips: 0,
+        nextSipDateStr: null as string | null,
+        categoriesCount: 0,
       };
     }
 
-    const enriched: EnrichedAssetMetric[] = assets.map((asset) => {
-      const investedLocal =
-        asset.investedAmount !== undefined && asset.investedAmount > 0
-          ? asset.investedAmount
-          : asset.quantity * asset.buyPrice;
+    let inrTotal = 0;
+    let usdTotalInr = 0;
+    let usdTotalNative = 0;
+    let maxPositionInr = 0;
+
+    for (const asset of assets) {
       const currentLocal = asset.quantity * asset.currentPrice;
-      const pnlLocal = currentLocal - investedLocal;
-      const pnlPct = investedLocal > 0 ? (pnlLocal / investedLocal) * 100 : 0;
-      const mult = asset.currency === "USD" ? usdInrRate : 1;
-      const currentInr = currentLocal * mult;
-      const investedInr = investedLocal * mult;
-      const weightPct = totalCurrentINR > 0 ? (currentInr / totalCurrentINR) * 100 : 0;
+      const isUsd = asset.currency === "USD" || asset.category === "US Stocks";
+      const currentInr = isUsd ? currentLocal * usdInrRate : currentLocal;
 
-      return {
-        asset,
-        ticker: getStockTicker(asset.name, asset.category),
-        investedLocal,
-        currentLocal,
-        pnlLocal,
-        pnlPct,
-        currentInr,
-        investedInr,
-        weightPct,
-      };
-    });
+      if (isUsd) {
+        usdTotalNative += currentLocal;
+        usdTotalInr += currentInr;
+      } else {
+        inrTotal += currentInr;
+      }
 
-    const sortedByReturn = [...enriched].sort((a, b) => b.pnlPct - a.pnlPct);
-    const sortedByWeight = [...enriched].sort((a, b) => b.currentInr - a.currentInr);
-
-    const winners = enriched.filter((e) => e.pnlLocal > 0);
-    const losers = enriched.filter((e) => e.pnlLocal < 0);
-    const winRatePct = enriched.length > 0 ? (winners.length / enriched.length) * 100 : 0;
-
-    // Group by Broker / Platform
-    const brokerMap = new Map<string, { count: number; totalInr: number }>();
-    for (const item of enriched) {
-      const brokerKey = item.asset.brokerApp?.trim() || "Direct / Unassigned";
-      const prev = brokerMap.get(brokerKey) || { count: 0, totalInr: 0 };
-      brokerMap.set(brokerKey, {
-        count: prev.count + 1,
-        totalInr: prev.totalInr + item.currentInr,
-      });
+      if (currentInr > maxPositionInr) {
+        maxPositionInr = currentInr;
+      }
     }
-    const brokerGroups = Array.from(brokerMap.entries())
-      .map(([name, info]) => ({
-        name,
-        count: info.count,
-        totalInr: info.totalInr,
-        sharePct: totalCurrentINR > 0 ? (info.totalInr / totalCurrentINR) * 100 : 0,
-      }))
-      .sort((a, b) => b.totalInr - a.totalInr);
 
-    const inrTotal = enriched
-      .filter((e) => e.asset.currency === "INR")
-      .reduce((s, e) => s + e.currentInr, 0);
-    const usdItems = enriched.filter((e) => e.asset.currency === "USD");
-    const usdTotalInr = usdItems.reduce((s, e) => s + e.currentInr, 0);
-    const usdTotalNative = usdItems.reduce((s, e) => s + e.currentLocal, 0);
+    const netWorth = totalCurrentINR > 0 ? totalCurrentINR : (inrTotal + usdTotalInr || 1);
+    const inrPct = Number(((inrTotal / netWorth) * 100).toFixed(1));
+    const usdPct = Number(((usdTotalInr / netWorth) * 100).toFixed(1));
+    const maxWeightPct = Number(((maxPositionInr / netWorth) * 100).toFixed(1));
+
+    // Dynamic Health Score (0-100)
+    let score = 92;
+    if (maxWeightPct > 50) score -= 20;
+    else if (maxWeightPct > 35) score -= 10;
+    else if (maxWeightPct > 25) score -= 4;
+
+    if (assets.length < 3) score -= 14;
+    else if (assets.length < 5) score -= 5;
+
+    const categories = new Set(assets.map((a) => a.category));
+    if (categories.size === 1) score -= 10;
+    if (usdPct >= 10 && usdPct <= 60) score += 6; // Cross-border FX hedge
+
+    score = Math.max(45, Math.min(98, Math.round(score)));
+
+    let healthLabel = "Balanced & Resilient";
+    if (score >= 88) healthLabel = "Optimal & Resilient";
+    else if (score >= 75) healthLabel = "Well Spread";
+    else if (score >= 60) healthLabel = "Moderate Spread";
+    else healthLabel = "Concentrated";
+
+    // Dynamic Next Milestone
+    const milestoneTiers = [
+      10000, 25000, 50000, 75000, 100000, 200000, 300000, 500000, 750000, 1000000,
+      1500000, 2500000, 5000000, 10000000,
+    ];
+    const nextMilestone =
+      milestoneTiers.find((m) => m > totalCurrentINR) ||
+      Math.ceil((totalCurrentINR * 1.3) / 10000) * 10000;
+    const milestoneProgressPct = Math.min(
+      100,
+      Math.max(5, Math.round((totalCurrentINR / nextMilestone) * 100))
+    );
+    const milestoneRemaining = Math.max(0, nextMilestone - totalCurrentINR);
+
+    const brokerSet = new Set(assets.map((a) => a.brokerApp?.trim()).filter(Boolean));
+    const brokerCount = brokerSet.size || 1;
+
+    const sipAssets = assets.filter((a) => a.isSip);
+    const nextSipDateStr =
+      sipAssets.length > 0 ? getNextSipDate(sipAssets[0].sipDay || 5) : null;
 
     return {
-      enriched: sortedByReturn,
-      topGainer: sortedByReturn[0] || null,
-      topLoser: sortedByReturn[sortedByReturn.length - 1] || null,
-      largestPosition: sortedByWeight[0] || null,
-      winnersCount: winners.length,
-      losersCount: losers.length,
-      winRatePct,
-      brokerGroups,
+      healthScore: score,
+      healthLabel,
+      maxWeightPct,
+      isConcentrated: maxWeightPct >= 35,
+      nextMilestone,
+      milestoneProgressPct,
+      milestoneRemaining,
       inrTotal,
-      usdTotalInr,
+      inrPct,
       usdTotalNative,
-      sipAssets: assets.filter((a) => a.isSip),
+      usdTotalInr,
+      usdPct,
+      brokerCount,
+      activeSips: sipAssets.length,
+      nextSipDateStr,
+      categoriesCount: categories.size,
     };
   }, [assets, totalCurrentINR, usdInrRate]);
-
-  const maxAbsPnlPct = useMemo(() => {
-    if (insights.enriched.length === 0) return 10;
-    return Math.max(5, ...insights.enriched.map((e) => Math.abs(e.pnlPct)));
-  }, [insights.enriched]);
 
   return (
     <main className="apple-portfolio-app">
@@ -432,357 +428,185 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="overview-insights-stack">
-                  {/* Row 1: 3-Column Portfolio Analytics Cards */}
+                  {/* Row 1: 3-Column Macro Intelligence Cards */}
                   <div className="overview-insights-grid">
-                    {/* Insight Card 1: Winners vs Losers & Top Performers */}
+                    {/* Card 1: Portfolio Health & Quality Index */}
                     <div className="overview-insight-card">
                       <div className="overview-card-head">
                         <div className="overview-card-title-row">
-                          <span className="overview-card-icon purple">
-                            <Award size={15} />
+                          <span className="overview-card-icon cyprus">
+                            <ShieldCheck size={16} />
                           </span>
                           <div>
-                            <h3 className="overview-card-title">Performance Insights</h3>
-                            <p className="overview-card-sub">Holdings profitability & leaders</p>
+                            <h3 className="overview-card-title">Portfolio Health</h3>
+                            <p className="overview-card-sub">Diversification & risk balance</p>
                           </div>
                         </div>
-                        <span className="overview-chip-badge">
-                          {insights.winRatePct.toFixed(0)}% Win Rate
+                        <span className="overview-chip-badge ok">
+                          {macroInsights.healthLabel}
                         </span>
                       </div>
 
-                      {/* Win / Loss Ratio Bar */}
-                      <div className="overview-ratio-block">
-                        <div className="overview-ratio-labels">
-                          <span style={{ color: "#15803d", fontWeight: 600 }}>
-                            {insights.winnersCount} Profitable
-                          </span>
-                          <span style={{ color: "#dc2626", fontWeight: 600 }}>
-                            {insights.losersCount} In Loss
-                          </span>
+                      <div className="overview-metric-hero">
+                        <div className="overview-metric-val">
+                          <span>{macroInsights.healthScore}</span>
+                          <span className="overview-metric-unit">/ 100</span>
                         </div>
-                        <div className="overview-ratio-bar">
+                        <div className="overview-meter-bar">
                           <div
-                            className="overview-ratio-fill"
-                            style={{ width: `${insights.winRatePct}%` }}
+                            className="overview-meter-fill"
+                            style={{ width: `${macroInsights.healthScore}%` }}
                           />
                         </div>
                       </div>
 
-                      {/* Top Performer & Laggard */}
-                      <div className="overview-highlight-rows">
-                        {insights.topGainer && (
-                          <div className="overview-highlight-item">
-                            <div className="overview-highlight-left">
-                              <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
-                                <StockLogoAvatar
-                                  name={insights.topGainer.asset.name}
-                                  ticker={insights.topGainer.ticker}
-                                  category={insights.topGainer.asset.category}
-                                />
-                              </div>
-                              <div>
-                                <span className="overview-micro-tag">TOP GAINER</span>
-                                <div className="overview-item-name">{insights.topGainer.asset.name}</div>
-                              </div>
-                            </div>
-                            <div className="overview-highlight-right positive">
-                              <span>
-                                {insights.topGainer.pnlLocal >= 0 ? "+" : ""}
-                                {money(insights.topGainer.pnlLocal, insights.topGainer.asset.currency)}
-                              </span>
-                              <small>
-                                {insights.topGainer.pnlPct >= 0 ? "+" : ""}
-                                {insights.topGainer.pnlPct.toFixed(2)}%
-                              </small>
-                            </div>
-                          </div>
-                        )}
-
-                        {insights.topLoser &&
-                          insights.topLoser.asset.id !== insights.topGainer?.asset.id && (
-                            <div className="overview-highlight-item">
-                              <div className="overview-highlight-left">
-                                <div className="apple-avatar-squircle" style={{ width: "30px", height: "30px", borderRadius: "8px" }}>
-                                  <StockLogoAvatar
-                                    name={insights.topLoser.asset.name}
-                                    ticker={insights.topLoser.ticker}
-                                    category={insights.topLoser.asset.category}
-                                  />
-                                </div>
-                                <div>
-                                  <span className="overview-micro-tag">
-                                    {insights.topLoser.pnlLocal < 0 ? "LARGEST DRAG" : "STEADY GAINER"}
-                                  </span>
-                                  <div className="overview-item-name">{insights.topLoser.asset.name}</div>
-                                </div>
-                              </div>
-                              <div
-                                className={`overview-highlight-right ${insights.topLoser.pnlLocal >= 0 ? "positive" : "negative"
-                                  }`}
-                              >
-                                <span>
-                                  {insights.topLoser.pnlLocal >= 0 ? "+" : ""}
-                                  {money(insights.topLoser.pnlLocal, insights.topLoser.asset.currency)}
-                                </span>
-                                <small>
-                                  {insights.topLoser.pnlPct >= 0 ? "+" : ""}
-                                  {insights.topLoser.pnlPct.toFixed(2)}%
-                                </small>
-                              </div>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-
-                    {/* Insight Card 2: Portfolio Concentration & Currency Exposure */}
-                    <div className="overview-insight-card">
-                      <div className="overview-card-head">
-                        <div className="overview-card-title-row">
-                          <span className="overview-card-icon blue">
-                            <Scale size={15} />
-                          </span>
-                          <div>
-                            <h3 className="overview-card-title">Concentration & FX Mix</h3>
-                            <p className="overview-card-sub">Single-stock risk & currency exposure</p>
-                          </div>
-                        </div>
-                        {insights.largestPosition && (
-                          <span
-                            className={`overview-chip-badge ${insights.largestPosition.weightPct >= 40 ? "warn" : "ok"
-                              }`}
-                          >
-                            {insights.largestPosition.weightPct >= 40
-                              ? "Concentrated"
-                              : insights.largestPosition.weightPct >= 25
-                                ? "Balanced"
-                                : "Well Spread"}
-                          </span>
-                        )}
-                      </div>
-
-                      {insights.largestPosition && (
-                        <div
-                          className="overview-concentration-box"
-                          onClick={() => openAssetDetail(insights.largestPosition!.asset)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              openAssetDetail(insights.largestPosition!.asset);
-                            }
-                          }}
-                        >
-                          <div className="overview-conc-top">
-                            <span className="overview-micro-tag">HEAVIEST POSITION</span>
-                            <strong>{insights.largestPosition.weightPct.toFixed(1)}% of Net Worth</strong>
-                          </div>
-                          <div className="overview-conc-name">
-                            <span>{insights.largestPosition.asset.name}</span>
-                            <span>{money(insights.largestPosition.currentInr)}</span>
-                          </div>
-                          <div className="overview-ratio-bar">
-                            <div
-                              className="overview-ratio-fill purple"
-                              style={{ width: `${Math.min(100, insights.largestPosition.weightPct)}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
                       <div className="overview-kv-list">
                         <div className="overview-kv-row">
-                          <span>Domestic Currency (INR)</span>
+                          <span>Single-Asset Concentration</span>
                           <strong>
-                            {money(insights.inrTotal)} ({totalCurrentINR > 0 ? ((insights.inrTotal / totalCurrentINR) * 100).toFixed(1) : "0.0"}%)
+                            {macroInsights.maxWeightPct}% max position
+                            <small
+                              style={{
+                                marginLeft: "5px",
+                                color: macroInsights.isConcentrated ? "#b45309" : "#004643",
+                                fontWeight: 500,
+                              }}
+                            >
+                              ({macroInsights.isConcentrated ? "Watch risk" : "Safe < 30%"})
+                            </small>
                           </strong>
                         </div>
                         <div className="overview-kv-row">
-                          <span>Foreign Exposure (USD)</span>
+                          <span>Asset Classes</span>
                           <strong>
-                            ${insights.usdTotalNative.toFixed(2)} ({totalCurrentINR > 0 ? ((insights.usdTotalInr / totalCurrentINR) * 100).toFixed(1) : "0.0"}%)
+                            {macroInsights.categoriesCount} categories across {assets.length} holdings
                           </strong>
                         </div>
                         <div className="overview-kv-row">
-                          <span>Live USD / INR Rate</span>
-                          <strong>1 USD = ₹{usdInrRate.toFixed(2)}</strong>
+                          <span>Custody Accounts</span>
+                          <strong>
+                            Segregated across {macroInsights.brokerCount}{" "}
+                            {macroInsights.brokerCount === 1 ? "broker" : "brokers"}
+                          </strong>
                         </div>
+                      </div>
+
+                      <div className="overview-note-box">
+                        {macroInsights.usdPct > 0
+                          ? "Healthy international exposure cushions overall returns against domestic single-stock swings."
+                          : "Consider global or mutual fund exposure to balance single-market volatility."}
                       </div>
                     </div>
 
-                    {/* Insight Card 3: Broker / App Platform Custody */}
+                    {/* Card 2: Global Currency & FX Exposure */}
                     <div className="overview-insight-card">
                       <div className="overview-card-head">
                         <div className="overview-card-title-row">
-                          <span className="overview-card-icon emerald">
-                            <Building2 size={15} />
+                          <span className="overview-card-icon cyprus">
+                            <Globe size={16} />
                           </span>
                           <div>
-                            <h3 className="overview-card-title">Broker Custody Split</h3>
-                            <p className="overview-card-sub">Where your investments are held</p>
+                            <h3 className="overview-card-title">Currency & FX Mix</h3>
+                            <p className="overview-card-sub">Domestic vs global purchasing power</p>
                           </div>
                         </div>
                         <span className="overview-chip-badge">
-                          {insights.brokerGroups.length}{" "}
-                          {insights.brokerGroups.length === 1 ? "Platform" : "Platforms"}
+                          {macroInsights.usdPct > 0 ? "Global Hedged" : "Domestic"}
                         </span>
                       </div>
 
-                      <div className="overview-broker-list">
-                        {insights.brokerGroups.map((b) => (
-                          <div key={b.name} className="overview-broker-row">
-                            <div className="overview-broker-left">
-                              <BrokerLogoAvatar brokerName={b.name} size={22} />
-                              <div>
-                                <div className="overview-broker-name">{b.name}</div>
-                                <div className="overview-broker-meta">
-                                  {b.count} {b.count === 1 ? "holding" : "holdings"} · {b.sharePct.toFixed(1)}%
-                                </div>
-                              </div>
-                            </div>
-                            <strong className="overview-broker-val">{money(b.totalInr)}</strong>
-                          </div>
-                        ))}
-                      </div>
-
-                      {insights.sipAssets.length > 0 && (
-                        <div className="overview-sip-summary-bar">
-                          <Repeat size={13} style={{ color: "#004643", flexShrink: 0 }} />
-                          <span>
-                            <strong>{insights.sipAssets.length} Active SIP</strong> · Next auto-debit on{" "}
-                            {getNextSipDate(insights.sipAssets[0].sipDay || 5)}
+                      <div className="overview-split-display">
+                        <div className="overview-split-item">
+                          <span className="overview-split-label">Domestic (INR)</span>
+                          <span className="overview-split-val">{money(macroInsights.inrTotal)}</span>
+                          <span className="overview-split-pct">{macroInsights.inrPct}% share</span>
+                        </div>
+                        <div className="overview-split-divider" />
+                        <div className="overview-split-item">
+                          <span className="overview-split-label">Global (USD)</span>
+                          <span className="overview-split-val">
+                            ${macroInsights.usdTotalNative.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </span>
+                          <span className="overview-split-pct">{macroInsights.usdPct}% share</span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Row 2: Returns Leaderboard Strip + Quick Navigation */}
-                  <div className="overview-performance-card">
-                    <div className="overview-perf-header">
-                      <div>
-                        <h3 className="overview-card-title" style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                          <Layers size={15} style={{ color: "#004643" }} /> Holding Return Leaderboard
-                        </h3>
-                        <p className="overview-card-sub">
-                          Performance snapshot across your portfolio
-                        </p>
                       </div>
-                      <div className="overview-quick-links">
-                        <Link href="/stocks" className="overview-route-pill">
-                          Stocks ({equities.length}) <ArrowUpRight size={13} />
-                        </Link>
-                        <Link href="/mutual-funds" className="overview-route-pill">
-                          Mutual Funds ({mutualFunds.length}) <ArrowUpRight size={13} />
-                        </Link>
+
+                      <div className="overview-kv-list">
+                        <div className="overview-kv-row">
+                          <span>Live USD / INR Benchmark</span>
+                          <strong>1 USD = ₹{usdInrRate.toFixed(2)}</strong>
+                        </div>
+                        <div className="overview-kv-row">
+                          <span>Converted USD Value</span>
+                          <strong>{money(macroInsights.usdTotalInr)}</strong>
+                        </div>
+                      </div>
+
+                      <div className="overview-note-box">
+                        Offshore holdings preserve capital purchasing power against long-term rupee inflation.
                       </div>
                     </div>
 
-                    {(() => {
-                      const stockLeaders = insights.enriched.filter(
-                        (item) => item.asset.category !== "Mutual Funds"
-                      );
-                      const mfLeaders = insights.enriched.filter(
-                        (item) => item.asset.category === "Mutual Funds"
-                      );
-
-                      const renderLeaderCard = (
-                        item: (typeof insights.enriched)[number],
-                        groupMaxAbsPct: number
-                      ) => {
-                        const isPos = item.pnlPct >= 0;
-                        const barWidth = Math.min(
-                          100,
-                          Math.max(8, (Math.abs(item.pnlPct) / groupMaxAbsPct) * 100)
-                        );
-                        return (
-                          <div key={item.asset.id} className="overview-leader-row">
-                            <div className="overview-leader-top">
-                              <div className="overview-leader-identity">
-                                <div
-                                  className="apple-avatar-squircle"
-                                  style={{ width: "34px", height: "34px", borderRadius: "10px" }}
-                                >
-                                  <StockLogoAvatar
-                                    name={item.asset.name}
-                                    ticker={item.ticker}
-                                    category={item.asset.category}
-                                  />
-                                </div>
-                                <div className="overview-leader-text">
-                                  <span className="overview-leader-name" title={item.asset.name}>
-                                    {item.asset.name}
-                                  </span>
-                                  <span className="overview-leader-meta">{item.ticker}</span>
-                                </div>
-                              </div>
-
-                              <div className={`overview-leader-pnl ${isPos ? "positive" : "negative"}`}>
-                                <span
-                                  className={`overview-leader-pct-pill ${isPos ? "positive" : "negative"}`}
-                                >
-                                  {isPos ? "+" : ""}
-                                  {item.pnlPct.toFixed(2)}%
-                                </span>
-                                <small>
-                                  {isPos ? "+" : ""}
-                                  {money(item.pnlLocal, item.asset.currency)}
-                                </small>
-                              </div>
-                            </div>
-
-                            <div className="overview-leader-bar-track">
-                              <div
-                                className={`overview-leader-bar-fill ${isPos ? "positive" : "negative"}`}
-                                style={{ width: `${barWidth}%` }}
-                              />
-                            </div>
+                    {/* Card 3: Wealth Velocity & Milestones */}
+                    <div className="overview-insight-card">
+                      <div className="overview-card-head">
+                        <div className="overview-card-title-row">
+                          <span className="overview-card-icon cyprus">
+                            <Target size={16} />
+                          </span>
+                          <div>
+                            <h3 className="overview-card-title">Wealth Velocity</h3>
+                            <p className="overview-card-sub">Capital momentum & next milestone</p>
                           </div>
-                        );
-                      };
-
-                      const stockMaxPct = Math.max(
-                        ...stockLeaders.map((item) => Math.abs(item.pnlPct)),
-                        1
-                      );
-                      const mfMaxPct = Math.max(
-                        ...mfLeaders.map((item) => Math.abs(item.pnlPct)),
-                        1
-                      );
-
-                      return (
-                        <div className="overview-leader-groups">
-                          {stockLeaders.length > 0 && (
-                            <div className="overview-leader-group">
-                              <div className="overview-leader-group-head">
-                                <span className="overview-leader-group-title">Stocks & ETFs</span>
-                                <span className="overview-leader-group-count">
-                                  {stockLeaders.length}
-                                </span>
-                              </div>
-                              <div className="overview-leaderboard-list">
-                                {stockLeaders.map((item) => renderLeaderCard(item, stockMaxPct))}
-                              </div>
-                            </div>
-                          )}
-
-                          {mfLeaders.length > 0 && (
-                            <div className="overview-leader-group">
-                              <div className="overview-leader-group-head">
-                                <span className="overview-leader-group-title">Mutual Funds</span>
-                                <span className="overview-leader-group-count">
-                                  {mfLeaders.length}
-                                </span>
-                              </div>
-                              <div className="overview-leaderboard-list">
-                                {mfLeaders.map((item) => renderLeaderCard(item, mfMaxPct))}
-                              </div>
-                            </div>
-                          )}
                         </div>
-                      );
-                    })()}
+                        <span className="overview-chip-badge ok">
+                          {macroInsights.milestoneProgressPct}% Complete
+                        </span>
+                      </div>
+
+                      <div className="overview-metric-hero">
+                        <div className="overview-metric-val">
+                          <span>{money(macroInsights.nextMilestone)}</span>
+                          <span className="overview-metric-unit">Next Target</span>
+                        </div>
+                        <div className="overview-meter-bar">
+                          <div
+                            className="overview-meter-fill"
+                            style={{ width: `${macroInsights.milestoneProgressPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="overview-kv-list">
+                        <div className="overview-kv-row">
+                          <span>Distance to Target</span>
+                          <strong>{money(macroInsights.milestoneRemaining)} to go</strong>
+                        </div>
+                        <div className="overview-kv-row">
+                          <span>Active SIP Momentum</span>
+                          <strong>
+                            {macroInsights.activeSips > 0
+                              ? `${macroInsights.activeSips} systematic investments`
+                              : "No active SIPs"}
+                          </strong>
+                        </div>
+                        {macroInsights.nextSipDateStr && (
+                          <div className="overview-kv-row">
+                            <span>Next Scheduled Debit</span>
+                            <strong>{macroInsights.nextSipDateStr}</strong>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="overview-note-box">
+                        {macroInsights.activeSips > 0
+                          ? "Disciplined monthly dollar-cost averaging accelerates your compounding curve."
+                          : "Starting systematic investments compounds principal effortlessly over market cycles."}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
