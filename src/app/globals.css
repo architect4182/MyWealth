@@ -9347,27 +9347,14 @@ tbody tr.flash-pulse td {
   overflow: visible !important;
 }
 
-/* Top Bar: Icon Pill (Left), Segmented Bar (Center), Return Badge (Right) */
+/* Top Bar: Segmented Bar (Left/Center), Return Badge (Right) */
 .stock-chart-top-bar {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 10px !important;
+  gap: 12px !important;
   width: 100% !important;
   flex-wrap: wrap !important;
-}
-
-/* Trend Icon Pill on Left */
-.stock-chart-trend-icon-pill {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 50% !important;
-  background: #E8F8F3 !important;
-  color: #059669 !important;
-  display: grid !important;
-  place-items: center !important;
-  flex-shrink: 0 !important;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15) !important;
 }
 
 /* Segmented Period Bar */
@@ -9689,11 +9676,6 @@ tbody tr.flash-pulse td {
 
   .stock-chart-top-bar {
     gap: 6px !important;
-  }
-
-  .stock-chart-trend-icon-pill {
-    width: 32px !important;
-    height: 32px !important;
   }
 
   .stock-unified-chart-card .stock-period-tab {

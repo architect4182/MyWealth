@@ -587,12 +587,7 @@ function AssetDetailModalInner({
             <div className="stock-unified-chart-card">
               {/* Top Bar matching screenshot */}
               <div className="stock-chart-top-bar">
-                {/* Left: Trend Icon Pill */}
-                <div className="stock-chart-trend-icon-pill" title="Price Trajectory">
-                  <TrendingUp size={18} strokeWidth={2.4} />
-                </div>
-
-                {/* Center: Segmented Period Bar with glowing active dot */}
+                {/* Segmented Period Bar with glowing active dot */}
                 <div className="stock-period-segmented-bar">
                   {PERIODS.map((period) => {
                     const isActive = selectedPeriod === period;
