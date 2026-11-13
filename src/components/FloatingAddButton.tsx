@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, TrendingUp, Landmark, ArrowUpRight } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 
 export function FloatingAddButton() {
@@ -10,13 +10,17 @@ export function FloatingAddButton() {
   const { setModal, setDefaultCategory } = usePortfolio();
 
   const [isVisible, setIsVisible] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const lastScrollYRef = useRef(0);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
 
-  // Show ONLY on stocks and mutual funds pages
-  const isStocks = pathname === "/stocks";
-  const isMf = pathname === "/mutual-funds";
+  // Hidden on login page
+  if (pathname === "/login") {
+    return null;
+  }
 
+  // Scroll visibility handling: hides when scrolling down, shows when scrolling up
   useEffect(() => {
     let ticking = false;
 
@@ -26,12 +30,13 @@ export function FloatingAddButton() {
           const currentScrollY = window.scrollY || document.documentElement.scrollTop;
           const diff = currentScrollY - lastScrollYRef.current;
 
-          // While scrolling down (reading content), smoothly hide the button
-          if (diff > 6 && currentScrollY > 40) {
-            setIsVisible(false);
-          } else if (diff < -6 || currentScrollY <= 40) {
-            // While scrolling up or near the top, reveal it with spring
-            setIsVisible(true);
+          // If menu is open, don't hide on scroll
+          if (!isOpen) {
+            if (diff > 6 && currentScrollY > 40) {
+              setIsVisible(false);
+            } else if (diff < -6 || currentScrollY <= 40) {
+              setIsVisible(true);
+            }
           }
 
           lastScrollYRef.current = currentScrollY;
@@ -43,41 +48,108 @@ export function FloatingAddButton() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isOpen]);
 
-  if (!isStocks && !isMf) {
-    return null;
-  }
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
-  const handleClick = () => {
-    // Trigger click ripple & spring press animation
+  const handleToggle = () => {
     setIsClicked(true);
-    setTimeout(() => setIsClicked(false), 420);
+    setTimeout(() => setIsClicked(false), 360);
+    setIsOpen((prev) => !prev);
+  };
 
-    if (isStocks) {
+  const handleSelect = (type: "stock" | "mf") => {
+    setIsOpen(false);
+    if (type === "stock") {
       setDefaultCategory("Indian Equities");
-    } else if (isMf) {
+    } else {
       setDefaultCategory("Mutual Funds");
     }
     setModal(true);
   };
 
-  const label = isStocks
-    ? "Add stock or equity position"
-    : "Add mutual fund investment";
-
   return (
-    <button
-      type="button"
-      className={`apple-floating-add-btn ios-clear-liquid-glass ${!isVisible ? "is-hidden" : ""} ${isClicked ? "is-clicked" : ""}`}
-      onClick={handleClick}
-      aria-label={label}
-      title={label}
-    >
-      <span className={`glass-click-ripple ${isClicked ? "active" : ""}`} aria-hidden="true" />
-      <span className="glass-specular-dome" aria-hidden="true" />
-      <span className="glass-rim-highlight" aria-hidden="true" />
-      <Plus size={28} strokeWidth={3.2} className="glass-plus-icon" />
-    </button>
+    <div ref={menuContainerRef} className="floating-add-wrapper">
+      {/* Click-away backdrop overlay when menu is open */}
+      {isOpen && (
+        <div
+          className="speed-dial-backdrop"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Speed Dial Menu: Two Options (Stocks & MF) */}
+      <div
+        className={`speed-dial-menu ${isOpen ? "is-open" : ""}`}
+        role="menu"
+        aria-label="Add investment options"
+        aria-hidden={!isOpen}
+      >
+        {/* Option 1: Stocks & Equities */}
+        <button
+          type="button"
+          className="speed-dial-option speed-dial-option--stocks"
+          onClick={() => handleSelect("stock")}
+          role="menuitem"
+          tabIndex={isOpen ? 0 : -1}
+        >
+          <div className="speed-dial-icon-wrap speed-dial-icon--stocks">
+            <TrendingUp size={20} strokeWidth={2.4} />
+          </div>
+          <div className="speed-dial-text">
+            <strong className="speed-dial-title">Stocks & Equities</strong>
+            <span className="speed-dial-desc">NSE / BSE • US NASDAQ / NYSE</span>
+          </div>
+          <span className="speed-dial-arrow" aria-hidden="true">
+            <ArrowUpRight size={16} strokeWidth={2.4} />
+          </span>
+        </button>
+
+        {/* Option 2: Mutual Funds */}
+        <button
+          type="button"
+          className="speed-dial-option speed-dial-option--mf"
+          onClick={() => handleSelect("mf")}
+          role="menuitem"
+          tabIndex={isOpen ? 0 : -1}
+        >
+          <div className="speed-dial-icon-wrap speed-dial-icon--mf">
+            <Landmark size={20} strokeWidth={2.4} />
+          </div>
+          <div className="speed-dial-text">
+            <strong className="speed-dial-title">Mutual Funds</strong>
+            <span className="speed-dial-desc">SIP & Lumpsum • AMFI Schemes</span>
+          </div>
+          <span className="speed-dial-arrow" aria-hidden="true">
+            <ArrowUpRight size={16} strokeWidth={2.4} />
+          </span>
+        </button>
+      </div>
+
+      {/* Primary Floating Action Button (Bottom Right) */}
+      <button
+        type="button"
+        className={`apple-floating-add-btn ios-clear-liquid-glass ${!isVisible && !isOpen ? "is-hidden" : ""} ${isClicked ? "is-clicked" : ""} ${isOpen ? "is-open" : ""}`}
+        onClick={handleToggle}
+        aria-label={isOpen ? "Close add asset options" : "Add asset options"}
+        aria-expanded={isOpen}
+        title={isOpen ? "Close" : "Add Asset (Stocks & Mutual Funds)"}
+      >
+        <span className={`glass-click-ripple ${isClicked ? "active" : ""}`} aria-hidden="true" />
+        <span className="glass-specular-dome" aria-hidden="true" />
+        <span className="glass-rim-highlight" aria-hidden="true" />
+        <Plus size={28} strokeWidth={3.2} className="glass-plus-icon" />
+      </button>
+    </div>
   );
 }

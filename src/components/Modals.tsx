@@ -60,18 +60,16 @@ export function AddAssetModal() {
   } = usePortfolio();
   const { shouldRender: shouldRenderAdd, isClosing: isClosingAdd } = useAnimatedModal(modal, modal);
 
-  // 1. Ask User First: "stock" | "mf" (strictly contextual: on /stocks lock to stock, on /mf lock to mf)
+  // 1. Ask User First: "stock" | "mf" (initialized from defaultCategory)
   const [assetType, setAssetType] = useState<"stock" | "mf">(() => {
-    if (isMfPage) return "mf";
-    if (isStocksPage) return "stock";
     return defaultCategory === "Mutual Funds" ? "mf" : "stock";
   });
 
   const [name, setName] = useState("");
   const [category, setCategory] = useState<AssetCategory>(() => {
-    if (isMfPage) return "Mutual Funds";
-    if (isStocksPage) return defaultCategory === "US Stocks" ? "US Stocks" : "Indian Equities";
-    return defaultCategory;
+    return defaultCategory === "Mutual Funds"
+      ? "Mutual Funds"
+      : (defaultCategory === "US Stocks" ? "US Stocks" : "Indian Equities");
   });
   const [quantity, setQuantity] = useState("");
   const [investedAmount, setInvestedAmount] = useState("");
@@ -140,18 +138,10 @@ export function AddAssetModal() {
         }
         setSelectedSymbol(prefillAsset.name);
       } else {
-        const at: "stock" | "mf" = isMfPage
-          ? "mf"
-          : isStocksPage
-            ? "stock"
-            : defaultCategory === "Mutual Funds"
-              ? "mf"
-              : "stock";
-        const cat: AssetCategory = isMfPage
+        const at: "stock" | "mf" = defaultCategory === "Mutual Funds" ? "mf" : "stock";
+        const cat: AssetCategory = defaultCategory === "Mutual Funds"
           ? "Mutual Funds"
-          : isStocksPage
-            ? (defaultCategory === "US Stocks" ? "US Stocks" : "Indian Equities")
-            : defaultCategory;
+          : (defaultCategory === "US Stocks" ? "US Stocks" : "Indian Equities");
 
         setAssetType(at);
         setCategory(cat);
@@ -540,18 +530,14 @@ export function AddAssetModal() {
         <div className="modal-heading">
           <div>
             <h2>
-              {isMfPage
+              {assetType === "mf"
                 ? "Add Mutual Fund"
-                : isStocksPage
-                  ? "Add Stock / Equity"
-                  : "Add investment"}
+                : "Add Stock / Equity"}
             </h2>
             <p>
-              {isMfPage
+              {assetType === "mf"
                 ? "Search AMFI schemes by fund house or keyword, and record your SIP or lumpsum investment."
-                : isStocksPage
-                  ? "Search Indian (NSE/BSE) or US tickers, auto-fill live price, and record your position."
-                  : "Select Stock or Mutual Fund, search relatable words, and record holdings."}
+                : "Search Indian (NSE/BSE) or US tickers, auto-fill live price, and record your position."}
             </p>
           </div>
           <button
@@ -564,37 +550,8 @@ export function AddAssetModal() {
           </button>
         </div>
 
-        {/* 1. Ask User First: Stock or MF? (Hidden on /stocks and /mutual-funds so each page is distraction-free) */}
-        {!isStocksPage && !isMfPage && (
-          <div className="add-asset-type-selector">
-            <button
-              type="button"
-              className={`add-type-btn ${assetType === "stock" ? "active" : ""}`}
-              onClick={() => handleSelectAssetType("stock")}
-            >
-              <span className="add-type-icon">📈</span>
-              <div className="add-type-text">
-                <strong>Stocks & Equities</strong>
-                <span>Indian & US Stocks</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={`add-type-btn ${assetType === "mf" ? "active" : ""}`}
-              onClick={() => handleSelectAssetType("mf")}
-            >
-              <span className="add-type-icon">🏦</span>
-              <div className="add-type-text">
-                <strong>Mutual Funds</strong>
-                <span>SIP & Lumpsum (AMFI)</span>
-              </div>
-            </button>
-          </div>
-        )}
-
-        {/* Sub-toggle for Stocks: India vs US (shown on /stocks or when assetType === 'stock' and not on mutual funds page) */}
-        {assetType === "stock" && !isMfPage && (
+        {/* Sub-toggle for Stocks: India vs US */}
+        {assetType === "stock" && (
             <div className="add-stock-market-segmented">
               <div
                 className={`segmented-sliding-glider ${category === "US Stocks" ? "glider-us" : "glider-in"}`}
