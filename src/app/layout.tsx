@@ -8,12 +8,9 @@ export const metadata: Metadata = {
   title: "MyWealth",
   description: "A clearer view of everything you're building.",
   icons: {
-    icon: [
-      { url: "/icon.png", type: "image/png" },
-      { url: "/logo.png", type: "image/png" },
-    ],
-    shortcut: "/icon.png",
-    apple: "/apple-icon.png",
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
