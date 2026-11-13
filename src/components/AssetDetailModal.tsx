@@ -21,6 +21,7 @@ import {
   Tag,
   FileText,
   ExternalLink,
+  Briefcase,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { StockLogoAvatar, getStockTicker, BrokerLogoAvatar } from "@/components/Logos";
@@ -62,6 +63,30 @@ interface StockChartResponse {
 
 const PERIODS = ["1D", "1W", "1M", "3M", "1Y", "ALL"] as const;
 type Period = (typeof PERIODS)[number];
+
+// Smooth Catmull-Rom to Cubic Bezier spline generator for natural organic mountain waves
+function buildSmoothPath(pts: { x: number; y: number }[]): string {
+  if (pts.length === 0) return "";
+  if (pts.length === 1) return `M ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)}`;
+  if (pts.length === 2) return `M ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)} L ${pts[1].x.toFixed(2)},${pts[1].y.toFixed(2)}`;
+
+  let d = `M ${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[Math.min(pts.length - 1, i + 2)];
+
+    const tension = 0.18;
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+    d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
 
 export function AssetDetailModal() {
   const { viewingAsset } = usePortfolio();
@@ -256,8 +281,8 @@ function AssetDetailModalInner({
 
 
   // SVG Chart Geometry dimensions
-  const chartWidth = 560;
-  const chartHeight = 180;
+  const chartWidth = 640;
+  const chartHeight = 220;
 
   // Active price values (either hovered point or latest live quote)
   const activeCurrentPrice = chartData?.currentPrice ?? viewingAsset?.currentPrice ?? 0;
@@ -316,15 +341,18 @@ function AssetDetailModalInner({
 
   let pathD = "";
   let areaD = "";
+  let secondaryPathD = "";
+  let secondaryAreaD = "";
   let coordinates: { x: number; y: number; point: ChartPoint }[] = [];
 
   if (points.length >= 2) {
     const prices = points.map((p) => p.price);
     const minP = Math.min(...prices);
     const maxP = Math.max(...prices);
-    const pad = (maxP - minP) * 0.08 || 1;
-    const yMin = minP - pad;
-    const yMax = maxP + pad;
+    const priceSpan = (maxP - minP) || 1;
+    // Generous top headroom for black tooltip pill and bottom space for volume bars
+    const yMin = minP - priceSpan * 0.12;
+    const yMax = maxP + priceSpan * 0.35;
     const ySpan = yMax - yMin || 1;
 
     coordinates = points.map((p, i) => {
@@ -333,14 +361,21 @@ function AssetDetailModalInner({
       return { x, y, point: p };
     });
 
-    pathD = coordinates.reduce((acc, curr, idx) => {
-      return idx === 0 ? `M ${curr.x.toFixed(2)},${curr.y.toFixed(2)}` : `${acc} L ${curr.x.toFixed(2)},${curr.y.toFixed(2)}`;
-    }, "");
+    pathD = buildSmoothPath(coordinates);
+    areaD = pathD ? `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z` : "";
 
-    areaD = `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z`;
+    // Secondary rolling hill wave in background
+    const secondaryCoordinates = coordinates.map((c, i) => {
+      const progress = i / (coordinates.length - 1);
+      const wave = Math.sin(progress * Math.PI * 2.2) * 20 + Math.cos(progress * Math.PI * 1.4) * 12;
+      const ySec = Math.min(chartHeight - 16, Math.max(36, c.y * 0.72 + chartHeight * 0.2 + wave));
+      return { x: c.x, y: ySec };
+    });
+    secondaryPathD = buildSmoothPath(secondaryCoordinates);
+    secondaryAreaD = secondaryPathD ? `${secondaryPathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z` : "";
   } else if (points.length === 1) {
     const p = points[0];
-    const y = chartHeight / 2;
+    const y = chartHeight * 0.55;
     coordinates = [
       { x: 0, y, point: p },
       { x: chartWidth, y, point: p },
@@ -348,6 +383,31 @@ function AssetDetailModalInner({
     pathD = `M 0,${y.toFixed(2)} L ${chartWidth},${y.toFixed(2)}`;
     areaD = `${pathD} L ${chartWidth},${chartHeight} L 0,${chartHeight} Z`;
   }
+
+  // Volume bars for chart base
+  const volumeBars = useMemo(() => {
+    const barCount = 36;
+    const barWidth = 3.5;
+    const gap = (chartWidth - barCount * barWidth) / (barCount - 1);
+    return Array.from({ length: barCount }, (_, i) => {
+      const x = i * (barWidth + gap);
+      const wave = Math.sin(i * 0.42) * 0.35 + Math.sin(i * 1.15) * 0.25 + 0.5;
+      const height = 10 + wave * 26;
+      return { x, width: barWidth, height };
+    });
+  }, [chartWidth]);
+
+  // Find peak coordinate to highlight by default if not hovering
+  const highestIndex = useMemo(() => {
+    if (points.length === 0) return 0;
+    return points.reduce((maxIdx, p, idx, arr) => (p.price > arr[maxIdx].price ? idx : maxIdx), 0);
+  }, [points]);
+
+  const lastCoordinate = coordinates.length > 0 ? coordinates[coordinates.length - 1] : null;
+  const peakCoordinate = coordinates[highestIndex] || lastCoordinate;
+  const activeHighlightCoord = hoverPosition && hoveredPoint
+    ? { x: hoverPosition.x, y: hoverPosition.y, point: hoveredPoint }
+    : peakCoordinate;
 
   // Interactive mouse/touch scrubber handlers
   const handleChartMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -369,9 +429,8 @@ function AssetDetailModalInner({
   };
 
   const isChartProfit = isOwnedInPortfolio ? isPersonalPositive : isPositive;
-  const strokeColor = isChartProfit ? "#16a34a" : "#dc2626";
+  const strokeColor = isChartProfit ? "#059669" : "#dc2626";
   const gradientId = `chartGrad_${viewingAsset.id}_${isChartProfit ? "gain" : "loss"}`;
-  const lastCoordinate = coordinates.length > 0 ? coordinates[coordinates.length - 1] : null;
   const formatUnits = (q: number) => {
     if (!Number.isFinite(q)) return "0";
     if (Math.abs(q - Math.round(q)) < 1e-8) return String(Math.round(q));
@@ -524,28 +583,47 @@ function AssetDetailModalInner({
               </div>
             </div>
 
-            {/* Unified White Chart Container with Period Bar + TRAJECTORY + Grid + Footer */}
+            {/* Unified Neo-Card Chart Container with Period Bar + Glowing Layers + Footer */}
             <div className="stock-unified-chart-card">
+              {/* Top Bar matching screenshot */}
               <div className="stock-chart-top-bar">
-                <div className="stock-period-segmented-bar">
-                  {PERIODS.map((period) => (
-                    <button
-                      key={period}
-                      type="button"
-                      className={`stock-period-tab ${selectedPeriod === period ? "active" : ""}`}
-                      onClick={() => setSelectedPeriod(period)}
-                    >
-                      {period}
-                    </button>
-                  ))}
+                {/* Left: Trend Icon Pill */}
+                <div className="stock-chart-trend-icon-pill" title="Price Trajectory">
+                  <TrendingUp size={18} strokeWidth={2.4} />
                 </div>
-                <span className="stock-trajectory-label">TRAJECTORY</span>
+
+                {/* Center: Segmented Period Bar with glowing active dot */}
+                <div className="stock-period-segmented-bar">
+                  {PERIODS.map((period) => {
+                    const isActive = selectedPeriod === period;
+                    return (
+                      <button
+                        key={period}
+                        type="button"
+                        className={`stock-period-tab ${isActive ? "active" : ""}`}
+                        onClick={() => setSelectedPeriod(period)}
+                      >
+                        {isActive && <span className="stock-period-glow-dot" aria-hidden="true" />}
+                        <span>{period}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right: Floating Change Badge */}
+                <div className={`stock-chart-return-badge ${isPositive ? "positive" : "negative"}`}>
+                  {isPositive ? <TrendingUp size={14} strokeWidth={2.6} /> : <TrendingDown size={14} />}
+                  <span>
+                    {isPositive ? "+" : ""}
+                    {activeChangePct.toFixed(1)}%
+                  </span>
+                </div>
               </div>
 
               <div className="stock-chart-svg-wrap">
                 {isLoadingChart && !chartData && (
                   <div className="stock-chart-loading-overlay">
-                    <RefreshCw size={24} className="spin-icon" style={{ color: "#2563eb" }} />
+                    <RefreshCw size={24} className="spin-icon" style={{ color: "#059669" }} />
                     <span style={{ color: "#5e5e6e", fontWeight: 600 }}>Fetching real-time market data...</span>
                   </div>
                 )}
@@ -586,90 +664,192 @@ function AssetDetailModalInner({
                     onTouchEnd={handleChartMouseLeave}
                   >
                     <defs>
+                      {/* Primary Foreground Wave Gradient */}
                       <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={strokeColor} stopOpacity="0.22" />
-                        <stop offset="85%" stopColor={strokeColor} stopOpacity="0.03" />
-                        <stop offset="100%" stopColor={strokeColor} stopOpacity="0" />
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.48" />
+                        <stop offset="42%" stopColor="#34D399" stopOpacity="0.22" />
+                        <stop offset="82%" stopColor="#6EE7B7" stopOpacity="0.06" />
+                        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
                       </linearGradient>
+
+                      {/* Secondary Background Rolling Hill Gradient */}
+                      <linearGradient id="secondaryWaveGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#06B6D4" stopOpacity="0.22" />
+                        <stop offset="50%" stopColor="#10B981" stopOpacity="0.09" />
+                        <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+                      </linearGradient>
+
+                      {/* Base Volume Bars Gradient */}
+                      <linearGradient id="volumeBarGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10B981" stopOpacity="0.28" />
+                        <stop offset="100%" stopColor="#004643" stopOpacity="0.03" />
+                      </linearGradient>
+
+                      {/* Filter for glowing neon emerald stroke */}
+                      <filter id="primaryLineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#10B981" floodOpacity="0.4" />
+                      </filter>
                     </defs>
 
-                    {/* Faint dashed horizontal guidelines */}
-                    {[0.25, 0.5, 0.75].map((pct) => (
+                    {/* Faint dashed horizontal reference lines */}
+                    {[0.28, 0.52, 0.76].map((pct) => (
                       <line
                         key={pct}
                         x1={0}
                         y1={chartHeight * pct}
                         x2={chartWidth}
                         y2={chartHeight * pct}
-                        stroke="rgba(0, 0, 0, 0.06)"
-                        strokeDasharray="3 4"
+                        stroke="rgba(0, 70, 67, 0.05)"
+                        strokeDasharray="4 6"
                         strokeWidth="1"
                       />
                     ))}
 
-                    {/* Chart Gradient Area */}
-                    {areaD && <path d={areaD} fill={`url(#${gradientId})`} />}
+                    {/* Base Volume Pill Bars */}
+                    <g className="stock-chart-volume-bars" opacity="0.42">
+                      {volumeBars.map((bar, idx) => (
+                        <rect
+                          key={idx}
+                          x={bar.x}
+                          y={chartHeight - bar.height}
+                          width={bar.width}
+                          height={bar.height}
+                          rx={bar.width / 2}
+                          fill="url(#volumeBarGrad)"
+                        />
+                      ))}
+                    </g>
 
-                    {/* Chart Line Path */}
-                    {pathD && (
+                    {/* Secondary Background Rolling Hill Wave */}
+                    {secondaryAreaD && (
+                      <path d={secondaryAreaD} fill="url(#secondaryWaveGrad)" />
+                    )}
+                    {secondaryPathD && (
                       <path
-                        d={pathD}
+                        d={secondaryPathD}
                         fill="none"
-                        stroke={strokeColor}
-                        strokeWidth="2.5"
+                        stroke="#14B8A6"
+                        strokeWidth="1.6"
+                        strokeOpacity="0.32"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                       />
                     )}
 
-                    {/* Resting live endpoint glowing circle */}
-                    {lastCoordinate && !hoverPosition && (
+                    {/* Primary Foreground Wave Area */}
+                    {areaD && <path d={areaD} fill={`url(#${gradientId})`} />}
+
+                    {/* Primary Foreground Glowing Curve Stroke */}
+                    {pathD && (
+                      <path
+                        d={pathD}
+                        fill="none"
+                        stroke={strokeColor}
+                        strokeWidth="3.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        filter="url(#primaryLineGlow)"
+                      />
+                    )}
+
+                    {/* Resting Endpoint Glowing Neon Ring (Right side) */}
+                    {lastCoordinate && activeHighlightCoord !== lastCoordinate && (
                       <g>
                         <circle
                           cx={lastCoordinate.x}
                           cy={lastCoordinate.y}
-                          r={6.5}
-                          fill={strokeColor}
-                          opacity={0.22}
+                          r="11"
+                          fill="#10B981"
+                          opacity="0.25"
                         />
                         <circle
                           cx={lastCoordinate.x}
                           cy={lastCoordinate.y}
-                          r={3.5}
-                          fill={strokeColor}
-                          stroke="#FFFFFF"
-                          strokeWidth={1.8}
+                          r="5.5"
+                          fill="#004643"
+                          stroke="#10B981"
+                          strokeWidth="2.4"
+                        />
+                        <circle
+                          cx={lastCoordinate.x}
+                          cy={lastCoordinate.y}
+                          r="1.8"
+                          fill="#FFFFFF"
                         />
                       </g>
                     )}
 
-                    {/* Interactive Crosshair & Cursor Point */}
-                    {hoverPosition && (
-                      <g>
+                    {/* Highlighted Data Point (Hovered or Peak) with Black Tooltip Pill */}
+                    {activeHighlightCoord && (
+                      <g className="stock-chart-active-highlight">
+                        {/* Vertical Dashed Guideline */}
                         <line
-                          x1={hoverPosition.x}
-                          y1={0}
-                          x2={hoverPosition.x}
+                          x1={activeHighlightCoord.x}
+                          y1={activeHighlightCoord.y}
+                          x2={activeHighlightCoord.x}
                           y2={chartHeight}
-                          stroke="var(--foreground-muted)"
+                          stroke="rgba(0, 70, 67, 0.22)"
                           strokeWidth="1.2"
                           strokeDasharray="3 3"
-                          opacity={0.6}
+                        />
+
+                        {/* Floating Black Pill Tooltip above point */}
+                        <g transform={`translate(${Math.max(52, Math.min(chartWidth - 52, activeHighlightCoord.x))}, ${activeHighlightCoord.y - 12})`}>
+                          {/* Downward triangle caret pointer */}
+                          <polygon
+                            points="-5,-2 5,-2 0,4"
+                            fill="#061D1A"
+                          />
+                          {/* Rounded rect pill */}
+                          <rect
+                            x="-50"
+                            y="-30"
+                            width="100"
+                            height="28"
+                            rx="14"
+                            fill="#061D1A"
+                            filter="drop-shadow(0 4px 10px rgba(0, 0, 0, 0.32))"
+                          />
+                          {/* Tooltip text */}
+                          <text
+                            x="0"
+                            y="-14"
+                            textAnchor="middle"
+                            fill="#FFFFFF"
+                            fontSize="12.5"
+                            fontWeight="700"
+                            letterSpacing="-0.2px"
+                            dominantBaseline="middle"
+                          >
+                            {viewingAsset.currency === "USD" ? "$" : "₹"}
+                            {activeHighlightCoord.point.price.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </text>
+                        </g>
+
+                        {/* Radiant Glowing Neon Aura around the point */}
+                        <circle
+                          cx={activeHighlightCoord.x}
+                          cy={activeHighlightCoord.y}
+                          r="13"
+                          fill="#10B981"
+                          opacity="0.35"
                         />
                         <circle
-                          cx={hoverPosition.x}
-                          cy={hoverPosition.y}
-                          r={7}
-                          fill={strokeColor}
-                          opacity={0.25}
+                          cx={activeHighlightCoord.x}
+                          cy={activeHighlightCoord.y}
+                          r="6.5"
+                          fill="#004643"
+                          stroke="#10B981"
+                          strokeWidth="2.8"
                         />
                         <circle
-                          cx={hoverPosition.x}
-                          cy={hoverPosition.y}
-                          r={4}
-                          fill={strokeColor}
-                          stroke="#FFFFFF"
-                          strokeWidth={2}
+                          cx={activeHighlightCoord.x}
+                          cy={activeHighlightCoord.y}
+                          r="2"
+                          fill="#FFFFFF"
                         />
                       </g>
                     )}
@@ -677,16 +857,29 @@ function AssetDetailModalInner({
                 )}
               </div>
 
-              {/* Chart Footer: Start Date • CMP • End Date */}
+              {/* Chart Footer matching screenshot */}
               {points.length > 0 && (
                 <div className="stock-chart-dates-footer">
-                  <span>{points[0].date}</span>
-                  <span style={{ fontWeight: 600, color: "#475569" }}>
-                    {viewingAsset.category === "Mutual Funds" ? "NAV" : "CMP"}:{" "}
-                    {viewingAsset.currency === "USD" ? "$" : "₹"}
-                    {displayPrice.toFixed(viewingAsset.category === "Mutual Funds" ? 4 : 2)}
-                  </span>
-                  <span>{points[points.length - 1].date}</span>
+                  <div className="stock-chart-footer-item">
+                    <Calendar size={14} className="stock-chart-footer-icon" />
+                    <span>{points[0].date}</span>
+                  </div>
+
+                  <div className="stock-chart-footer-cmp-pill">
+                    <Briefcase size={14} className="stock-chart-footer-cmp-icon" />
+                    <span>
+                      {viewingAsset.category === "Mutual Funds" ? "NAV" : "CMP"}:{" "}
+                      <strong>
+                        {viewingAsset.currency === "USD" ? "$" : "₹"}
+                        {displayPrice.toFixed(viewingAsset.category === "Mutual Funds" ? 4 : 2)}
+                      </strong>
+                    </span>
+                  </div>
+
+                  <div className="stock-chart-footer-item">
+                    <span>{points[points.length - 1].date}</span>
+                    <Calendar size={14} className="stock-chart-footer-icon" />
+                  </div>
                 </div>
               )}
             </div>
