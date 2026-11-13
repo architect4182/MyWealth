@@ -25,6 +25,7 @@ export default function StocksPage() {
     stocksPnlPct,
     indianInvested,
     usInvested,
+    usInvestedUSD,
     pctIndian,
     pctUS,
     money,
@@ -269,7 +270,7 @@ export default function StocksPage() {
                       </span>
                     </div>
                   </div>
-                  <span className="apple-alloc-val">{money(usInvested)}</span>
+                  <span className="apple-alloc-val">{money(usInvestedUSD, "USD")}</span>
                 </div>
               </div>
             </div>

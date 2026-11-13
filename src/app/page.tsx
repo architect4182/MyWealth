@@ -47,6 +47,7 @@ export default function Home() {
     totalReturnPct,
     indianInvested,
     usInvested,
+    usInvestedUSD,
     mfInvested,
     indianProfitsOnly,
     usProfitsOnly,
@@ -406,7 +407,7 @@ export default function Home() {
                             <span className="apple-alloc-pct">{investedPctUS}% of invested</span>
                           </div>
                         </div>
-                        <span className="apple-alloc-val">{money(usInvested)}</span>
+                        <span className="apple-alloc-val">{money(usInvestedUSD, "USD")}</span>
                       </div>
                     </Link>
                   </div>

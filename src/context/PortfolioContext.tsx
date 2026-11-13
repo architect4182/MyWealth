@@ -123,6 +123,7 @@ interface PortfolioContextType {
   goldVal: number;
   indianInvested: number;
   usInvested: number;
+  usInvestedUSD: number;
   goldInvested: number;
   pctIndian: number;
   pctUS: number;
@@ -881,6 +882,19 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const usInvested = useMemo(
     () => calcInvestedInr(assets.filter((a) => a.category === "US Stocks")),
     [assets, usdInrRate]
+  );
+  const usInvestedUSD = useMemo(
+    () =>
+      assets
+        .filter((a) => a.category === "US Stocks" || a.currency === "USD")
+        .reduce((sum, a) => {
+          const cost =
+            a.investedAmount !== undefined && a.investedAmount > 0
+              ? a.investedAmount
+              : a.quantity * a.buyPrice;
+          return sum + cost;
+        }, 0),
+    [assets]
   );
   const goldInvested = useMemo(
     () => calcInvestedInr(assets.filter((a) => a.category === "Gold & Fixed Income")),
@@ -2119,6 +2133,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       goldVal,
       indianInvested,
       usInvested,
+      usInvestedUSD,
       goldInvested,
       pctIndian,
       pctUS,
@@ -2208,6 +2223,7 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       goldVal,
       indianInvested,
       usInvested,
+      usInvestedUSD,
       goldInvested,
       pctIndian,
       pctUS,
