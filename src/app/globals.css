@@ -10798,3 +10798,463 @@ tbody tr.flash-pulse td {
     font-size: 12.5px !important;
   }
 }
+
+/* =========================================================================
+   PORTFOLIO INVESTMENT ANALYSIS & HOLDINGS BREAKDOWN SECTION
+   ========================================================================= */
+
+.apple-analysis-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin: 6px 0 8px;
+}
+
+.apple-analysis-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.apple-analysis-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.apple-analysis-icon-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: rgba(0, 70, 67, 0.09);
+  color: #004643;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 70, 67, 0.16);
+}
+
+.apple-analysis-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.apple-analysis-heading {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0E2422;
+  letter-spacing: -0.3px;
+}
+
+.apple-analysis-chip-count {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(0, 70, 67, 0.08);
+  color: #004643;
+  border: 1px solid rgba(0, 70, 67, 0.18);
+  white-space: nowrap;
+}
+
+.apple-analysis-subheading {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #4A5E5B;
+}
+
+.apple-analysis-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: #F3F4F6;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  color: #0E2422;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.apple-analysis-toggle-btn:hover {
+  background: #E5E7EB;
+  border-color: rgba(0, 0, 0, 0.14);
+}
+
+.apple-analysis-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeInDown 0.25s ease-out;
+}
+
+.apple-analysis-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 960px) {
+  .apple-analysis-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* Thematic Lists */
+.apple-analysis-thematic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.apple-analysis-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(0, 70, 67, 0.06);
+}
+
+.apple-analysis-theme-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.apple-analysis-theme-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.apple-analysis-theme-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.apple-analysis-theme-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.apple-analysis-theme-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0E2422;
+}
+
+.apple-analysis-theme-pct {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #004643;
+}
+
+.apple-analysis-stock-pills {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.apple-analysis-stock-pill {
+  font-size: 10.5px;
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 70, 67, 0.16);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.apple-analysis-stock-pill strong {
+  font-weight: 700;
+}
+
+.apple-analysis-stock-pill small {
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.apple-analysis-theme-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0E2422;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* Highlight Box */
+.apple-analysis-highlight-box {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(0, 70, 67, 0.04);
+  border: 1px solid rgba(0, 70, 67, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.apple-analysis-highlight-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #004643;
+}
+
+.apple-analysis-highlight-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+  color: #0E2422;
+}
+
+.apple-analysis-highlight-name-row strong {
+  font-weight: 700;
+}
+
+.apple-analysis-highlight-name-row span {
+  font-size: 12px;
+  color: #4A5E5B;
+  font-weight: 500;
+}
+
+/* Alpha Matrix */
+.apple-analysis-alpha-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 580px) {
+  .apple-analysis-alpha-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.apple-analysis-alpha-card {
+  padding: 11px 13px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.apple-analysis-alpha-card.winner {
+  background: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.22);
+}
+
+.apple-analysis-alpha-card.laggard {
+  background: rgba(220, 38, 38, 0.05);
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.apple-analysis-alpha-card.clean {
+  background: rgba(0, 70, 67, 0.05);
+  border: 1px solid rgba(0, 70, 67, 0.18);
+}
+
+.apple-analysis-alpha-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.apple-analysis-alpha-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.apple-analysis-alpha-tag.positive {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.12);
+}
+
+.apple-analysis-alpha-tag.negative {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.12);
+}
+
+.apple-analysis-alpha-pct {
+  font-size: 13.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.apple-analysis-alpha-pct.positive {
+  color: #15803d;
+}
+
+.apple-analysis-alpha-pct.negative {
+  color: #b91c1c;
+}
+
+.apple-analysis-alpha-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apple-analysis-alpha-details strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0E2422;
+}
+
+.apple-analysis-alpha-sub {
+  font-size: 11px;
+  color: #4A5E5B;
+}
+
+/* Capital Tiers List */
+.apple-analysis-capital-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.apple-analysis-tiers-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #6B7280;
+}
+
+.apple-analysis-tiers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.apple-analysis-tier-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.apple-analysis-tier-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.apple-analysis-tier-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.apple-analysis-tier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0E2422;
+}
+
+.apple-analysis-tier-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Takeaways List */
+.apple-analysis-takeaways-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.apple-analysis-takeaway-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(0, 70, 67, 0.08);
+}
+
+.apple-analysis-takeaway-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(0, 70, 67, 0.08);
+  color: #004643;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.apple-analysis-takeaway-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.apple-analysis-takeaway-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.apple-analysis-takeaway-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0E2422;
+}
+
+.apple-analysis-takeaway-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: rgba(0, 70, 67, 0.08);
+  color: #004643;
+  border: 1px solid rgba(0, 70, 67, 0.16);
+  white-space: nowrap;
+}
+
+.apple-analysis-takeaway-desc {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #4A5E5B;
+}

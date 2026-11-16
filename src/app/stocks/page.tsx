@@ -13,6 +13,7 @@ import { usePortfolio } from "@/context/PortfolioContext";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
 import { HoldingsTableAndCards } from "@/components/HoldingsTableAndCards";
+import { InvestmentAnalysisSection } from "@/components/InvestmentAnalysisSection";
 import { TrendingSection } from "@/components/TrendingSection";
 import { Footer } from "@/components/Footer";
 
@@ -276,6 +277,13 @@ export default function StocksPage() {
               </div>
             </div>
           </div>
+
+          {/* EQUITIES INVESTMENT ANALYSIS (Personalized based on what user is invested in) */}
+          <InvestmentAnalysisSection
+            assets={equities}
+            title="Equities Investment Analysis"
+            subtitle="Diagnostics & thematic exposure based on your active stock holdings"
+          />
 
           {/* STOCKS TABLE & CARDS SECTION */}
           <HoldingsTableAndCards

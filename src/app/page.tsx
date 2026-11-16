@@ -15,6 +15,7 @@ import {
 import { usePortfolio } from "@/context/PortfolioContext";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { PortfolioModals } from "@/components/Modals";
+import { InvestmentAnalysisSection } from "@/components/InvestmentAnalysisSection";
 import { MarketTimingBadge } from "@/components/MarketBadge";
 import { getNextSipDate } from "@/utils/sip";
 import { Footer } from "@/components/Footer";
@@ -608,6 +609,13 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Deep Investment Analysis Based On What The User Is Invested In */}
+                  <InvestmentAnalysisSection
+                    assets={assets}
+                    title="Portfolio Investment Analysis"
+                    subtitle="Personalized diagnostics & sector breakdown based on your active holdings"
+                  />
                 </div>
               )}
             </>
