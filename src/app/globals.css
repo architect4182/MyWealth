@@ -2224,20 +2224,34 @@ tbody tr:hover td {
 }
 
 /* ==========================================================================
-   Modals & Sheets (Apple Frosted Glass)
+   Modals & Sheets (Apple Frosted Glass - Bulletproof Multi-Device Responsive)
    ========================================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 8, 12, 0.78);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  z-index: 1000;
-  animation: overlayFadeIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
-  overscroll-behavior: contain;
+  background: rgba(12, 16, 18, 0.58) !important;
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+  z-index: 1000 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  box-sizing: border-box !important;
+  animation: overlayFadeIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Orientation / Height Protection: In landscape or compact height, align top so header is never clipped */
+@media (max-height: 850px), (orientation: landscape) and (max-height: 900px) {
+  .modal-overlay {
+    align-items: flex-start !important;
+    padding-top: max(12px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
 }
 
 @keyframes overlayFadeIn {
@@ -2255,33 +2269,42 @@ tbody tr:hover td {
 }
 
 /* ==========================================================================
-   Multi-Device Responsive Investment Modal Architecture
+   Multi-Device Responsive Investment Modal Architecture (iPad, Mobile, Desktop)
    ========================================================================== */
 .investment-modal {
   /* Default Desktop Wide Viewport (>= 1024px) */
   width: min(90vw, 740px);
   max-width: 740px;
-  max-height: calc(100dvh - 36px);
-  padding: 26px 30px 20px;
-  border-radius: 26px;
+  max-height: min(92vh, calc(100dvh - 36px)) !important;
+  padding: 24px 28px 18px;
+  border-radius: 24px;
   background: var(--glass-bg-modal);
   backdrop-filter: var(--glass-blur-lg);
   -webkit-backdrop-filter: var(--glass-blur-lg);
-  border: 1px solid rgba(0, 70, 67, 0.24);
-  border-top: 1.5px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(0, 70, 67, 0.22);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.85);
   box-shadow: var(--shadow-glass-modal);
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 12px;
   position: relative;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain;
-  transform-origin: center 55%;
-  animation: modalPopIn 0.36s cubic-bezier(0.22, 1.18, 0.36, 1) both;
+  margin: auto !important;
+  transform-origin: center 50%;
+  animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: opacity, transform;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
+}
+
+.investment-modal::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Modal Variants */
@@ -2289,7 +2312,7 @@ tbody tr:hover td {
 .investment-modal.delete-modal {
   width: min(92vw, 440px) !important;
   max-width: 440px !important;
-  padding: 22px 24px 18px !important;
+  padding: 20px 22px 16px !important;
 }
 
 .investment-modal.modal-lg {
@@ -2297,57 +2320,75 @@ tbody tr:hover td {
   max-width: 860px !important;
 }
 
-/* Panoramic Stock & Fund Detail Modal (Expansive 2-Column Trading Dashboard) */
+/* Panoramic Stock & Fund Detail Modal */
 .investment-modal.stock-detail-modal {
-  width: min(96vw, 1160px) !important;
-  max-width: 1160px !important;
-  padding: 24px 28px 22px !important;
+  width: min(96vw, 1180px) !important;
+  max-width: 1180px !important;
+  max-height: min(94vh, calc(100dvh - 28px)) !important;
+  padding: 20px 24px 18px !important;
+  margin: auto !important;
 }
 
 /* Large Displays & Ultra-wide (>= 1440px) */
 @media (min-width: 1440px) {
   .investment-modal:not(.modal-sm):not(.stock-detail-modal) {
-    width: min(88vw, 780px);
-    max-width: 780px;
-    padding: 28px 34px 22px;
-    gap: 15px;
+    width: min(88vw, 760px);
+    max-width: 760px;
+    padding: 26px 32px 20px;
+    gap: 14px;
   }
 
   .investment-modal.stock-detail-modal {
-    width: min(94vw, 1200px) !important;
-    max-width: 1200px !important;
-    padding: 26px 32px 24px !important;
+    width: min(94vw, 1220px) !important;
+    max-width: 1220px !important;
+    padding: 24px 30px 22px !important;
   }
 }
 
 /* Laptops & Standard Desktops (1024px - 1439px) */
 @media (min-width: 1024px) and (max-width: 1439px) {
   .investment-modal:not(.modal-sm):not(.stock-detail-modal) {
-    width: min(90vw, 720px);
-    max-width: 720px;
-    padding: 26px 30px 20px;
+    width: min(90vw, 700px);
+    max-width: 700px;
+    padding: 24px 28px 18px;
   }
 
   .investment-modal.stock-detail-modal {
-    width: min(95vw, 1100px) !important;
-    max-width: 1100px !important;
-    padding: 22px 26px 20px !important;
+    width: min(95vw, 1140px) !important;
+    max-width: 1140px !important;
+    padding: 18px 22px 16px !important;
   }
 }
 
-/* Tablets & iPads (768px - 1023px) */
+/* Tablets & iPads (768px - 1023px) - Perfect iPad A16 Portrait & Rotation */
 @media (min-width: 768px) and (max-width: 1023px) {
   .investment-modal:not(.modal-sm):not(.stock-detail-modal) {
-    width: min(92vw, 640px);
-    max-width: 640px;
-    padding: 24px 26px 18px;
+    width: min(92vw, 650px);
+    max-width: 650px;
+    padding: 20px 24px 16px;
     gap: 12px;
   }
 
   .investment-modal.stock-detail-modal {
     width: min(96vw, 920px) !important;
     max-width: 920px !important;
-    padding: 20px 22px 18px !important;
+    padding: 16px 20px 16px !important;
+  }
+}
+
+/* Tablet / Laptop Landscape Mode (Constrained Height <= 850px) */
+@media (orientation: landscape) and (max-height: 850px) {
+  .investment-modal {
+    margin: 0 auto !important;
+    max-height: calc(100dvh - 20px) !important;
+    padding: 14px 20px 12px !important;
+    gap: 10px !important;
+    border-radius: 20px !important;
+  }
+
+  .investment-modal.stock-detail-modal {
+    max-height: calc(100dvh - 16px) !important;
+    padding: 14px 18px 14px !important;
   }
 }
 
@@ -2356,16 +2397,16 @@ tbody tr:hover td {
   .investment-modal:not(.modal-sm):not(.stock-detail-modal) {
     width: min(94vw, 520px);
     max-width: 520px;
-    max-height: calc(100dvh - 28px);
-    padding: 22px 22px 18px;
+    max-height: min(92vh, calc(100dvh - 24px)) !important;
+    padding: 20px 20px 16px;
     border-radius: 22px;
-    gap: 12px;
+    gap: 11px;
   }
 
   .investment-modal.stock-detail-modal {
-    width: min(96vw, 680px) !important;
-    max-width: 680px !important;
-    padding: 16px 16px 18px !important;
+    width: min(96vw, 700px) !important;
+    max-width: 700px !important;
+    padding: 16px 16px 16px !important;
   }
 }
 
@@ -7447,10 +7488,10 @@ select:focus {
    Horizontal Panoramic Modal Layout & Light Theme Loading Styles
    ========================================================================== */
 .stock-detail-modal {
-  max-width: 1280px !important;
-  width: min(96vw, 1280px) !important;
-  max-height: 94vh !important;
-  overflow-y: auto;
+  max-width: 1240px !important;
+  width: min(96vw, 1240px) !important;
+  max-height: min(94vh, calc(100dvh - 32px)) !important;
+  overflow-y: auto !important;
   overflow-x: hidden !important;
   padding: 18px 22px !important;
   gap: 12px !important;
@@ -7473,15 +7514,16 @@ select:focus {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  gap: 16px !important;
+  gap: 14px !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  flex-wrap: wrap !important;
 }
 
 .stock-detail-identity {
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
+  gap: 12px !important;
   flex: 1 1 auto !important;
   min-width: 0 !important;
 }
@@ -7495,7 +7537,7 @@ select:focus {
 
 .stock-detail-name {
   margin: 0 !important;
-  font-size: 19px !important;
+  font-size: clamp(16px, 2.4vw, 19px) !important;
   font-weight: 700 !important;
   letter-spacing: -0.4px !important;
   color: #0E2422 !important;
@@ -7521,9 +7563,10 @@ select:focus {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
   border-radius: 50% !important;
   background: #f4f4f8 !important;
   color: #4A5E5B !important;
@@ -7539,12 +7582,12 @@ select:focus {
   transform: scale(1.05) !important;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 940px) {
   .stock-detail-modal {
-    width: min(96vw, 840px) !important;
+    width: min(96vw, 860px) !important;
     max-width: 100% !important;
-    max-height: 90vh !important;
-    padding: 20px 18px !important;
+    max-height: min(92vh, calc(100dvh - 24px)) !important;
+    padding: 18px 18px !important;
   }
 }
 
@@ -7741,16 +7784,80 @@ select:focus {
 
 .stock-modal-panoramic-body {
   display: grid !important;
-  grid-template-columns: 1.35fr 1fr !important;
-  gap: 24px !important;
+  grid-template-columns: 1.3fr 1fr !important;
+  gap: 20px !important;
   align-items: start !important;
   width: 100% !important;
 }
 
-@media (max-width: 980px) {
+/* iPad Portrait (width <= 960px): Stack seamlessly into single column */
+@media (max-width: 960px) {
   .stock-modal-panoramic-body {
     grid-template-columns: 1fr !important;
-    gap: 18px !important;
+    gap: 16px !important;
+  }
+}
+
+/* iPad Landscape (961px - 1200px): Optimal 2-column side-by-side trading view */
+@media (min-width: 961px) and (max-width: 1200px) {
+  .stock-modal-panoramic-body {
+    grid-template-columns: 1.25fr 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+/* iPad & Tablet Landscape / Short Height Viewports (Rotation Protection) */
+@media (orientation: landscape) and (max-height: 850px) {
+  .stock-detail-modal {
+    max-height: calc(100dvh - 18px) !important;
+    padding: 14px 18px !important;
+    gap: 10px !important;
+  }
+
+  .stock-hero-price-card {
+    padding: 8px 12px !important;
+  }
+
+  .stock-price-digits {
+    font-size: 26px !important;
+  }
+
+  .stock-unified-chart-card {
+    padding: 12px 14px 10px !important;
+    border-radius: 20px !important;
+    gap: 8px !important;
+  }
+
+  .stock-chart-svg-wrap {
+    min-height: 190px !important;
+  }
+
+  .stock-position-outer-card {
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    gap: 8px !important;
+  }
+
+  .stock-bento-grid {
+    gap: 6px !important;
+  }
+
+  .stock-bento-card {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .bento-value {
+    font-size: 14px !important;
+  }
+
+  .stock-net-return-banner {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .stock-net-return-amount {
+    font-size: 17px !important;
   }
 }
 

@@ -349,9 +349,25 @@ export function AddAssetModal() {
         return;
       if (data.success && data.price) {
         setCurrentPrice(String(data.price));
-        const qNum = Number(quantity) > 0 ? Number(quantity) : 1;
-        setQuantity(String(qNum));
-        setCurrentValue((qNum * data.price).toFixed(2));
+        if (!buyPrice && !buyPriceEditedRef.current) {
+          setBuyPrice(String(data.price));
+        }
+
+        if (Number(investedAmount) > 0) {
+          const bp = Number(buyPrice) > 0 ? Number(buyPrice) : data.price;
+          const rawQ = Number(investedAmount) / bp;
+          const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+          setQuantity(String(cleanQ));
+          setCurrentValue((cleanQ * data.price).toFixed(2));
+        } else {
+          const qNum = Number(quantity) > 0 ? Number(quantity) : 1;
+          setQuantity(String(qNum));
+          setCurrentValue((qNum * data.price).toFixed(2));
+          if (!investedAmount) {
+            setInvestedAmount((qNum * data.price).toFixed(2));
+          }
+        }
+
         if (data.currency) setCurrency(data.currency as "INR" | "USD");
         // Only overwrite name when explicitly triggered by a selection, not auto-typing
         if (data.name && isStockSelected && name.trim().length <= 4) {
@@ -944,15 +960,17 @@ export function AddAssetModal() {
                                     const q = e.target.value;
                                     setQuantity(q);
                                     const numQ = Number(q);
+                                    const priceToUse = Number(buyPrice) > 0 ? Number(buyPrice) : Number(currentPrice);
                                     if (numQ > 0) {
-                                      if (investedEditedRef.current && Number(investedAmount) > 0) {
-                                        setBuyPrice((Number(investedAmount) / numQ).toFixed(4));
-                                      } else if (buyPriceEditedRef.current && Number(buyPrice) > 0) {
-                                        setInvestedAmount((numQ * Number(buyPrice)).toFixed(2));
+                                      if (priceToUse > 0) {
+                                        setInvestedAmount((numQ * priceToUse).toFixed(2));
                                       }
                                       if (Number(currentPrice) > 0) {
                                         setCurrentValue((numQ * Number(currentPrice)).toFixed(2));
                                       }
+                                    } else if (!q) {
+                                      setInvestedAmount("");
+                                      setCurrentValue("");
                                     }
                                   }}
                                   placeholder="e.g. 10"
@@ -976,8 +994,17 @@ export function AddAssetModal() {
                                     onClick={() => {
                                       setBuyPrice(currentPrice);
                                       buyPriceEditedRef.current = true;
-                                      if (quantity && Number(quantity) > 0) {
-                                        setInvestedAmount((Number(quantity) * Number(currentPrice)).toFixed(2));
+                                      const numCp = Number(currentPrice);
+                                      if (numCp > 0) {
+                                        if (Number(investedAmount) > 0) {
+                                          const rawQ = Number(investedAmount) / numCp;
+                                          const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                                          setQuantity(String(cleanQ));
+                                          setCurrentValue((cleanQ * numCp).toFixed(2));
+                                        } else if (Number(quantity) > 0) {
+                                          setInvestedAmount((Number(quantity) * numCp).toFixed(2));
+                                          setCurrentValue((Number(quantity) * numCp).toFixed(2));
+                                        }
                                       }
                                     }}
                                     title="Click to fill with live CMP"
@@ -1000,14 +1027,15 @@ export function AddAssetModal() {
                                     setBuyPrice(price);
                                     const numBp = Number(price);
                                     if (numBp > 0) {
-                                      if (!investedEditedRef.current && Number(quantity) > 0) {
-                                        setInvestedAmount((Number(quantity) * numBp).toFixed(2));
-                                      } else if (investedEditedRef.current && Number(investedAmount) > 0 && (!quantity || Number(quantity) <= 0)) {
-                                        const newQ = Number(investedAmount) / numBp;
-                                        setQuantity(String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8))));
+                                      if (Number(investedAmount) > 0) {
+                                        const rawQ = Number(investedAmount) / numBp;
+                                        const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                                        setQuantity(String(cleanQ));
                                         if (Number(currentPrice) > 0) {
-                                          setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
+                                          setCurrentValue((cleanQ * Number(currentPrice)).toFixed(2));
                                         }
+                                      } else if (Number(quantity) > 0) {
+                                        setInvestedAmount((Number(quantity) * numBp).toFixed(2));
                                       }
                                     }
                                   }}
@@ -1035,15 +1063,20 @@ export function AddAssetModal() {
                                     investedEditedRef.current = amount.trim().length > 0;
                                     setInvestedAmount(amount);
                                     const numInv = Number(amount);
-                                    const numQ = Number(quantity);
-                                    if (numInv > 0 && numQ > 0) {
-                                      setBuyPrice((numInv / numQ).toFixed(4));
-                                    } else if (numInv > 0 && Number(buyPrice) > 0) {
-                                      const newQ = numInv / Number(buyPrice);
-                                      setQuantity(String(Math.abs(newQ - Math.round(newQ)) < 1e-8 ? Math.round(newQ) : Number(newQ.toFixed(8))));
-                                      if (Number(currentPrice) > 0) {
-                                        setCurrentValue((newQ * Number(currentPrice)).toFixed(2));
+                                    const priceToUse = Number(buyPrice) > 0 ? Number(buyPrice) : Number(currentPrice);
+                                    if (numInv > 0 && priceToUse > 0) {
+                                      if (!buyPrice && Number(currentPrice) > 0) {
+                                        setBuyPrice(currentPrice);
                                       }
+                                      const rawQ = numInv / priceToUse;
+                                      const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                                      setQuantity(String(cleanQ));
+                                      if (Number(currentPrice) > 0) {
+                                        setCurrentValue((cleanQ * Number(currentPrice)).toFixed(2));
+                                      }
+                                    } else if (!amount) {
+                                      setQuantity("");
+                                      setCurrentValue("");
                                     }
                                   }}
                                   placeholder={
@@ -1823,10 +1856,12 @@ function EditAssetModalInner({
                   onChange={(e) => {
                     const q = e.target.value;
                     const numQ = Number(q);
+                    const bp = Number(editingAsset.buyPrice) > 0 ? Number(editingAsset.buyPrice) : Number(editingAsset.currentPrice);
                     const cp = Number(editingAsset.currentPrice);
                     setEditingAsset({
                       ...editingAsset,
                       quantity: q,
+                      investedAmount: numQ > 0 && bp > 0 ? (numQ * bp).toFixed(2) : editingAsset.investedAmount,
                       currentValue: numQ > 0 && cp > 0 ? (numQ * cp).toFixed(2) : editingAsset.currentValue,
                     });
                   }}
@@ -1842,12 +1877,27 @@ function EditAssetModalInner({
                   min="0.01"
                   step="any"
                   value={editingAsset.investedAmount}
-                  onChange={(e) =>
-                    setEditingAsset({
-                      ...editingAsset,
-                      investedAmount: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const invStr = e.target.value;
+                    const numInv = Number(invStr);
+                    const bp = Number(editingAsset.buyPrice) > 0 ? Number(editingAsset.buyPrice) : Number(editingAsset.currentPrice);
+                    const cp = Number(editingAsset.currentPrice);
+                    if (numInv > 0 && bp > 0) {
+                      const rawQ = numInv / bp;
+                      const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                      setEditingAsset({
+                        ...editingAsset,
+                        investedAmount: invStr,
+                        quantity: String(cleanQ),
+                        currentValue: cp > 0 ? (cleanQ * cp).toFixed(2) : editingAsset.currentValue,
+                      });
+                    } else {
+                      setEditingAsset({
+                        ...editingAsset,
+                        investedAmount: invStr,
+                      });
+                    }
+                  }}
                   placeholder="e.g. 5000"
                 />
               </label>
@@ -2064,7 +2114,7 @@ export function DbConfigModal() {
     >
       <div
         className="investment-modal"
-        style={{ width: "min(100%, 540px)", maxHeight: "90vh", overflowY: "auto", scrollbarWidth: "none" }}
+        style={{ width: "min(100%, 540px)", maxHeight: "min(92vh, calc(100dvh - 32px))", overflowY: "auto", scrollbarWidth: "none" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-heading">
