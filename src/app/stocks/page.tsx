@@ -32,8 +32,24 @@ export default function StocksPage() {
     isRefreshingPrices,
     handleRefreshPrices,
     priceRefreshMessage,
+    indianMarket,
+    usMarket,
+    currentTime,
   } = usePortfolio();
-  const [stockSubTab, setStockSubTab] = useState<"all" | "indian" | "us">("all");
+
+  const inOpen = Boolean(indianMarket?.isOpen);
+  const usOpen = Boolean(usMarket?.isOpen);
+
+  const isWeekend = useMemo(() => {
+    if (!currentTime) return false;
+    const istDay = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Kolkata",
+      weekday: "short",
+    }).format(currentTime);
+    return istDay === "Sat" || istDay === "Sun";
+  }, [currentTime]);
+
+  const [stockSubTab, setStockSubTab] = useState<"all" | "live" | "indian" | "us">("all");
 
   const indianAssets = useMemo(
     () => equities.filter((a) => a.category === "Indian Equities"),
@@ -59,8 +75,13 @@ export default function StocksPage() {
   const displayedStocks = useMemo(() => {
     if (stockSubTab === "indian") return indianAssets;
     if (stockSubTab === "us") return usAssets;
+    if (stockSubTab === "live") {
+      if (inOpen && !usOpen) return indianAssets;
+      if (usOpen && !inOpen) return usAssets;
+      return equities;
+    }
     return equities;
-  }, [stockSubTab, indianAssets, usAssets, equities]);
+  }, [stockSubTab, indianAssets, usAssets, equities, inOpen, usOpen]);
 
   const filterTabs = [
     {
@@ -69,6 +90,24 @@ export default function StocksPage() {
       count: equities.length,
       icon: <ChartNoAxesCombined size={13} />,
     },
+    ...(!isWeekend && (inOpen || usOpen)
+      ? [
+          {
+            key: "live",
+            label: inOpen ? "NSE Live (Open Now)" : "US Live (Open Now)",
+            count: inOpen ? indianAssets.length : usAssets.length,
+            icon: (
+              <span
+                className="apple-live-radar-wrap"
+                style={{ width: "9px", height: "9px", display: "inline-block", position: "relative" }}
+              >
+                <span className="apple-live-radar-ping" />
+                <span className="apple-live-radar-core" />
+              </span>
+            ),
+          },
+        ]
+      : []),
     {
       key: "indian",
       label: "NSE / BSE India",
@@ -282,7 +321,7 @@ export default function StocksPage() {
             filterTabs={filterTabs}
             activeFilterTab={stockSubTab}
             onFilterTabChange={(key) =>
-              setStockSubTab(key as "all" | "indian" | "us")
+              setStockSubTab(key as "all" | "live" | "indian" | "us")
             }
             emptyTitle="No stock positions found"
             emptyDescription="Add an Indian or US equity position or search for another ticker."

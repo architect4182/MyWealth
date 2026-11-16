@@ -13,6 +13,7 @@ import {
   Plus,
   ChartNoAxesCombined,
   Repeat,
+  Clock,
 } from "lucide-react";
 import { AssetPosition, AssetCategory } from "@/types/portfolio";
 import { usePortfolio } from "@/context/PortfolioContext";
@@ -56,6 +57,76 @@ export interface HoldingsTableAndCardsProps {
   defaultAddCategory?: AssetCategory;
 }
 
+/** Computes active session priority for Mon-Fri market timing sorting */
+function getMarketSessionRank(category: AssetCategory, now: Date | null): number {
+  if (!now) return 0;
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).formatToParts(now);
+
+  const partMap: Record<string, string> = {};
+  parts.forEach((p) => {
+    partMap[p.type] = p.value;
+  });
+  const weekday = partMap.weekday;
+  const hour = parseInt(partMap.hour, 10);
+  const minute = parseInt(partMap.minute, 10);
+  const istMinutes = hour * 60 + minute;
+
+  const isWeekend = weekday === "Sat" || weekday === "Sun";
+  if (isWeekend) {
+    return 0; // Weekend: all markets closed
+  }
+
+  if (category === "Indian Equities") {
+    // 9:15 AM - 3:30 PM IST (555 to 930) -> LIVE trading
+    if (istMinutes >= 555 && istMinutes < 930) return 1000;
+    // 9:00 AM - 9:15 AM IST (540 to 555) -> PRE-MARKET
+    if (istMinutes >= 540 && istMinutes < 555) return 800;
+    // Before 9:00 AM on weekday -> Opening today next
+    if (istMinutes < 540) return 500;
+    // After 3:30 PM on weekday -> Closed for today
+    return 200;
+  }
+
+  if (category === "US Stocks") {
+    const usSt = getAssetMarketStatus("US Stocks", now);
+    if (usSt.status === "LIVE") return 1000;
+    if (usSt.status === "PRE-MARKET") return 800;
+    if (usSt.status === "AFTER-HOURS") return 600;
+    // If between 3:30 PM (930) and US regular open (approx 8:00 PM IST) -> US market opens next today!
+    if (istMinutes >= 930 && istMinutes < 1200) return 700;
+    // Earlier in the Indian day -> Closed, opens tonight
+    return 200;
+  }
+
+  if (category === "Mutual Funds") {
+    // During Indian equity market hours (555 to 930) -> Active trading day
+    if (istMinutes >= 555 && istMinutes < 930) return 900;
+    // During NAV publication window (8:00 PM - 11:30 PM IST -> 1200 to 1410) -> NAV updating live
+    if (istMinutes >= 1200 && istMinutes < 1410) return 950;
+    return 300;
+  }
+
+  if (category === "Crypto") {
+    return 750; // 24/7 active
+  }
+
+  if (category === "Gold & Fixed Income") {
+    if (istMinutes >= 555 && istMinutes < 930) return 850;
+    return 200;
+  }
+
+  return 200;
+}
+
+export type SortField = "auto" | "pnl" | "value" | "invested" | "price" | "name";
+
 export function HoldingsTableAndCards({
   assets,
   filterTabs,
@@ -71,6 +142,7 @@ export function HoldingsTableAndCards({
     updatingPriceAssetIds,
     flashAssetId,
     money,
+    usdInrRate,
     showUsdInRupees,
     currentTime,
     setModal,
@@ -80,10 +152,10 @@ export function HoldingsTableAndCards({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
-  const [sortField, setSortField] = useState<"name" | "price" | "invested" | "value" | "pnl">("pnl");
+  const [sortField, setSortField] = useState<SortField>("auto");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  function handleSort(field: "name" | "price" | "invested" | "value" | "pnl") {
+  function handleSort(field: SortField) {
     if (sortField === field) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -92,9 +164,26 @@ export function HoldingsTableAndCards({
     }
   }
 
+  function cycleSort() {
+    const sequence: SortField[] = ["auto", "pnl", "value", "invested", "name"];
+    const idx = sequence.indexOf(sortField);
+    const next = sequence[(idx + 1) % sequence.length];
+    setSortField(next);
+    setSortOrder("desc");
+  }
+
   // Pre-cached market statuses for entire collection to eliminate redundant Date calculations
   const usStatus = useMemo(() => getAssetMarketStatus("US Stocks", currentTime), [currentTime]);
   const inStatus = useMemo(() => getAssetMarketStatus("Indian Equities", currentTime), [currentTime]);
+
+  const isWeekend = useMemo(() => {
+    if (!currentTime) return false;
+    const istDay = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Kolkata",
+      weekday: "short",
+    }).format(currentTime);
+    return istDay === "Sat" || istDay === "Sun";
+  }, [currentTime]);
 
   const displayedAssets = useMemo(() => {
     let list = [...assets];
@@ -109,36 +198,53 @@ export function HoldingsTableAndCards({
     }
 
     list.sort((a, b) => {
-      let valA = 0;
-      let valB = 0;
+      const invA = a.investedAmount !== undefined && a.investedAmount > 0 ? a.investedAmount : a.quantity * a.buyPrice;
+      const curA = a.quantity * a.currentPrice;
+      const rawPnlA = curA - invA;
+      const pnlInrA = a.currency === "USD" ? rawPnlA * usdInrRate : rawPnlA;
 
+      const invB = b.investedAmount !== undefined && b.investedAmount > 0 ? b.investedAmount : b.quantity * b.buyPrice;
+      const curB = b.quantity * b.currentPrice;
+      const rawPnlB = curB - invB;
+      const pnlInrB = b.currency === "USD" ? rawPnlB * usdInrRate : rawPnlB;
+
+      // 1. SMART AUTO SORTING (Market Timing on Mon-Fri, By Profit on Sat-Sun)
+      if (sortField === "auto") {
+        if (!isWeekend) {
+          // Mon - Fri: Sort primarily by Market Timing Rank
+          const rankA = getMarketSessionRank(a.category, currentTime);
+          const rankB = getMarketSessionRank(b.category, currentTime);
+          if (rankA !== rankB) {
+            return rankB - rankA; // Active market sessions come first
+          }
+        }
+        // Sat - Sun OR within same market session: Sort by Profit descending
+        return pnlInrB - pnlInrA;
+      }
+
+      // 2. EXPLICIT COLUMN SORTS
       if (sortField === "name") {
         const cmp = a.name.localeCompare(b.name);
         return sortOrder === "asc" ? cmp : -cmp;
       } else if (sortField === "price") {
-        valA = a.currentPrice;
-        valB = b.currentPrice;
+        return sortOrder === "asc" ? a.currentPrice - b.currentPrice : b.currentPrice - a.currentPrice;
       } else if (sortField === "invested") {
-        valA = a.investedAmount !== undefined && a.investedAmount > 0 ? a.investedAmount : a.quantity * a.buyPrice;
-        valB = b.investedAmount !== undefined && b.investedAmount > 0 ? b.investedAmount : b.quantity * b.buyPrice;
+        const costA = a.currency === "USD" ? invA * usdInrRate : invA;
+        const costB = b.currency === "USD" ? invB * usdInrRate : invB;
+        return sortOrder === "asc" ? costA - costB : costB - costA;
       } else if (sortField === "value") {
-        valA = a.quantity * a.currentPrice;
-        valB = b.quantity * b.currentPrice;
+        const valA = a.currency === "USD" ? curA * usdInrRate : curA;
+        const valB = b.currency === "USD" ? curB * usdInrRate : curB;
+        return sortOrder === "asc" ? valA - valB : valB - valA;
       } else if (sortField === "pnl") {
-        const invA = a.investedAmount !== undefined && a.investedAmount > 0 ? a.investedAmount : a.quantity * a.buyPrice;
-        const curA = a.quantity * a.currentPrice;
-        valA = curA - invA;
-
-        const invB = b.investedAmount !== undefined && b.investedAmount > 0 ? b.investedAmount : b.quantity * b.buyPrice;
-        const curB = b.quantity * b.currentPrice;
-        valB = curB - invB;
+        return sortOrder === "asc" ? pnlInrA - pnlInrB : pnlInrB - pnlInrA;
       }
 
-      return sortOrder === "asc" ? valA - valB : valB - valA;
+      return 0;
     });
 
     return list;
-  }, [assets, searchQuery, sortField, sortOrder]);
+  }, [assets, searchQuery, sortField, sortOrder, currentTime, isWeekend, usdInrRate]);
 
   return (
     <section className="apple-holdings-section">
@@ -198,12 +304,32 @@ export function HoldingsTableAndCards({
           {/* Quick Sort Selector */}
           <button
             type="button"
-            className="apple-filter-pill"
-            onClick={() => handleSort("pnl")}
-            title="Toggle Sort by Return"
+            className={`apple-filter-pill ${sortField === "auto" ? "active-auto" : ""}`}
+            onClick={cycleSort}
+            title={
+              sortField === "auto"
+                ? isWeekend
+                  ? "Weekend mode: Automatically sorted by profit"
+                  : "Weekday mode: Filtered by active market timing (Live markets first)"
+                : "Click to cycle sort modes"
+            }
           >
-            <ArrowUpDown size={12} />
-            <span>Sort: {sortField.toUpperCase()} ({sortOrder})</span>
+            {sortField === "auto" ? (
+              isWeekend ? (
+                <TrendingUp size={12} style={{ color: "#004643" }} />
+              ) : (
+                <Clock size={12} style={{ color: "#004643" }} />
+              )
+            ) : (
+              <ArrowUpDown size={12} />
+            )}
+            <span>
+              {sortField === "auto"
+                ? isWeekend
+                  ? "By Profit (Weekend)"
+                  : "Market Time (Mon–Fri)"
+                : `Sort: ${sortField.toUpperCase()} (${sortOrder})`}
+            </span>
           </button>
         </div>
       </div>

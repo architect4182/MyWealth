@@ -6793,6 +6793,13 @@ body {
   box-shadow: 0 2px 8px rgba(0, 70, 67, 0.25) !important;
 }
 
+.apple-filter-pill.active-auto {
+  background: rgba(0, 70, 67, 0.08) !important;
+  border: 1px solid rgba(0, 70, 67, 0.28) !important;
+  color: #004643 !important;
+  font-weight: 600 !important;
+}
+
 .apple-search-input {
   background: #F3F4F6 !important;
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
