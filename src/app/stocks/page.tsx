@@ -278,14 +278,7 @@ export default function StocksPage() {
             </div>
           </div>
 
-          {/* EQUITIES INVESTMENT ANALYSIS (Personalized based on what user is invested in) */}
-          <InvestmentAnalysisSection
-            assets={equities}
-            title="Equities Investment Analysis"
-            subtitle="Diagnostics & thematic exposure based on your active stock holdings"
-          />
-
-          {/* STOCKS TABLE & CARDS SECTION */}
+          {/* STOCKS TABLE & CARDS SECTION (Invested Holdings) */}
           <HoldingsTableAndCards
             assets={displayedStocks}
             filterTabs={filterTabs}
@@ -299,6 +292,9 @@ export default function StocksPage() {
               stockSubTab === "us" ? "US Stocks" : "Indian Equities"
             }
           />
+
+          {/* MINIMAL EQUITIES INVESTMENT ANALYSIS (Below Invested, Above Trending) */}
+          <InvestmentAnalysisSection assets={equities} />
 
           {/* TRENDING STOCKS TODAY (TOP 10 LIVE MOVERS) */}
           <TrendingSection type="stocks" />
