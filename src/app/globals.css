@@ -2246,7 +2246,8 @@ tbody tr:hover td {
 }
 
 /* Orientation / Height Protection: In landscape or compact height, align top so header is never clipped */
-@media (max-height: 850px), (orientation: landscape) and (max-height: 900px) {
+@media (max-height: 850px),
+(orientation: landscape) and (max-height: 900px) {
   .modal-overlay {
     align-items: flex-start !important;
     padding-top: max(12px, env(safe-area-inset-top)) !important;
@@ -10497,6 +10498,7 @@ tbody tr.flash-pulse td {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -10588,6 +10590,7 @@ tbody tr.flash-pulse td {
     opacity: 0;
     transform: translateY(14px) scale(0.92);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -11111,14 +11114,146 @@ tbody tr.flash-pulse td {
   font-size: 12px;
 }
 
-/* Compact Theme Toggle on Small Screens */
+/* iOS 26 Clear Liquid Glass Theme Toggle */
+.liquid-glass-theme-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 80px;
+  height: 28px;
+  border-radius: 9999px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  overflow: visible;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.85) 0%, rgba(203, 213, 225, 0.72) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1.5px 4px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.liquid-glass-track-label {
+  position: absolute;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease, color 0.25s ease;
+}
+
+.liquid-glass-theme-toggle.is-light .liquid-glass-track-label {
+  right: 11px;
+  color: #0E2422;
+}
+
+.liquid-glass-theme-toggle.is-dark .liquid-glass-track-label {
+  left: 12px;
+  color: #F8FAFC;
+}
+
+.liquid-glass-orb {
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  width: 38px;
+  height: 34px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%) translateX(0);
+  transition: transform 0.38s cubic-bezier(0.34, 1.42, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease;
+  background: radial-gradient(130% 130% at 30% 22%,
+      rgba(255, 255, 255, 0.72) 0%,
+      rgba(255, 255, 255, 0.26) 45%,
+      rgba(255, 255, 255, 0.08) 78%,
+      rgba(255, 255, 255, 0.48) 100%);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.92),
+    inset 0 -2px 4px rgba(15, 23, 42, 0.12),
+    0 4px 14px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.liquid-glass-orb-sheen {
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.55) 0%,
+      rgba(255, 255, 255, 0.05) 38%,
+      transparent 65%,
+      rgba(255, 255, 255, 0.22) 100%);
+  pointer-events: none;
+}
+
+.liquid-glass-orb-icon {
+  position: relative;
+  z-index: 2;
+  color: #0E2422;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.6));
+}
+
+.liquid-glass-theme-toggle.is-dark .liquid-glass-orb {
+  transform: translateY(-50%) translateX(46px);
+  background: radial-gradient(130% 130% at 28% 20%,
+      rgba(255, 255, 255, 0.34) 0%,
+      rgba(255, 255, 255, 0.1) 42%,
+      rgba(15, 23, 42, 0.25) 75%,
+      rgba(255, 255, 255, 0.22) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    inset 0 1.5px 2.5px rgba(255, 255, 255, 0.62),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.18),
+    0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+.liquid-glass-theme-toggle.is-dark .liquid-glass-orb-sheen {
+  background: linear-gradient(165deg,
+      rgba(255, 255, 255, 0.38) 0%,
+      rgba(255, 255, 255, 0.04) 40%,
+      transparent 70%,
+      rgba(255, 255, 255, 0.18) 100%);
+}
+
+.liquid-glass-theme-toggle.is-dark .liquid-glass-orb-icon {
+  color: #FFFFFF;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.75));
+}
+
+html[data-theme="dark"] .liquid-glass-theme-toggle {
+  background: linear-gradient(180deg, rgba(72, 76, 84, 0.72) 0%, rgba(44, 48, 54, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1.5px 4px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
 @media (max-width: 768px) {
-  .ios-theme-toggle .ios-toggle-label {
-    display: none !important;
+  .liquid-glass-theme-toggle {
+    width: 68px;
+    height: 26px;
   }
-  .ios-theme-toggle {
-    padding: 0 8px !important;
-    gap: 6px !important;
+
+  .liquid-glass-orb {
+    width: 34px;
+    height: 31px;
+  }
+
+  .liquid-glass-theme-toggle.is-dark .liquid-glass-orb {
+    transform: translateY(-50%) translateX(38px);
+  }
+
+  .liquid-glass-track-label {
+    font-size: 10.5px;
+  }
+
+  .liquid-glass-theme-toggle.is-light .liquid-glass-track-label {
+    right: 8px;
+  }
+
+  .liquid-glass-theme-toggle.is-dark .liquid-glass-track-label {
+    left: 9px;
   }
 }
 
@@ -11259,8 +11394,6 @@ html[data-theme="dark"] .apple-allocation-card,
 html[data-theme="dark"] .overview-insight-card,
 html[data-theme="dark"] .overview-performance-card,
 html[data-theme="dark"] .apple-minimal-analysis-card,
-html[data-theme="dark"] .apple-holdings-section,
-html[data-theme="dark"] .apple-trending-section,
 html[data-theme="dark"] .empty-state {
   background: linear-gradient(145deg,
       rgba(17, 24, 32, 0.94) 0%,
@@ -11423,6 +11556,15 @@ html[data-theme="dark"] .apple-view-btn {
 html[data-theme="dark"] .apple-view-btn.active {
   background: #1E293B !important;
   color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-bento-asset-card::before,
+html[data-theme="dark"] .apple-trending-card::before,
+html[data-theme="dark"] .apple-wallet-hero::before,
+html[data-theme="dark"] .apple-allocation-card::before,
+html[data-theme="dark"] .apple-island-header::before {
+  display: none !important;
+  opacity: 0 !important;
 }
 
 html[data-theme="dark"] .apple-bento-asset-card,
@@ -11931,5 +12073,3 @@ html[data-theme="dark"] .apple-auth-input {
   border-color: rgba(255, 255, 255, 0.14) !important;
   color: #F1F5F9 !important;
 }
-
-

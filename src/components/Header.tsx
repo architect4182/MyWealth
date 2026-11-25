@@ -56,7 +56,7 @@ function IosThemeToggle({
 }) {
   return (
     <div
-      className="ios-toggle-pill ios-theme-toggle"
+      className={`liquid-glass-theme-toggle ${isDark ? "is-dark" : "is-light"}`}
       onClick={onToggle}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -64,18 +64,23 @@ function IosThemeToggle({
           onToggle();
         }
       }}
-      role="button"
+      role="switch"
+      aria-checked={isDark}
       tabIndex={0}
-      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      title={isDark ? "Dark Mode (Click for Light)" : "Light Mode (Click for Dark)"}
       aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
       suppressHydrationWarning
     >
-      <span className="ios-toggle-symbol" style={{ display: "inline-flex", alignItems: "center" }}>
-        {isDark ? <Moon size={13} /> : <Sun size={13} />}
+      <span className="liquid-glass-track-label">
+        {isDark ? "Dark" : "Light"}
       </span>
-      <span className="ios-toggle-label">{isDark ? "Dark" : "Light"}</span>
-      <span className={`ios-switch ${isDark ? "active" : ""}`}>
-        <span className="ios-switch-knob" />
+      <span className="liquid-glass-orb">
+        <span className="liquid-glass-orb-sheen" aria-hidden="true" />
+        {isDark ? (
+          <Sun size={15} strokeWidth={2.3} className="liquid-glass-orb-icon" />
+        ) : (
+          <Moon size={14} strokeWidth={2.3} fill="currentColor" className="liquid-glass-orb-icon" />
+        )}
       </span>
     </div>
   );
