@@ -11964,6 +11964,34 @@ html[data-theme="dark"] .apple-market-timing-card {
   box-shadow: none !important;
 }
 
+html[data-theme="dark"] .apple-market-timing-card strong {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card span {
+  color: #CBD5E1 !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card .apple-live-market-badge.live span {
+  color: #34D399 !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card .apple-live-market-badge.closed span {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card [style*="border-top"] {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card [style*="var(--apple-blue)"] {
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card [style*="var(--muted)"] {
+  color: #94A3B8 !important;
+}
+
 html[data-theme="dark"] .apple-ios-sip-toggle-card,
 html[data-theme="dark"] .modal-stock-sip-toggle {
   background: #161F29 !important;
