@@ -16,13 +16,60 @@ export const COMPANY_LOGO_API = "https://api.companyenrich.com/logo";
  *   "Tata Motors Ltd"     -> "tatamotors.com"
  *   "State Bank of India" -> "sbi.co.in"
  */
-export function getCompanyDomain(name: string, ticker: string = ""): string {
+export function getCompanyDomain(name: string, ticker: string = "", category?: AssetCategory): string {
   const trimmed = (name || ticker || "").trim();
   if (!trimmed) return "google.com";
 
   // 1. Direct domain match (e.g. youtube.com, amazon.com)
   if (/^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?$/.test(trimmed)) {
     return trimmed.toLowerCase();
+  }
+
+  const lowerName = trimmed.toLowerCase();
+  const isMutualFund =
+    category === "Mutual Funds" ||
+    /\b(mutual fund|direct plan|regular plan|idcw|growth option|index fund|flexi cap|mid cap|small cap|large cap|elss)\b/i.test(trimmed);
+
+  // 1b. Dedicated Mutual Fund AMC Domains (distinct from Parent Bank/Stock logos!)
+  if (isMutualFund) {
+    const mfAmcRules: Array<[string, string]> = [
+      ["hdfc", "hdfcfund.com"],
+      ["icici", "icicipruamc.com"],
+      ["sbi", "sbimf.com"],
+      ["axis", "axismf.com"],
+      ["kotak", "kotakmf.com"],
+      ["tata", "tatamutualfund.com"],
+      ["bajaj", "bajajamc.com"],
+      ["parag parikh", "ppfas.com"],
+      ["ppfas", "ppfas.com"],
+      ["navi", "navi.com"],
+      ["quant", "quantmutual.com"],
+      ["mirae", "miraeassetmf.co.in"],
+      ["nippon", "nipponindiaim.com"],
+      ["motilal", "motilaloswalmf.com"],
+      ["uti", "utimf.com"],
+      ["dsp", "dspim.com"],
+      ["bandhan", "bandhanmutual.com"],
+      ["edelweiss", "edelweissmf.com"],
+      ["aditya birla", "adityabirlacapital.com"],
+      ["canara robeco", "canararobeco.com"],
+      ["franklin", "franklintempletonindia.com"],
+      ["sundaram", "sundarammutual.com"],
+      ["whiteoak", "whiteoakamc.com"],
+      ["hsbc", "hsbc.com"],
+      ["pgim", "pgim.com"],
+      ["zerodha", "zerodhafundhouse.com"],
+      ["groww", "groww.in"],
+      ["360 one", "360.one"],
+      ["helios", "heliosmf.in"],
+      ["union", "unionmf.com"],
+      ["lic mf", "licmf.com"],
+    ];
+    for (const [needle, amcDomain] of mfAmcRules) {
+      if (lowerName.includes(needle)) {
+        return amcDomain;
+      }
+    }
   }
 
   // 2. Clean legal entities, punctuation, and fund terms
@@ -116,16 +163,16 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     sbimf: "sbimf.com",
     nippon: "nipponindiaim.com",
     nipponindia: "nipponindiaim.com",
-    icicipru: "icicibank.com",
-    iciciprudential: "icicibank.com",
-    hdfcmf: "hdfcbank.com",
-    axismf: "axisbank.com",
+    icicipru: "icicipruamc.com",
+    iciciprudential: "icicipruamc.com",
+    hdfcmf: "hdfcfund.com",
+    axismf: "axismf.com",
     moswal: "motilaloswalmf.com",
     motilaloswal: "motilaloswalmf.com",
     utimf: "utimf.com",
     uti: "utimf.com",
-    tatamf: "tata.com",
-    kotakmf: "kotak.com",
+    tatamf: "tatamutualfund.com",
+    kotakmf: "kotakmf.com",
     dspmf: "dspim.com",
     dsp: "dspim.com",
     bandhan: "bandhanmutual.com",
@@ -180,7 +227,6 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
   if (domainOverrides[clean]) return domainOverrides[clean];
 
   // Match well-known Mutual Fund AMC & ETF prefixes when full scheme title includes index/plan words
-  const lowerName = trimmed.toLowerCase();
   const prefixRules: Array<[string, string]> = [
     ["parag parikh", "ppfas.com"],
     ["ppfas", "ppfas.com"],
@@ -317,9 +363,35 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
   ticker?: string;
   category?: AssetCategory;
 }) {
-  const domain = getCompanyDomain(name, ticker);
+  const domain = getCompanyDomain(name, ticker, category);
   const [imgError, setImgError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(() => (domain ? loadedLogosCache.has(domain) : false));
+
+  // Dedicated crisp HDFC Mutual Fund AMC emblem (distinct from HDFC Bank stock)
+  if (domain === "hdfcfund.com") {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          borderRadius: "inherit",
+          background: "#ED1C24",
+          display: "grid",
+          placeItems: "center",
+          overflow: "hidden",
+        }}
+      >
+        <svg viewBox="0 0 64 64" width="66%" height="66%" aria-label={name}>
+          <rect x="4" y="4" width="56" height="56" rx="3" fill="#18181B" />
+          <rect x="10" y="10" width="12" height="30" fill="#ED1C24" />
+          <rect x="26" y="10" width="28" height="12" fill="#FFFFFF" />
+          <rect x="42" y="26" width="12" height="28" fill="#FFFFFF" />
+          <rect x="10" y="44" width="28" height="10" fill="#FFFFFF" />
+          <rect x="26" y="26" width="12" height="14" fill="#18181B" />
+        </svg>
+      </div>
+    );
+  }
 
   // Special Category Badges
   if (category === "Gold & Fixed Income") {
