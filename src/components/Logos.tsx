@@ -114,8 +114,8 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     mirae: "miraeassetmf.co.in",
     miraeasset: "miraeassetmf.co.in",
     sbimf: "sbimf.com",
-    nippon: "mf.nipponindiaim.com",
-    nipponindia: "mf.nipponindiaim.com",
+    nippon: "nipponindiaim.com",
+    nipponindia: "nipponindiaim.com",
     icicipru: "icicibank.com",
     iciciprudential: "icicibank.com",
     hdfcmf: "hdfcbank.com",
@@ -188,7 +188,7 @@ export function getCompanyDomain(name: string, ticker: string = ""): string {
     ["quant ", "quantmutual.com"],
     ["mirae asset", "miraeassetmf.co.in"],
     ["sbi ", "sbimf.com"],
-    ["nippon india", "mf.nipponindiaim.com"],
+    ["nippon india", "nipponindiaim.com"],
     ["icici prudential", "icicibank.com"],
     ["hdfc ", "hdfcbank.com"],
     ["axis ", "axisbank.com"],
@@ -382,14 +382,8 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
   const googleFaviconUrl = domain
     ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
     : "";
-  const primaryLogoUrl =
-    fmpLogoUrl ||
-    (category === "Mutual Funds" ? googleFaviconUrl : companyEnrichUrl);
-  const fallbackLogoUrl = fmpLogoUrl
-    ? companyEnrichUrl
-    : category === "Mutual Funds"
-      ? companyEnrichUrl
-      : googleFaviconUrl;
+  const primaryLogoUrl = fmpLogoUrl || companyEnrichUrl;
+  const fallbackLogoUrl = fmpLogoUrl ? companyEnrichUrl : googleFaviconUrl;
   const [useFallbackLogo, setUseFallbackLogo] = useState(false);
   const logoUrl = useFallbackLogo ? fallbackLogoUrl : primaryLogoUrl;
 
@@ -470,10 +464,10 @@ export const StockLogoAvatar = React.memo(function StockLogoAvatar({
             inset: 0,
             width: "100%",
             height: "100%",
-            objectFit: "contain",
+            objectFit: logoUrl.includes("companyenrich.com") ? "cover" : "contain",
             borderRadius: "inherit",
             background: "#FFFFFF",
-            padding: "1px",
+            padding: logoUrl.includes("companyenrich.com") ? "0" : "1px",
             opacity: isLoaded ? 1 : 0,
             transition: "opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
             display: "block",
