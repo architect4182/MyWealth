@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { INDIA_STOCKS_POOL, US_STOCKS_POOL, MF_POOL } from "@/data/trendingPool";
 import { getStockTicker } from "@/utils/tickers";
+import { rankMutualFundSchemes } from "@/lib/mf-utils";
 
 export interface SearchResultItem {
   symbol: string;
