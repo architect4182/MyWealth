@@ -198,14 +198,7 @@ export async function GET(req: NextRequest) {
               schemeName: string;
             }>;
             if (Array.isArray(schemes)) {
-              // Sort to prioritize Direct Plan and Growth
-              const sorted = [...schemes].sort((a, b) => {
-                const aName = a.schemeName.toLowerCase();
-                const bName = b.schemeName.toLowerCase();
-                const aScore = (aName.includes("direct") ? 2 : 0) + (aName.includes("growth") ? 1 : 0);
-                const bScore = (bName.includes("direct") ? 2 : 0) + (bName.includes("growth") ? 1 : 0);
-                return bScore - aScore;
-              });
+              const sorted = rankMutualFundSchemes(schemes, queryLower);
 
               sorted.slice(0, 6).forEach((s) => {
                 const sym = `MF-${s.schemeCode}`;

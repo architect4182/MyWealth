@@ -568,40 +568,40 @@ export function AddAssetModal() {
 
         {/* Sub-toggle for Stocks: India vs US */}
         {assetType === "stock" && (
-            <div className="add-stock-market-segmented">
-              <div
-                className={`segmented-sliding-glider ${category === "US Stocks" ? "glider-us" : "glider-in"}`}
-                aria-hidden="true"
-              />
-              <button
-                type="button"
-                className={`add-market-segmented-btn ${category === "Indian Equities" ? "active" : ""}`}
-                onClick={() => {
-                  setCategory("Indian Equities");
-                  setCurrency("INR");
-                }}
-              >
-                <span className="market-flag">🇮🇳</span>
-                <span className="market-name">India (NSE / BSE)</span>
-                <span className="market-curr-tag">₹ INR</span>
-              </button>
-              <button
-                type="button"
-                className={`add-market-segmented-btn ${category === "US Stocks" ? "active" : ""}`}
-                onClick={() => {
-                  setCategory("US Stocks");
-                  setCurrency("USD");
-                }}
-              >
-                <span className="market-flag">🇺🇸</span>
-                <span className="market-name">US (NASDAQ / NYSE)</span>
-                <span className="market-curr-tag">$ USD</span>
-              </button>
-            </div>
+          <div className="add-stock-market-segmented">
+            <div
+              className={`segmented-sliding-glider ${category === "US Stocks" ? "glider-us" : "glider-in"}`}
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              className={`add-market-segmented-btn ${category === "Indian Equities" ? "active" : ""}`}
+              onClick={() => {
+                setCategory("Indian Equities");
+                setCurrency("INR");
+              }}
+            >
+              <span className="market-flag">🇮🇳</span>
+              <span className="market-name">India (NSE / BSE)</span>
+              <span className="market-curr-tag">₹ INR</span>
+            </button>
+            <button
+              type="button"
+              className={`add-market-segmented-btn ${category === "US Stocks" ? "active" : ""}`}
+              onClick={() => {
+                setCategory("US Stocks");
+                setCurrency("USD");
+              }}
+            >
+              <span className="market-flag">🇺🇸</span>
+              <span className="market-name">US (NASDAQ / NYSE)</span>
+              <span className="market-curr-tag">$ USD</span>
+            </button>
+          </div>
         )}
 
-            {/* 2. Asset / Fund Name with Relatable Words Search Dropdown OR Selected Asset Card */}
-            <div ref={searchContainerRef} className="asset-search-container">
+        {/* 2. Asset / Fund Name with Relatable Words Search Dropdown OR Selected Asset Card */}
+        <div ref={searchContainerRef} className="asset-search-container">
           {!isStockSelected ? (
             <div className="modal-search-field-wrap">
               <div className="modal-search-label-row">
@@ -646,556 +646,556 @@ export function AddAssetModal() {
                 )}
               </div>
             </div>
-                ) : (
-                /* Selected Asset Card */
-                <div className="selected-asset-card">
-                  <div className="selected-asset-left">
-                    <div className="selected-asset-avatar">
-                      {assetType === "mf" ? "🏦" : category === "US Stocks" ? "🇺🇸" : "🇮🇳"}
-                    </div>
-                    <div className="selected-asset-info">
-                      <div className="selected-asset-name-row">
-                        <strong className="selected-asset-name">{name}</strong>
-                        <span className="selected-asset-ticker-tag">
-                          {selectedSymbol ? selectedSymbol.toUpperCase() : category}
-                        </span>
-                      </div>
-                      <div className="selected-asset-meta">
-                        <span className="live-cmp-pill">
-                          <span className="live-pulse-dot" />
-                          Live CMP: {currency === "USD" ? "$" : "₹"}{currentPrice || buyPrice || "Updating…"}
-                        </span>
-                        <span className="meta-sep">•</span>
-                        <span className="selected-market-name">{category}</span>
-                      </div>
-                    </div>
+          ) : (
+            /* Selected Asset Card */
+            <div className="selected-asset-card">
+              <div className="selected-asset-left">
+                <div className="selected-asset-avatar">
+                  {assetType === "mf" ? "🏦" : category === "US Stocks" ? "🇺🇸" : "🇮🇳"}
+                </div>
+                <div className="selected-asset-info">
+                  <div className="selected-asset-name-row">
+                    <strong className="selected-asset-name">{name}</strong>
+                    <span className="selected-asset-ticker-tag">
+                      {selectedSymbol ? selectedSymbol.toUpperCase() : category}
+                    </span>
                   </div>
-                  <button
-                    type="button"
-                    className="change-asset-btn"
-                    onClick={() => {
-                      setIsStockSelected(false);
-                      setName("");
-                      setBuyPrice("");
-                      setCurrentPrice("");
-                      setCurrentValue("");
-                      setSelectedSymbol("");
-                    }}
-                  >
-                    Change
-                  </button>
+                  <div className="selected-asset-meta">
+                    <span className="live-cmp-pill">
+                      <span className="live-pulse-dot" />
+                      Live CMP: {currency === "USD" ? "$" : "₹"}{currentPrice || buyPrice || "Updating…"}
+                    </span>
+                    <span className="meta-sep">•</span>
+                    <span className="selected-market-name">{category}</span>
+                  </div>
+                </div>
               </div>
+              <button
+                type="button"
+                className="change-asset-btn"
+                onClick={() => {
+                  setIsStockSelected(false);
+                  setName("");
+                  setBuyPrice("");
+                  setCurrentPrice("");
+                  setCurrentValue("");
+                  setSelectedSymbol("");
+                }}
+              >
+                Change
+              </button>
+            </div>
           )}
 
-              {/* Relatable Words / Search Suggestions Dropdown */}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="asset-search-dropdown">
-                  {suggestions.map((item, idx) => (
-                    <div
-                      key={`${item.symbol}-${idx}`}
-                      className={`asset-search-item ${highlightIndex === idx ? "highlighted" : ""}`}
-                      onMouseDown={() => handleSelectSuggestion(item)}
-                    >
-                      <div className="asset-search-item-left">
-                        <span className="asset-search-item-badge">{item.ticker || item.symbol}</span>
-                        <div className="asset-search-item-info">
-                          <span className="asset-search-item-name">{item.name}</span>
-                          <span className="asset-search-item-sub">{item.subtext}</span>
-                        </div>
-                      </div>
-                      <span className="select-arrow-hint">Select ↵</span>
+          {/* Relatable Words / Search Suggestions Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="asset-search-dropdown">
+              {suggestions.map((item, idx) => (
+                <div
+                  key={`${item.symbol}-${idx}`}
+                  className={`asset-search-item ${highlightIndex === idx ? "highlighted" : ""}`}
+                  onMouseDown={() => handleSelectSuggestion(item)}
+                >
+                  <div className="asset-search-item-left">
+                    <span className="asset-search-item-badge">{item.ticker || item.symbol}</span>
+                    <div className="asset-search-item-info">
+                      <span className="asset-search-item-name">{item.name}</span>
+                      <span className="asset-search-item-sub">{item.subtext}</span>
                     </div>
-                  ))}
+                  </div>
+                  <span className="select-arrow-hint">Select ↵</span>
                 </div>
-              )}
+              ))}
             </div>
+          )}
+        </div>
 
-                  {/* Generic Category/Currency Row ONLY shown when NOT on /stocks and NOT on /mutual-funds */}
-                  {!isStocksPage && !isMfPage && (
+        {/* Generic Category/Currency Row ONLY shown when NOT on /stocks and NOT on /mutual-funds */}
+        {!isStocksPage && !isMfPage && (
           <div className="form-row">
             <label>
               <span>Category</span>
-                  <select
-                    value={category}
-                    disabled={isStockSelected}
-                    onChange={(e) => {
-                        const c = e.target.value as AssetCategory;
-                        setCategory(c);
-                        if (c === "US Stocks") setCurrency("USD");
-                        else setCurrency("INR");
-                        if (c === "Mutual Funds") {
-                          setAssetType("mf");
-                          setIsSip(true);
-                        } else {
-                          setAssetType("stock");
-                          setIsSip(false);
-                        }
-                      }
-                    }
+              <select
+                value={category}
+                disabled={isStockSelected}
+                onChange={(e) => {
+                  const c = e.target.value as AssetCategory;
+                  setCategory(c);
+                  if (c === "US Stocks") setCurrency("USD");
+                  else setCurrency("INR");
+                  if (c === "Mutual Funds") {
+                    setAssetType("mf");
+                    setIsSip(true);
+                  } else {
+                    setAssetType("stock");
+                    setIsSip(false);
+                  }
+                }
+                }
               >
-                    <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
-                    <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
-                    <option value="Mutual Funds">Mutual Funds (AMFI)</option>
-                    <option value="Gold & Fixed Income">Gold & Fixed Income</option>
-                    <option value="Crypto">Crypto</option>
-                  </select>
-                </label>
+                <option value="Indian Equities">Indian Equities (NSE/BSE)</option>
+                <option value="US Stocks">US Stocks (NASDAQ/NYSE)</option>
+                <option value="Mutual Funds">Mutual Funds (AMFI)</option>
+                <option value="Gold & Fixed Income">Gold & Fixed Income</option>
+                <option value="Crypto">Crypto</option>
+              </select>
+            </label>
 
-                <label>
-                  <span>Currency</span>
-                  <select
-                    value={currency}
-                    disabled={isStockSelected}
-                    onChange={(e) => setCurrency(e.target.value as "INR" | "USD")}
-                  >
-                    <option value="INR">INR — Indian Rupee (₹)</option>
-                    <option value="USD">USD — US Dollar ($)</option>
-                  </select>
-                </label>
-              </div>
+            <label>
+              <span>Currency</span>
+              <select
+                value={currency}
+                disabled={isStockSelected}
+                onChange={(e) => setCurrency(e.target.value as "INR" | "USD")}
+              >
+                <option value="INR">INR — Indian Rupee (₹)</option>
+                <option value="USD">USD — US Dollar ($)</option>
+              </select>
+            </label>
+          </div>
         )}
 
-            {/* Persistent Recurring SIP Toggle Strip - Always visible in both states! */}
-            <div className="modal-stock-sip-strip">
-              <button
-                type="button"
-                className={`modal-stock-sip-toggle ${isSip ? "active" : ""}`}
-                onClick={() => setIsSip(!isSip)}
-                role="switch"
-                aria-checked={isSip}
-                aria-label="Toggle Recurring SIP"
-              >
-                <div className="modal-stock-sip-left">
-                  <Repeat size={14} className="sip-repeat-icon" />
-                  <div className="modal-stock-sip-text">
-                    <span className="modal-stock-sip-label">
-                      {assetType === "mf" ? "Recurring Monthly SIP" : "Recurring Stock SIP (Monthly)"}
+        {/* Persistent Recurring SIP Toggle Strip - Always visible in both states! */}
+        <div className="modal-stock-sip-strip">
+          <button
+            type="button"
+            className={`modal-stock-sip-toggle ${isSip ? "active" : ""}`}
+            onClick={() => setIsSip(!isSip)}
+            role="switch"
+            aria-checked={isSip}
+            aria-label="Toggle Recurring SIP"
+          >
+            <div className="modal-stock-sip-left">
+              <Repeat size={14} className="sip-repeat-icon" />
+              <div className="modal-stock-sip-text">
+                <span className="modal-stock-sip-label">
+                  {assetType === "mf" ? "Recurring Monthly SIP" : "Recurring Stock SIP (Monthly)"}
+                </span>
+                <span className="modal-stock-sip-desc">
+                  {isSip
+                    ? (assetType === "mf"
+                      ? "Auto-executes monthly on chosen date • Click to switch to Lump Sum"
+                      : "Auto-accumulates shares monthly on chosen date • Click to switch to One-Time Buy")
+                    : (assetType === "mf"
+                      ? "Switch to automated recurring monthly SIP"
+                      : "Invest a fixed amount every month instead of a lump sum")}
+                </span>
+              </div>
+            </div>
+            <span className={`ios-switch-mini ${isSip ? "active" : ""}`}>
+              <span className="knob" />
+            </span>
+          </button>
+        </div>
+
+        {/* CONDITIONAL INTERFACE: SIP vs STANDARD POSITION */}
+        {isSip ? (
+          <>
+            <div className="form-row">
+              <label>
+                <span>Monthly SIP Amount ({currency === "USD" ? "$" : "₹"})</span>
+                <input
+                  required
+                  type="number"
+                  min="1"
+                  step="any"
+                  value={sipAmount}
+                  onChange={(e) => setSipAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                />
+              </label>
+
+              <label>
+                <span>SIP Start Date</span>
+                <input
+                  required
+                  type="date"
+                  value={sipStartDate}
+                  onChange={(e) => setSipStartDate(e.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="form-row">
+              <label>
+                <span>Debit Date of Month</span>
+                <select
+                  value={sipDay}
+                  onChange={(e) => setSipDay(e.target.value)}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28].map((d) => (
+                    <option key={d} value={d}>
+                      {d}{d === 1 ? "st" : d === 2 ? "nd" : d === 3 ? "rd" : "th"} of month {d === 5 ? "• Recommended" : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>
+                  {assetType === "mf"
+                    ? `Current NAV (${currency === "USD" ? "$" : "₹"})`
+                    : `Current Price CMP (${currency === "USD" ? "$" : "₹"})`}
+                </span>
+                <input
+                  type="number"
+                  min="0.0001"
+                  step="any"
+                  value={currentPrice || buyPrice}
+                  readOnly
+                  disabled
+                  placeholder={isFetchingPrice ? "Updating live price…" : (assetType === "mf" ? "e.g. 85.50" : "Live CMP")}
+                />
+              </label>
+            </div>
+
+            {/* Broker selection in SIP mode */}
+            <div>
+              <label>
+                <span>Investing via App / Broker (Optional)</span>
+                <select
+                  value={isCustomBroker ? "__custom__" : (brokerApp || "")}
+                  onChange={(e) => {
+                    if (e.target.value === "__custom__") {
+                      setIsCustomBroker(true);
+                      setBrokerApp("");
+                    } else {
+                      setIsCustomBroker(false);
+                      setBrokerApp(e.target.value);
+                    }
+                  }}
+                >
+                  <option value="">-- Select Broker (Optional) --</option>
+                  {getQuickBrokerOptions(category).map((app) => (
+                    <option key={app} value={app}>
+                      {app}
+                    </option>
+                  ))}
+                  <option value="__custom__">Other / Custom Broker…</option>
+                </select>
+              </label>
+              {isCustomBroker && (
+                <input
+                  style={{ marginTop: "8px" }}
+                  required
+                  value={brokerApp}
+                  onChange={(e) => setBrokerApp(e.target.value)}
+                  placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities"
+                  autoFocus
+                />
+              )}
+            </div>
+
+            <div className="apple-sip-schedule-card">
+              <div className="sip-schedule-header">
+                <div className="sip-schedule-icon-squircle">
+                  <CalendarClock size={18} strokeWidth={2.2} />
+                </div>
+                <div className="sip-schedule-info">
+                  <div className="sip-schedule-title-row">
+                    <span className="sip-schedule-title">Next Scheduled Installment</span>
+                    <span className="sip-schedule-date-badge">
+                      {getNextSipDate(Number(sipDay) || 5)}
                     </span>
-                    <span className="modal-stock-sip-desc">
-                      {isSip
-                        ? (assetType === "mf"
-                            ? "Auto-executes monthly on chosen date • Click to switch to Lump Sum"
-                            : "Auto-accumulates shares monthly on chosen date • Click to switch to One-Time Buy")
-                        : (assetType === "mf"
-                            ? "Switch to automated recurring monthly SIP"
-                            : "Invest a fixed amount every month instead of a lump sum")}
+                  </div>
+                  <p className="sip-schedule-desc">
+                    Auto-adds monthly installments on this date to track compound returns.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`sip-first-installment-card ${initialInstallmentDone ? "active" : ""}`}
+                onClick={() => setInitialInstallmentDone(!initialInstallmentDone)}
+                role="checkbox"
+                aria-checked={initialInstallmentDone}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === " " || e.key === "Enter") {
+                    e.preventDefault();
+                    setInitialInstallmentDone(!initialInstallmentDone);
+                  }
+                }}
+              >
+                <div className="sip-installment-left">
+                  <div className={`sip-custom-checkbox ${initialInstallmentDone ? "checked" : ""}`}>
+                    {initialInstallmentDone && <Check size={12} strokeWidth={3} />}
+                  </div>
+                  <div className="sip-installment-text">
+                    <div className="sip-installment-label-row">
+                      <span className="sip-installment-label">Log 1st installment today</span>
+                      <span className="sip-installment-amount-chip">
+                        {currency === "USD" ? "$" : "₹"}{sipAmount || "0"}
+                      </span>
+                    </div>
+                    <span className="sip-installment-hint">
+                      {initialInstallmentDone
+                        ? "Records initial investment immediately into your portfolio"
+                        : "Waits until next scheduled debit date to record 1st payment"}
                     </span>
                   </div>
                 </div>
-                <span className={`ios-switch-mini ${isSip ? "active" : ""}`}>
+                <span className={`ios-switch-mini ${initialInstallmentDone ? "active" : ""}`}>
                   <span className="knob" />
                 </span>
-              </button>
+              </div>
             </div>
-
-            {/* CONDITIONAL INTERFACE: SIP vs STANDARD POSITION */}
-            {isSip ? (
-              <>
-                <div className="form-row">
-                  <label>
-                    <span>Monthly SIP Amount ({currency === "USD" ? "$" : "₹"})</span>
+          </>
+        ) : (
+          /* STANDARD / STOCKS INTERFACE */
+          <>
+            < div className="modal-responsive-inputs-grid">
+              {/* Quantity */}
+              <div className="modal-input-group">
+                <label>
+                  <span>Quantity (Shares)</span>
+                  <div className="input-affix-wrap">
                     <input
                       required
-                      type="number"
-                      min="1"
-                      step="any"
-                      value={sipAmount}
-                      onChange={(e) => setSipAmount(e.target.value)}
-                      placeholder="e.g. 5000"
-                    />
-                  </label>
-
-                  <label>
-                    <span>SIP Start Date</span>
-                    <input
-                      required
-                      type="date"
-                      value={sipStartDate}
-                      onChange={(e) => setSipStartDate(e.target.value)}
-                    />
-                  </label>
-                </div>
-
-                <div className="form-row">
-                  <label>
-                    <span>Debit Date of Month</span>
-                    <select
-                      value={sipDay}
-                      onChange={(e) => setSipDay(e.target.value)}
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28].map((d) => (
-                        <option key={d} value={d}>
-                          {d}{d === 1 ? "st" : d === 2 ? "nd" : d === 3 ? "rd" : "th"} of month {d === 5 ? "• Recommended" : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    <span>
-                      {assetType === "mf"
-                        ? `Current NAV (${currency === "USD" ? "$" : "₹"})`
-                        : `Current Price CMP (${currency === "USD" ? "$" : "₹"})`}
-                    </span>
-                    <input
                       type="number"
                       min="0.0001"
                       step="any"
-                      value={currentPrice || buyPrice}
-                      readOnly
-                      disabled
-                      placeholder={isFetchingPrice ? "Updating live price…" : (assetType === "mf" ? "e.g. 85.50" : "Live CMP")}
-                    />
-                  </label>
-                </div>
-
-                {/* Broker selection in SIP mode */}
-                <div>
-                  <label>
-                    <span>Investing via App / Broker (Optional)</span>
-                    <select
-                      value={isCustomBroker ? "__custom__" : (brokerApp || "")}
+                      value={quantity}
                       onChange={(e) => {
-                        if (e.target.value === "__custom__") {
-                          setIsCustomBroker(true);
-                          setBrokerApp("");
-                        } else {
-                          setIsCustomBroker(false);
-                          setBrokerApp(e.target.value);
+                        const q = e.target.value;
+                        setQuantity(q);
+                        const numQ = Number(q);
+                        const priceToUse = Number(buyPrice) > 0 ? Number(buyPrice) : Number(currentPrice);
+                        if (numQ > 0) {
+                          if (priceToUse > 0) {
+                            setInvestedAmount((numQ * priceToUse).toFixed(2));
+                          }
+                          if (Number(currentPrice) > 0) {
+                            setCurrentValue((numQ * Number(currentPrice)).toFixed(2));
+                          }
+                        } else if (!q) {
+                          setInvestedAmount("");
+                          setCurrentValue("");
                         }
                       }}
-                    >
-                      <option value="">-- Select Broker (Optional) --</option>
-                      {getQuickBrokerOptions(category).map((app) => (
-                        <option key={app} value={app}>
-                          {app}
-                        </option>
-                      ))}
-                      <option value="__custom__">Other / Custom Broker…</option>
-                    </select>
-                  </label>
-                  {isCustomBroker && (
-                    <input
-                      style={{ marginTop: "8px" }}
-                      required
-                      value={brokerApp}
-                      onChange={(e) => setBrokerApp(e.target.value)}
-                      placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities"
-                      autoFocus
+                      placeholder="e.g. 10"
+                      className="input-with-suffix"
+                      style={{ paddingRight: "64px" }}
                     />
-                  )}
-                </div>
-
-                <div className="apple-sip-schedule-card">
-                  <div className="sip-schedule-header">
-                    <div className="sip-schedule-icon-squircle">
-                      <CalendarClock size={18} strokeWidth={2.2} />
-                    </div>
-                    <div className="sip-schedule-info">
-                      <div className="sip-schedule-title-row">
-                        <span className="sip-schedule-title">Next Scheduled Installment</span>
-                        <span className="sip-schedule-date-badge">
-                          {getNextSipDate(Number(sipDay) || 5)}
-                        </span>
-                      </div>
-                      <p className="sip-schedule-desc">
-                        Auto-adds monthly installments on this date to track compound returns.
-                      </p>
-                    </div>
+                    <span className="input-suffix-badge">Shares</span>
                   </div>
+                </label>
+              </div>
 
-                  <div
-                    className={`sip-first-installment-card ${initialInstallmentDone ? "active" : ""}`}
-                    onClick={() => setInitialInstallmentDone(!initialInstallmentDone)}
-                    role="checkbox"
-                    aria-checked={initialInstallmentDone}
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === " " || e.key === "Enter") {
-                        e.preventDefault();
-                        setInitialInstallmentDone(!initialInstallmentDone);
+              {/* Buy Price */}
+              <div className="modal-input-group">
+                <label>
+                  <div className="label-row-with-pill">
+                    <span>Buy Price per Share</span>
+                    {currentPrice ? (
+                      <button
+                        type="button"
+                        className="quick-cmp-chip"
+                        onClick={() => {
+                          setBuyPrice(currentPrice);
+                          buyPriceEditedRef.current = true;
+                          const numCp = Number(currentPrice);
+                          if (numCp > 0) {
+                            if (Number(investedAmount) > 0) {
+                              const rawQ = Number(investedAmount) / numCp;
+                              const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                              setQuantity(String(cleanQ));
+                              setCurrentValue((cleanQ * numCp).toFixed(2));
+                            } else if (Number(quantity) > 0) {
+                              setInvestedAmount((Number(quantity) * numCp).toFixed(2));
+                              setCurrentValue((Number(quantity) * numCp).toFixed(2));
+                            }
+                          }
+                        }}
+                        title="Click to fill with live CMP"
+                      >
+                        ⚡ CMP {currency === "USD" ? "$" : "₹"}{currentPrice}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="input-affix-wrap">
+                    <span className="input-prefix-badge">{currency === "USD" ? "$" : "₹"}</span>
+                    <input
+                      required
+                      type="number"
+                      min="0.0001"
+                      step="any"
+                      value={buyPrice}
+                      onChange={(e) => {
+                        const price = e.target.value;
+                        buyPriceEditedRef.current = price.trim().length > 0;
+                        setBuyPrice(price);
+                        const numBp = Number(price);
+                        if (numBp > 0) {
+                          if (Number(investedAmount) > 0) {
+                            const rawQ = Number(investedAmount) / numBp;
+                            const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                            setQuantity(String(cleanQ));
+                            if (Number(currentPrice) > 0) {
+                              setCurrentValue((cleanQ * Number(currentPrice)).toFixed(2));
+                            }
+                          } else if (Number(quantity) > 0) {
+                            setInvestedAmount((Number(quantity) * numBp).toFixed(2));
+                          }
+                        }
+                      }}
+                      placeholder="e.g. 1165"
+                      className="input-with-prefix"
+                      style={{ paddingLeft: "32px" }}
+                    />
+                  </div>
+                </label>
+              </div>
+
+              {/* Total Invested */}
+              <div className="modal-input-group full-width-sm">
+                <label>
+                  <span>Total Amount Invested</span>
+                  <div className="input-affix-wrap">
+                    <span className="input-prefix-badge">{currency === "USD" ? "$" : "₹"}</span>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      value={investedAmount}
+                      onChange={(e) => {
+                        const amount = e.target.value;
+                        investedEditedRef.current = amount.trim().length > 0;
+                        setInvestedAmount(amount);
+                        const numInv = Number(amount);
+                        const priceToUse = Number(buyPrice) > 0 ? Number(buyPrice) : Number(currentPrice);
+                        if (numInv > 0 && priceToUse > 0) {
+                          if (!buyPrice && Number(currentPrice) > 0) {
+                            setBuyPrice(currentPrice);
+                          }
+                          const rawQ = numInv / priceToUse;
+                          const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
+                          setQuantity(String(cleanQ));
+                          if (Number(currentPrice) > 0) {
+                            setCurrentValue((cleanQ * Number(currentPrice)).toFixed(2));
+                          }
+                        } else if (!amount) {
+                          setQuantity("");
+                          setCurrentValue("");
+                        }
+                      }}
+                      placeholder={
+                        Number(quantity) > 0 && Number(buyPrice) > 0
+                          ? (Number(quantity) * Number(buyPrice)).toFixed(2)
+                          : "0.00"
+                      }
+                      className="input-with-prefix"
+                      style={{ paddingLeft: "32px" }}
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* LIVE POSITION SUMMARY CARD (Replaces the 3 gray inputs!) */}
+            <div className="modal-live-summary-card">
+              <div className="summary-card-metric">
+                <span className="summary-metric-label">Invested Capital</span>
+                <strong className="summary-metric-val">
+                  {currency === "USD" ? "$" : "₹"}
+                  {investedAmount || (Number(quantity) * Number(buyPrice) > 0 ? (Number(quantity) * Number(buyPrice)).toFixed(2) : "0.00")}
+                </strong>
+              </div>
+              <div className="summary-card-divider" />
+              <div className="summary-card-metric">
+                <span className="summary-metric-label">
+                  Live Market Value
+                  {isFetchingPrice && <IosMiniSpinner />}
+                </span>
+                <strong className="summary-metric-val">
+                  {currency === "USD" ? "$" : "₹"}
+                  {Number(quantity) > 0 && (Number(currentPrice) || Number(buyPrice)) > 0
+                    ? (Number(quantity) * (Number(currentPrice) || Number(buyPrice))).toFixed(2)
+                    : "0.00"}
+                </strong>
+              </div>
+              <div className="summary-card-divider" />
+              <div className="summary-card-metric">
+                <span className="summary-metric-label">Est. Unrealized Return</span>
+                {(() => {
+                  const inv = Number(investedAmount) || (Number(quantity) * Number(buyPrice)) || 0;
+                  const val = Number(quantity) * (Number(currentPrice) || Number(buyPrice)) || 0;
+                  const diff = val - inv;
+                  const pct = inv > 0 ? (diff / inv) * 100 : 0;
+                  const isPos = diff >= 0;
+                  return (
+                    <strong className={`summary-metric-val ${isPos ? "positive" : "negative"}`}>
+                      {isPos ? "+" : ""}{currency === "USD" ? "$" : "₹"}{diff.toFixed(2)}
+                      <span className="summary-metric-pct"> ({isPos ? "+" : ""}{pct.toFixed(2)}%)</span>
+                    </strong>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* SECONDARY ROW: App / Broker & Trade Date */}
+            <div className="form-row modal-broker-date-row">
+              <div>
+                <label>
+                  <span>Investing via App / Broker (Optional)</span>
+                  <select
+                    value={isCustomBroker ? "__custom__" : (brokerApp || "")}
+                    onChange={(e) => {
+                      if (e.target.value === "__custom__") {
+                        setIsCustomBroker(true);
+                        setBrokerApp("");
+                      } else {
+                        setIsCustomBroker(false);
+                        setBrokerApp(e.target.value);
                       }
                     }}
                   >
-                    <div className="sip-installment-left">
-                      <div className={`sip-custom-checkbox ${initialInstallmentDone ? "checked" : ""}`}>
-                        {initialInstallmentDone && <Check size={12} strokeWidth={3} />}
-                      </div>
-                      <div className="sip-installment-text">
-                        <div className="sip-installment-label-row">
-                          <span className="sip-installment-label">Log 1st installment today</span>
-                          <span className="sip-installment-amount-chip">
-                            {currency === "USD" ? "$" : "₹"}{sipAmount || "0"}
-                          </span>
-                        </div>
-                        <span className="sip-installment-hint">
-                          {initialInstallmentDone
-                            ? "Records initial investment immediately into your portfolio"
-                            : "Waits until next scheduled debit date to record 1st payment"}
-                        </span>
-                      </div>
-                    </div>
-                    <span className={`ios-switch-mini ${initialInstallmentDone ? "active" : ""}`}>
-                      <span className="knob" />
-                    </span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              /* STANDARD / STOCKS INTERFACE */
-              <>
-            < div className="modal-responsive-inputs-grid">
-                          {/* Quantity */}
-                          <div className="modal-input-group">
-                            <label>
-                              <span>Quantity (Shares)</span>
-                              <div className="input-affix-wrap">
-                                <input
-                                  required
-                                  type="number"
-                                  min="0.0001"
-                                  step="any"
-                                  value={quantity}
-                                  onChange={(e) => {
-                                    const q = e.target.value;
-                                    setQuantity(q);
-                                    const numQ = Number(q);
-                                    const priceToUse = Number(buyPrice) > 0 ? Number(buyPrice) : Number(currentPrice);
-                                    if (numQ > 0) {
-                                      if (priceToUse > 0) {
-                                        setInvestedAmount((numQ * priceToUse).toFixed(2));
-                                      }
-                                      if (Number(currentPrice) > 0) {
-                                        setCurrentValue((numQ * Number(currentPrice)).toFixed(2));
-                                      }
-                                    } else if (!q) {
-                                      setInvestedAmount("");
-                                      setCurrentValue("");
-                                    }
-                                  }}
-                                  placeholder="e.g. 10"
-                                  className="input-with-suffix"
-                                  style={{ paddingRight: "64px" }}
-                                />
-                                <span className="input-suffix-badge">Shares</span>
-                              </div>
-                            </label>
-                          </div>
-
-                          {/* Buy Price */}
-                          <div className="modal-input-group">
-                            <label>
-                              <div className="label-row-with-pill">
-                                <span>Buy Price per Share</span>
-                                {currentPrice ? (
-                                  <button
-                                    type="button"
-                                    className="quick-cmp-chip"
-                                    onClick={() => {
-                                      setBuyPrice(currentPrice);
-                                      buyPriceEditedRef.current = true;
-                                      const numCp = Number(currentPrice);
-                                      if (numCp > 0) {
-                                        if (Number(investedAmount) > 0) {
-                                          const rawQ = Number(investedAmount) / numCp;
-                                          const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
-                                          setQuantity(String(cleanQ));
-                                          setCurrentValue((cleanQ * numCp).toFixed(2));
-                                        } else if (Number(quantity) > 0) {
-                                          setInvestedAmount((Number(quantity) * numCp).toFixed(2));
-                                          setCurrentValue((Number(quantity) * numCp).toFixed(2));
-                                        }
-                                      }
-                                    }}
-                                    title="Click to fill with live CMP"
-                                  >
-                                    ⚡ CMP {currency === "USD" ? "$" : "₹"}{currentPrice}
-                                  </button>
-                                ) : null}
-                              </div>
-                              <div className="input-affix-wrap">
-                                <span className="input-prefix-badge">{currency === "USD" ? "$" : "₹"}</span>
-                                <input
-                                  required
-                                  type="number"
-                                  min="0.0001"
-                                  step="any"
-                                  value={buyPrice}
-                                  onChange={(e) => {
-                                    const price = e.target.value;
-                                    buyPriceEditedRef.current = price.trim().length > 0;
-                                    setBuyPrice(price);
-                                    const numBp = Number(price);
-                                    if (numBp > 0) {
-                                      if (Number(investedAmount) > 0) {
-                                        const rawQ = Number(investedAmount) / numBp;
-                                        const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
-                                        setQuantity(String(cleanQ));
-                                        if (Number(currentPrice) > 0) {
-                                          setCurrentValue((cleanQ * Number(currentPrice)).toFixed(2));
-                                        }
-                                      } else if (Number(quantity) > 0) {
-                                        setInvestedAmount((Number(quantity) * numBp).toFixed(2));
-                                      }
-                                    }
-                                  }}
-                                  placeholder="e.g. 1165"
-                                  className="input-with-prefix"
-                                  style={{ paddingLeft: "32px" }}
-                                />
-                              </div>
-                            </label>
-                          </div>
-
-                          {/* Total Invested */}
-                          <div className="modal-input-group full-width-sm">
-                            <label>
-                              <span>Total Amount Invested</span>
-                              <div className="input-affix-wrap">
-                                <span className="input-prefix-badge">{currency === "USD" ? "$" : "₹"}</span>
-                                <input
-                                  type="number"
-                                  min="0.01"
-                                  step="any"
-                                  value={investedAmount}
-                                  onChange={(e) => {
-                                    const amount = e.target.value;
-                                    investedEditedRef.current = amount.trim().length > 0;
-                                    setInvestedAmount(amount);
-                                    const numInv = Number(amount);
-                                    const priceToUse = Number(buyPrice) > 0 ? Number(buyPrice) : Number(currentPrice);
-                                    if (numInv > 0 && priceToUse > 0) {
-                                      if (!buyPrice && Number(currentPrice) > 0) {
-                                        setBuyPrice(currentPrice);
-                                      }
-                                      const rawQ = numInv / priceToUse;
-                                      const cleanQ = Math.abs(rawQ - Math.round(rawQ)) < 1e-6 ? Math.round(rawQ) : parseFloat(rawQ.toFixed(6));
-                                      setQuantity(String(cleanQ));
-                                      if (Number(currentPrice) > 0) {
-                                        setCurrentValue((cleanQ * Number(currentPrice)).toFixed(2));
-                                      }
-                                    } else if (!amount) {
-                                      setQuantity("");
-                                      setCurrentValue("");
-                                    }
-                                  }}
-                                  placeholder={
-                                    Number(quantity) > 0 && Number(buyPrice) > 0
-                                      ? (Number(quantity) * Number(buyPrice)).toFixed(2)
-                                      : "0.00"
-                                  }
-                                  className="input-with-prefix"
-                                  style={{ paddingLeft: "32px" }}
-                                />
-                              </div>
-                            </label>
-                          </div>
-              </div>
-
-                        {/* LIVE POSITION SUMMARY CARD (Replaces the 3 gray inputs!) */ }
-                        <div className="modal-live-summary-card">
-                          <div className="summary-card-metric">
-                            <span className="summary-metric-label">Invested Capital</span>
-                            <strong className="summary-metric-val">
-                              {currency === "USD" ? "$" : "₹"}
-                              {investedAmount || (Number(quantity) * Number(buyPrice) > 0 ? (Number(quantity) * Number(buyPrice)).toFixed(2) : "0.00")}
-                            </strong>
-                          </div>
-                          <div className="summary-card-divider" />
-                          <div className="summary-card-metric">
-                            <span className="summary-metric-label">
-                              Live Market Value
-                              {isFetchingPrice && <IosMiniSpinner />}
-                            </span>
-                            <strong className="summary-metric-val">
-                              {currency === "USD" ? "$" : "₹"}
-                              {Number(quantity) > 0 && (Number(currentPrice) || Number(buyPrice)) > 0
-                                ? (Number(quantity) * (Number(currentPrice) || Number(buyPrice))).toFixed(2)
-                                : "0.00"}
-                            </strong>
-                          </div>
-                          <div className="summary-card-divider" />
-                          <div className="summary-card-metric">
-                            <span className="summary-metric-label">Est. Unrealized Return</span>
-                            {(() => {
-                              const inv = Number(investedAmount) || (Number(quantity) * Number(buyPrice)) || 0;
-                              const val = Number(quantity) * (Number(currentPrice) || Number(buyPrice)) || 0;
-                              const diff = val - inv;
-                              const pct = inv > 0 ? (diff / inv) * 100 : 0;
-                              const isPos = diff >= 0;
-                              return (
-                                <strong className={`summary-metric-val ${isPos ? "positive" : "negative"}`}>
-                                  {isPos ? "+" : ""}{currency === "USD" ? "$" : "₹"}{diff.toFixed(2)}
-                                  <span className="summary-metric-pct"> ({isPos ? "+" : ""}{pct.toFixed(2)}%)</span>
-                                </strong>
-                              );
-                            })()}
-                          </div>
-                        </div>
-
-                        {/* SECONDARY ROW: App / Broker & Trade Date */ }
-                        <div className="form-row modal-broker-date-row">
-                          <div>
-                            <label>
-                              <span>Investing via App / Broker (Optional)</span>
-                              <select
-                                value={isCustomBroker ? "__custom__" : (brokerApp || "")}
-                                onChange={(e) => {
-                                  if (e.target.value === "__custom__") {
-                                    setIsCustomBroker(true);
-                                    setBrokerApp("");
-                                  } else {
-                                    setIsCustomBroker(false);
-                                    setBrokerApp(e.target.value);
-                                  }
-                    }}
-                  >
-                                <option value="">-- Select Broker (Optional) --</option>
-                                {getQuickBrokerOptions(category).map((app) => (
-                                  <option key={app} value={app}>
-                                    {app}
-                                  </option>
-                                ))}
-                                <option value="__custom__">Other / Custom Broker…</option>
-                              </select>
-                            </label>
-                            {isCustomBroker && (
-                              <input
-                                style={{ marginTop: "8px" }}
-                                required
-                                value={brokerApp}
-                                onChange={(e) => setBrokerApp(e.target.value)}
-                                placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities"
-                                autoFocus
-                              />
+                    <option value="">-- Select Broker (Optional) --</option>
+                    {getQuickBrokerOptions(category).map((app) => (
+                      <option key={app} value={app}>
+                        {app}
+                      </option>
+                    ))}
+                    <option value="__custom__">Other / Custom Broker…</option>
+                  </select>
+                </label>
+                {isCustomBroker && (
+                  <input
+                    style={{ marginTop: "8px" }}
+                    required
+                    value={brokerApp}
+                    onChange={(e) => setBrokerApp(e.target.value)}
+                    placeholder="e.g. Zerodha, Groww, Upstox, SBI Securities"
+                    autoFocus
+                  />
                 )}
-            </div>
-
-                <div>
-                  <label>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span>Trade Date (Optional)</span>
-                      {tradeDate && (
-                        <button
-                          type="button"
-                          onClick={() => setTradeDate("")}
-                          className="modal-clear-date-btn"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="date"
-                      max={formatLocalDate()}
-                      value={tradeDate}
-                      onChange={(e) => setTradeDate(e.target.value)}
-                    />
-                  </label>
-                </div>
               </div>
-            </>
-          )}
+
+              <div>
+                <label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Trade Date (Optional)</span>
+                    {tradeDate && (
+                      <button
+                        type="button"
+                        onClick={() => setTradeDate("")}
+                        className="modal-clear-date-btn"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="date"
+                    max={formatLocalDate()}
+                    value={tradeDate}
+                    onChange={(e) => setTradeDate(e.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+          </>
+        )}
 
         <div className="modal-actions">
           <button

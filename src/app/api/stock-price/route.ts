@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStockTicker } from "@/utils/tickers";
 import { fetchNasdaqRealTimeQuote } from "@/lib/live-quotes";
+import { pickBestMutualFundScheme } from "@/lib/mf-utils";
 
 interface SearchQuote {
   symbol?: string;
@@ -348,27 +349,7 @@ async function getIndianMutualFundQuote(
 
     if (!schemes || schemes.length === 0) return null;
 
-    const isDirect = /direct/i.test(query);
-    const isGrowth = /growth/i.test(query);
-    const isIDCW = /idcw|dividend/i.test(query);
-
-    let best =
-      schemes.find((s) => {
-        const n = s.schemeName.toLowerCase();
-        const directMatch = isDirect ? n.includes("direct") : !n.includes("direct");
-        const growthMatch = isGrowth
-          ? n.includes("growth")
-          : isIDCW
-          ? n.includes("idcw") || n.includes("dividend")
-          : true;
-        return directMatch && growthMatch;
-      }) ||
-      schemes.find((s) => {
-        const n = s.schemeName.toLowerCase();
-        return (isDirect ? n.includes("direct") : true) && (isGrowth ? n.includes("growth") : true);
-      }) ||
-      schemes[0];
-
+    const best = pickBestMutualFundScheme(schemes, query);
     if (!best?.schemeCode) return null;
 
     const navRes = await fetch(`https://api.mfapi.in/mf/${best.schemeCode}`, { cache: "no-store" });

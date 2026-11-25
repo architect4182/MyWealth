@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStockTicker } from "@/utils/tickers";
+import { pickBestMutualFundScheme } from "@/lib/mf-utils";
 import { fetchNasdaqRealTimeQuote } from "@/lib/live-quotes";
 
 const headers = {
@@ -121,13 +122,7 @@ export async function GET(req: NextRequest) {
           });
           const schemes = (await searchRes.json().catch(() => [])) as Array<{ schemeCode: number; schemeName: string }>;
           if (schemes && schemes.length > 0) {
-            const isDirect = /direct/i.test(query);
-            const isGrowth = /growth/i.test(query);
-            const best =
-              schemes.find((s) => {
-                const n = s.schemeName.toLowerCase();
-                return (isDirect ? n.includes("direct") : true) && (isGrowth ? n.includes("growth") : true);
-              }) || schemes[0];
+            const best = pickBestMutualFundScheme(schemes, query);
             schemeCode = String(best?.schemeCode || "");
           }
         }
