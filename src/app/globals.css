@@ -11554,6 +11554,44 @@ html[data-theme="dark"] .apple-avatar-shell {
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
+/* Trending Stocks / MFs Section (Exact Classes) */
+html[data-theme="dark"] .apple-trending-title,
+html[data-theme="dark"] .apple-trending-name,
+html[data-theme="dark"] .apple-trending-price,
+html[data-theme="dark"] .apple-trending-sub-title strong {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-trending-subtitle,
+html[data-theme="dark"] .apple-trending-sub-ticker,
+html[data-theme="dark"] .apple-trending-sub-dot,
+html[data-theme="dark"] .apple-trending-exchange-tag,
+html[data-theme="dark"] .apple-trending-rank,
+html[data-theme="dark"] .apple-trending-ltp-label,
+html[data-theme="dark"] .apple-trending-chevron,
+html[data-theme="dark"] .apple-count-caption {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-trending-icon-badge,
+html[data-theme="dark"] .apple-trending-top-badge,
+html[data-theme="dark"] .apple-market-pill,
+html[data-theme="dark"] .apple-val-usd-pill,
+html[data-theme="dark"] .apple-trending-live-sync-pill {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
+}
+
+html[data-theme="dark"] .apple-trending-divider {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+html[data-theme="dark"] .apple-trending-skeleton-card {
+  background: #161F29 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
 /* 4. Dynamic Island, Speed Dial & Footer */
 html[data-theme="dark"] .apple-dynamic-island {
   background: rgba(17, 24, 32, 0.92) !important;
@@ -11567,6 +11605,18 @@ html[data-theme="dark"] .speed-dial-option {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5) !important;
 }
 
+html[data-theme="dark"] .speed-dial-option::before,
+html[data-theme="dark"] .apple-floating-add-btn.open::before {
+  display: none !important;
+}
+
+html[data-theme="dark"] .apple-floating-add-btn.open {
+  background: #1E293B !important;
+  color: #F1F5F9 !important;
+  border: 1.5px solid rgba(45, 212, 191, 0.45) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6) !important;
+}
+
 html[data-theme="dark"] .speed-dial-title {
   color: #F1F5F9 !important;
 }
@@ -11577,8 +11627,57 @@ html[data-theme="dark"] .speed-dial-sub {
 
 html[data-theme="dark"] .apple-footer {
   background: #0D1319 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
   color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-footer-col-title {
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-footer-desc,
+html[data-theme="dark"] .apple-footer-disclaimer,
+html[data-theme="dark"] .apple-footer-copy,
+html[data-theme="dark"] .apple-footer-status-item,
+html[data-theme="dark"] .apple-footer-links li a {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-footer-links li a:hover,
+html[data-theme="dark"] .apple-footer-credit b {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-footer-disclosure {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-theme="dark"] .apple-footer-shield-row,
+html[data-theme="dark"] .apple-footer-shield-icon {
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-footer-github-btn {
+  background: #161F29 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #F1F5F9 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .apple-footer-github-btn:hover {
+  background: #1E293B !important;
+  border-color: rgba(45, 212, 191, 0.4) !important;
+}
+
+html[data-theme="dark"] .apple-footer-github-tag {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-footer-divider {
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
 html[data-theme="dark"] .apple-footer-link,
@@ -11638,7 +11737,72 @@ html[data-theme="dark"] .investment-modal select option {
 
 html[data-theme="dark"] .input-prefix-badge,
 html[data-theme="dark"] .input-suffix-badge {
+  color: #CBD5E1 !important;
+}
+
+html[data-theme="dark"] .input-suffix-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .icon-button,
+html[data-theme="dark"] .modal-close-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .icon-button:hover,
+html[data-theme="dark"] .modal-close-btn:hover {
+  background: rgba(45, 212, 191, 0.18) !important;
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-market-timing-card {
+  background: #161F29 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #F1F5F9 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .apple-ios-sip-toggle-card {
+  background: #161F29 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #F1F5F9 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .apple-ios-sip-toggle-card.active {
+  background: rgba(16, 185, 129, 0.14) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html[data-theme="dark"] .apple-ios-sip-title {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-ios-sip-desc {
   color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .summary-metric-label {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .summary-metric-val:not(.positive):not(.negative) {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .summary-metric-val.positive {
+  color: #34D399 !important;
+}
+
+html[data-theme="dark"] .summary-metric-val.negative {
+  color: #F87171 !important;
+}
+
+html[data-theme="dark"] .summary-card-divider {
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
 html[data-theme="dark"] .investment-modal .modal-actions {
@@ -11646,14 +11810,18 @@ html[data-theme="dark"] .investment-modal .modal-actions {
   border-top-color: rgba(255, 255, 255, 0.08) !important;
 }
 
-html[data-theme="dark"] .secondary-button {
+html[data-theme="dark"] .secondary-button,
+html[data-theme="dark"] .ghost-button,
+html[data-theme="dark"] .modal-actions button[type="button"]:not(.primary-button) {
   background: rgba(255, 255, 255, 0.07) !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
   color: #F1F5F9 !important;
 }
 
-html[data-theme="dark"] .secondary-button:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
+html[data-theme="dark"] .secondary-button:hover,
+html[data-theme="dark"] .ghost-button:hover,
+html[data-theme="dark"] .modal-actions button[type="button"]:not(.primary-button):hover {
+  background: rgba(255, 255, 255, 0.13) !important;
 }
 
 html[data-theme="dark"] .add-type-btn,

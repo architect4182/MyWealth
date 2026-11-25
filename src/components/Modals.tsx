@@ -2157,8 +2157,8 @@ export function DbConfigModal() {
           >
             <div
               style={{
-                background: "#ECE7DB",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
+                background: "var(--glass-bg-subtle)",
+                border: "1px solid var(--border)",
                 padding: "12px 14px",
                 borderRadius: "14px",
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
@@ -2190,8 +2190,8 @@ export function DbConfigModal() {
             </div>
             <div
               style={{
-                background: "#ECE7DB",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
+                background: "var(--glass-bg-subtle)",
+                border: "1px solid var(--border)",
                 padding: "12px 14px",
                 borderRadius: "14px",
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
