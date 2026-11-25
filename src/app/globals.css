@@ -11302,7 +11302,7 @@ html[data-theme="dark"] .apple-minimal-bullet-item {
 }
 
 html[data-theme="dark"] .apple-hero-val-text,
-html[data-theme="dark"] .apple-stat-chip-val,
+html[data-theme="dark"] .apple-stat-chip-val:not([style*="color"]),
 html[data-theme="dark"] .apple-alloc-title,
 html[data-theme="dark"] .apple-alloc-name,
 html[data-theme="dark"] .apple-alloc-val,
@@ -11318,6 +11318,16 @@ html[data-theme="dark"] .empty-state strong {
   color: #F1F5F9 !important;
 }
 
+html[data-theme="dark"] .apple-stat-chip-val[style*="16a34a"],
+html[data-theme="dark"] .apple-stat-chip-val[style*="22, 163, 74"] {
+  color: #34D399 !important;
+}
+
+html[data-theme="dark"] .apple-stat-chip-val[style*="dc2626"],
+html[data-theme="dark"] .apple-stat-chip-val[style*="220, 38, 38"] {
+  color: #F87171 !important;
+}
+
 html[data-theme="dark"] .apple-stat-chip,
 html[data-theme="dark"] .apple-alloc-item,
 html[data-theme="dark"] .overview-split-display,
@@ -11325,7 +11335,13 @@ html[data-theme="dark"] .overview-note-box,
 html[data-theme="dark"] .apple-minimal-theme-chip,
 html[data-theme="dark"] .apple-minimal-stat-strip {
   background: rgba(255, 255, 255, 0.04) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.28) !important;
+}
+
+html[data-theme="dark"] .apple-stat-chip:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(45, 212, 191, 0.32) !important;
 }
 
 html[data-theme="dark"] .apple-alloc-item:hover {
@@ -11424,18 +11440,38 @@ html[data-theme="dark"] .apple-trending-card:hover {
 
 html[data-theme="dark"] .bento-card-name,
 html[data-theme="dark"] .bento-card-hero-value,
+html[data-theme="dark"] .bento-card-cmp-value,
 html[data-theme="dark"] .bento-card-cmp-val,
+html[data-theme="dark"] .bento-card-metric-val:not(.bento-return-val),
 html[data-theme="dark"] .bento-metric-val,
 html[data-theme="dark"] .trending-card-name,
 html[data-theme="dark"] .trending-card-price {
   color: #F1F5F9 !important;
 }
 
+html[data-theme="dark"] .bento-card-subtitle,
 html[data-theme="dark"] .bento-card-sub,
+html[data-theme="dark"] .bento-card-usd-sub,
 html[data-theme="dark"] .bento-card-micro-label,
+html[data-theme="dark"] .bento-card-metric-label,
 html[data-theme="dark"] .bento-metric-label,
+html[data-theme="dark"] .bento-card-broker-text,
 html[data-theme="dark"] .trending-card-ticker {
   color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .bento-card-cmp-pct.is-positive,
+html[data-theme="dark"] .bento-return-val.is-positive {
+  color: #34D399 !important;
+}
+
+html[data-theme="dark"] .bento-card-cmp-pct.is-negative,
+html[data-theme="dark"] .bento-return-val.is-negative {
+  color: #F87171 !important;
+}
+
+html[data-theme="dark"] .bento-card-divider {
+  background: rgba(255, 255, 255, 0.07) !important;
 }
 
 html[data-theme="dark"] .bento-card-metrics-panel {
@@ -11447,9 +11483,25 @@ html[data-theme="dark"] .bento-card-footer {
   border-top-color: rgba(255, 255, 255, 0.07) !important;
 }
 
+html[data-theme="dark"] .bento-card-broker-link,
+html[data-theme="dark"] .bento-card-inspect-link,
 html[data-theme="dark"] .bento-broker-link,
-html[data-theme="dark"] .bento-inspect-link {
+html[data-theme="dark"] .bento-inspect-link,
+html[data-theme="dark"] .bento-card-metric-val[style*="004643"] {
   color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-ticker-pill,
+html[data-theme="dark"] .apple-category-pill,
+html[data-theme="dark"] .apple-broker-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #CBD5E1 !important;
+}
+
+html[data-theme="dark"] .apple-broker-pill {
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
 }
 
 html[data-theme="dark"] .apple-holdings-table-wrap {
