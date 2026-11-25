@@ -466,7 +466,9 @@ function AssetDetailModalInner({
               <div className="stock-detail-pills">
                 <span className="apple-ticker-pill">{ticker}</span>
                 <span className="apple-category-pill">{viewingAsset.category}</span>
-                <MarketTimingBadge status={marketStatus} />
+                {viewingAsset.category !== "Mutual Funds" && (
+                  <MarketTimingBadge status={marketStatus} />
+                )}
               </div>
             </div>
           </div>

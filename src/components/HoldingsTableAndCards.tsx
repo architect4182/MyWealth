@@ -398,9 +398,8 @@ export function HoldingsTableAndCards({
             return (
               <div
                 key={item.id}
-                className={`apple-bento-asset-card ${isFlashed ? "flash-pulse" : ""} ${
-                  isUnsaved ? "unsaved-glow" : ""
-                }`}
+                className={`apple-bento-asset-card ${isFlashed ? "flash-pulse" : ""} ${isUnsaved ? "unsaved-glow" : ""
+                  }`}
                 onClick={() => openAssetDetail(item)}
                 role="button"
                 tabIndex={0}
@@ -449,10 +448,12 @@ export function HoldingsTableAndCards({
                       </div>
                     </div>
                   </div>
-                  <MarketTimingBadge
-                    status={item.category === "US Stocks" ? usStatus : inStatus}
-                    compact
-                  />
+                  {item.category !== "Mutual Funds" && (
+                    <MarketTimingBadge
+                      status={item.category === "US Stocks" ? usStatus : inStatus}
+                      compact
+                    />
+                  )}
                 </div>
 
                 {/* 2. Primary Valuation Split: Holding Value (Left) vs CMP / NAV (Right) */}
@@ -484,9 +485,8 @@ export function HoldingsTableAndCards({
                       <div className="bento-card-cmp-value">{cmpStr}</div>
                     )}
                     <span
-                      className={`bento-card-cmp-pct ${
-                        unitGain >= 0 ? "is-positive" : "is-negative"
-                      }`}
+                      className={`bento-card-cmp-pct ${unitGain >= 0 ? "is-positive" : "is-negative"
+                        }`}
                     >
                       {unitGainPct >= 0 ? "+" : ""}
                       {unitGainPct.toFixed(2)}% vs Avg
@@ -513,9 +513,8 @@ export function HoldingsTableAndCards({
                   <div className="bento-card-metric-row">
                     <span className="bento-card-metric-label">Total Return</span>
                     <span
-                      className={`bento-card-metric-val bento-return-val ${
-                        pnl >= 0 ? "is-positive" : "is-negative"
-                      }`}
+                      className={`bento-card-metric-val bento-return-val ${pnl >= 0 ? "is-positive" : "is-negative"
+                        }`}
                     >
                       {pnl >= 0 ? "+" : ""}
                       {money(pnl, item.currency)} ({pnlPct >= 0 ? "+" : ""}
@@ -629,8 +628,8 @@ export function HoldingsTableAndCards({
                   const isUpdatingPrice = updatingPriceAssetIds.has(item.id);
                   const isFlashed = flashAssetId === item.id;
                   const investedVal = item.investedAmount !== undefined && item.investedAmount > 0
-              ? item.investedAmount
-              : (item.quantity * item.buyPrice);
+                    ? item.investedAmount
+                    : (item.quantity * item.buyPrice);
                   const currentVal = item.quantity * item.currentPrice;
                   const pnl = currentVal - investedVal;
                   const pnlPct = investedVal > 0 ? (pnl / investedVal) * 100 : 0;
@@ -703,12 +702,14 @@ export function HoldingsTableAndCards({
                                   SIP{item.sipStatus === "paused" ? " (Paused)" : ""}
                                 </span>
                               )}
-                              <MarketTimingBadge
-                                status={
-                                  item.category === "US Stocks" ? usStatus : inStatus
-                                }
-                                compact
-                              />
+                              {item.category !== "Mutual Funds" && (
+                                <MarketTimingBadge
+                                  status={
+                                    item.category === "US Stocks" ? usStatus : inStatus
+                                  }
+                                  compact
+                                />
+                              )}
                               {item.brokerApp && (() => {
                                 const brokerUrl = getBrokerDestinationUrl(
                                   item.brokerApp,
@@ -790,9 +791,8 @@ export function HoldingsTableAndCards({
                       </td>
                       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                         <div
-                          className={`apple-return-pill ${
-                            pnl >= 0 ? "positive" : "negative"
-                          }`}
+                          className={`apple-return-pill ${pnl >= 0 ? "positive" : "negative"
+                            }`}
                           style={{ display: "inline-flex" }}
                         >
                           {pnl >= 0 ? (
