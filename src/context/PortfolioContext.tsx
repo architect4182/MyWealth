@@ -98,6 +98,8 @@ interface PortfolioContextType {
   usdInrRate: number;
   showUsdInRupees: boolean;
   toggleUsdInRupees: () => void;
+  theme: "light" | "dark";
+  toggleTheme: () => void;
   indianMarket: MarketTimingStatus;
   usMarket: MarketTimingStatus;
   currentTime: Date | null;
@@ -437,6 +439,33 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   };
+
+  // Global Theme State (Light / Dark Mode)
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mywealth_theme");
+      if (saved === "dark" || saved === "light") {
+        setTheme(saved);
+        document.documentElement.setAttribute("data-theme", saved);
+        document.documentElement.classList.toggle("dark", saved === "dark");
+      }
+    } catch {}
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("mywealth_theme", next);
+      } catch {}
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", next);
+        document.documentElement.classList.toggle("dark", next === "dark");
+      }
+      return next;
+    });
+  }, []);
 
   // Ensure clean luminous light theme (remove any residual dark mode class)
   useEffect(() => {
@@ -2108,6 +2137,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       usdInrRate,
       showUsdInRupees,
       toggleUsdInRupees,
+      theme,
+      toggleTheme,
       indianMarket,
       usMarket,
       currentTime,
@@ -2198,6 +2229,8 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       usdInrRate,
       showUsdInRupees,
       toggleUsdInRupees,
+      theme,
+      toggleTheme,
       indianMarket,
       usMarket,
       currentTime,

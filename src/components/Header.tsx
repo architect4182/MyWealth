@@ -11,6 +11,8 @@ import {
   LogOut,
   User,
   Loader2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { usePortfolio } from "@/context/PortfolioContext";
 import { MyWealthLogo } from "@/components/MyWealthLogo";
@@ -45,6 +47,40 @@ function IosCurrencyToggle({
   );
 }
 
+function IosThemeToggle({
+  isDark,
+  onToggle,
+}: {
+  isDark: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      className="ios-toggle-pill ios-theme-toggle"
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      suppressHydrationWarning
+    >
+      <span className="ios-toggle-symbol" style={{ display: "inline-flex", alignItems: "center" }}>
+        {isDark ? <Moon size={13} /> : <Sun size={13} />}
+      </span>
+      <span className="ios-toggle-label">{isDark ? "Dark" : "Light"}</span>
+      <span className={`ios-switch ${isDark ? "active" : ""}`}>
+        <span className="ios-switch-knob" />
+      </span>
+    </div>
+  );
+}
+
 export const Header = React.memo(function Header({
   showSidePanel,
   setShowSidePanel,
@@ -58,6 +94,8 @@ export const Header = React.memo(function Header({
     usMarket,
     showUsdInRupees,
     toggleUsdInRupees,
+    theme,
+    toggleTheme,
     usdInrRate,
     setDbModal,
     setMarketModal,
@@ -196,8 +234,12 @@ export const Header = React.memo(function Header({
         })}
       </nav>
 
-      {/* Right: Currency Toggle + DB Setup */}
+      {/* Right: Theme Toggle + Currency Toggle + DB Setup */}
       <div className="apple-header-right">
+        <IosThemeToggle
+          isDark={theme === "dark"}
+          onToggle={toggleTheme}
+        />
         <IosCurrencyToggle
           checked={showUsdInRupees}
           onToggle={toggleUsdInRupees}
