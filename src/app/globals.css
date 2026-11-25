@@ -11119,7 +11119,7 @@ tbody tr.flash-pulse td {
   position: relative;
   display: inline-flex;
   align-items: center;
-  width: 80px;
+  width: 88px;
   height: 28px;
   border-radius: 9999px;
   cursor: pointer;
@@ -11142,7 +11142,7 @@ tbody tr.flash-pulse td {
 }
 
 .liquid-glass-theme-toggle.is-light .liquid-glass-track-label {
-  right: 11px;
+  right: 12px;
   color: #0E2422;
 }
 
@@ -11153,27 +11153,27 @@ tbody tr.flash-pulse td {
 
 .liquid-glass-orb {
   position: absolute;
-  left: -2px;
+  left: -3px;
   top: 50%;
-  width: 38px;
-  height: 34px;
+  width: 40px;
+  height: 36px;
   border-radius: 9999px;
   display: grid;
   place-items: center;
   transform: translateY(-50%) translateX(0);
   transition: transform 0.38s cubic-bezier(0.34, 1.42, 0.64, 1), background 0.3s ease, box-shadow 0.3s ease;
-  background: radial-gradient(130% 130% at 30% 22%,
-      rgba(255, 255, 255, 0.72) 0%,
-      rgba(255, 255, 255, 0.26) 45%,
-      rgba(255, 255, 255, 0.08) 78%,
-      rgba(255, 255, 255, 0.48) 100%);
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.88);
+  background: radial-gradient(120% 120% at 30% 20%,
+      rgba(255, 255, 255, 0.62) 0%,
+      rgba(255, 255, 255, 0.16) 45%,
+      rgba(255, 255, 255, 0.04) 76%,
+      rgba(255, 255, 255, 0.36) 100%);
+  backdrop-filter: blur(6px) saturate(180%);
+  -webkit-backdrop-filter: blur(6px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.92),
-    inset 0 -2px 4px rgba(15, 23, 42, 0.12),
-    0 4px 14px rgba(15, 23, 42, 0.18);
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -1.5px 3px rgba(15, 23, 42, 0.1),
+    0 4px 12px rgba(15, 23, 42, 0.16);
   overflow: hidden;
 }
 
@@ -11182,10 +11182,10 @@ tbody tr.flash-pulse td {
   inset: 1px;
   border-radius: inherit;
   background: linear-gradient(180deg,
-      rgba(255, 255, 255, 0.55) 0%,
-      rgba(255, 255, 255, 0.05) 38%,
-      transparent 65%,
-      rgba(255, 255, 255, 0.22) 100%);
+      rgba(255, 255, 255, 0.48) 0%,
+      rgba(255, 255, 255, 0.04) 36%,
+      transparent 68%,
+      rgba(255, 255, 255, 0.18) 100%);
   pointer-events: none;
 }
 
@@ -11197,51 +11197,53 @@ tbody tr.flash-pulse td {
 }
 
 .liquid-glass-theme-toggle.is-dark .liquid-glass-orb {
-  transform: translateY(-50%) translateX(46px);
-  background: radial-gradient(130% 130% at 28% 20%,
-      rgba(255, 255, 255, 0.34) 0%,
-      rgba(255, 255, 255, 0.1) 42%,
-      rgba(15, 23, 42, 0.25) 75%,
-      rgba(255, 255, 255, 0.22) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.42);
+  transform: translateY(-50%) translateX(54px);
+  background: radial-gradient(125% 125% at 28% 18%,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.04) 42%,
+      rgba(0, 0, 0, 0.22) 74%,
+      rgba(255, 255, 255, 0.16) 100%);
+  backdrop-filter: blur(5px) saturate(160%);
+  -webkit-backdrop-filter: blur(5px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.36);
   box-shadow:
-    inset 0 1.5px 2.5px rgba(255, 255, 255, 0.62),
-    inset 0 -2px 4px rgba(255, 255, 255, 0.18),
-    0 6px 18px rgba(0, 0, 0, 0.55);
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.52),
+    inset 0 -1.5px 3px rgba(255, 255, 255, 0.14),
+    0 6px 16px rgba(0, 0, 0, 0.55);
 }
 
 .liquid-glass-theme-toggle.is-dark .liquid-glass-orb-sheen {
   background: linear-gradient(165deg,
-      rgba(255, 255, 255, 0.38) 0%,
-      rgba(255, 255, 255, 0.04) 40%,
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 255, 255, 0.02) 38%,
       transparent 70%,
-      rgba(255, 255, 255, 0.18) 100%);
+      rgba(255, 255, 255, 0.14) 100%);
 }
 
 .liquid-glass-theme-toggle.is-dark .liquid-glass-orb-icon {
   color: #FFFFFF;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.75));
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
 }
 
 html[data-theme="dark"] .liquid-glass-theme-toggle {
-  background: linear-gradient(180deg, rgba(72, 76, 84, 0.72) 0%, rgba(44, 48, 54, 0.85) 100%);
+  background: linear-gradient(180deg, rgba(64, 68, 76, 0.72) 0%, rgba(36, 40, 46, 0.88) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 1.5px 4px rgba(0, 0, 0, 0.55), 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 @media (max-width: 768px) {
   .liquid-glass-theme-toggle {
-    width: 68px;
+    width: 76px;
     height: 26px;
   }
 
   .liquid-glass-orb {
-    width: 34px;
-    height: 31px;
+    width: 36px;
+    height: 32px;
   }
 
   .liquid-glass-theme-toggle.is-dark .liquid-glass-orb {
-    transform: translateY(-50%) translateX(38px);
+    transform: translateY(-50%) translateX(46px);
   }
 
   .liquid-glass-track-label {
@@ -11249,11 +11251,11 @@ html[data-theme="dark"] .liquid-glass-theme-toggle {
   }
 
   .liquid-glass-theme-toggle.is-light .liquid-glass-track-label {
-    right: 8px;
+    right: 9px;
   }
 
   .liquid-glass-theme-toggle.is-dark .liquid-glass-track-label {
-    left: 9px;
+    left: 10px;
   }
 }
 
@@ -11646,24 +11648,68 @@ html[data-theme="dark"] .apple-broker-pill {
   border-color: rgba(45, 212, 191, 0.25) !important;
 }
 
-html[data-theme="dark"] .apple-holdings-table-wrap {
+html[data-theme="dark"] .apple-holdings-table-wrap,
+html[data-theme="dark"] .apple-table-panel {
   background: #111820 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
 }
 
-html[data-theme="dark"] .apple-holdings-table th {
+html[data-theme="dark"] .apple-table-panel::before {
+  display: none !important;
+}
+
+html[data-theme="dark"] .apple-holdings-table th,
+html[data-theme="dark"] .apple-table-panel thead,
+html[data-theme="dark"] .apple-table-panel th {
   background: #0D1319 !important;
   color: #94A3B8 !important;
-  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-html[data-theme="dark"] .apple-holdings-table td {
+html[data-theme="dark"] .apple-table-panel .sortable-th:hover {
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-holdings-table td,
+html[data-theme="dark"] .apple-table-panel td {
+  background: #111820 !important;
   color: #F1F5F9 !important;
-  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
-html[data-theme="dark"] .apple-holdings-row:hover {
+html[data-theme="dark"] .apple-holdings-row:hover,
+html[data-theme="dark"] .apple-table-panel tbody tr:hover td {
   background: rgba(255, 255, 255, 0.04) !important;
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-table-panel tbody tr.flash-pulse td {
+  background: rgba(45, 212, 191, 0.14) !important;
+}
+
+html[data-theme="dark"] .apple-table-chevron-circle {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #CBD5E1 !important;
+}
+
+html[data-theme="dark"] .apple-table-panel tbody tr:hover .apple-table-chevron-circle {
+  background: rgba(45, 212, 191, 0.16) !important;
+  border-color: rgba(45, 212, 191, 0.35) !important;
+  color: #2DD4BF !important;
+}
+
+html[data-theme="dark"] .apple-return-pill.positive {
+  background: rgba(16, 185, 129, 0.14) !important;
+  border-color: rgba(16, 185, 129, 0.28) !important;
+  color: #34D399 !important;
+}
+
+html[data-theme="dark"] .apple-return-pill.negative {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.28) !important;
+  color: #F87171 !important;
 }
 
 html[data-theme="dark"] .apple-table-footer {
@@ -11697,6 +11743,17 @@ html[data-theme="dark"] .apple-avatar-shell {
 }
 
 /* Trending Stocks / MFs Section (Exact Classes) */
+html[data-theme="dark"] .apple-trending-section {
+  background: #111820 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-trending-section::before {
+  display: none !important;
+}
+
 html[data-theme="dark"] .apple-trending-title,
 html[data-theme="dark"] .apple-trending-name,
 html[data-theme="dark"] .apple-trending-price,
@@ -11907,24 +11964,54 @@ html[data-theme="dark"] .apple-market-timing-card {
   box-shadow: none !important;
 }
 
-html[data-theme="dark"] .apple-ios-sip-toggle-card {
+html[data-theme="dark"] .apple-ios-sip-toggle-card,
+html[data-theme="dark"] .modal-stock-sip-toggle {
   background: #161F29 !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #F1F5F9 !important;
   box-shadow: none !important;
 }
 
-html[data-theme="dark"] .apple-ios-sip-toggle-card.active {
-  background: rgba(16, 185, 129, 0.14) !important;
+html[data-theme="dark"] .apple-ios-sip-toggle-card.active,
+html[data-theme="dark"] .modal-stock-sip-toggle.active {
+  background: rgba(16, 185, 129, 0.12) !important;
   border-color: rgba(16, 185, 129, 0.35) !important;
 }
 
-html[data-theme="dark"] .apple-ios-sip-title {
+html[data-theme="dark"] .apple-ios-sip-title,
+html[data-theme="dark"] .modal-stock-sip-label,
+html[data-theme="dark"] .sip-schedule-title,
+html[data-theme="dark"] .sip-installment-label {
   color: #F1F5F9 !important;
 }
 
-html[data-theme="dark"] .apple-ios-sip-desc {
+html[data-theme="dark"] .apple-ios-sip-desc,
+html[data-theme="dark"] .modal-stock-sip-desc,
+html[data-theme="dark"] .sip-schedule-desc,
+html[data-theme="dark"] .sip-installment-hint {
   color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .sip-repeat-icon,
+html[data-theme="dark"] .sip-schedule-icon-squircle {
+  color: #2DD4BF !important;
+  background: rgba(45, 212, 191, 0.14) !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
+}
+
+html[data-theme="dark"] .sip-schedule-date-badge,
+html[data-theme="dark"] .sip-installment-amount-chip {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
+}
+
+html[data-theme="dark"] .ios-switch-mini {
+  background: #334155 !important;
+}
+
+html[data-theme="dark"] .ios-switch-mini.active {
+  background: #10B981 !important;
 }
 
 html[data-theme="dark"] .summary-metric-label {
