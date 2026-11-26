@@ -243,12 +243,6 @@ export function InvestmentAnalysisSection({ assets }: InvestmentAnalysisSectionP
               {assets.length} Positions Active
             </span>
           </div>
-
-          <div className="apple-minimal-realtime-pill">
-            <span className="apple-live-radar-ping" />
-            <span className="apple-live-radar-core" />
-            <span>Live Portfolio Diagnostics</span>
-          </div>
         </div>
 
         {/* 1. Thematic Spectrum & Ticker Chips */}
