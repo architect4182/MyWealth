@@ -12164,8 +12164,19 @@ html[data-theme="dark"] .stock-net-return-banner.loss {
 }
 
 /* 6. Login / Auth Page */
-html[data-theme="dark"] .apple-auth-page {
+html[data-theme="dark"] {
+  --surface: #111820;
+  --surface-color: #161F29;
+  --foreground: #F1F5F9;
+  --foreground-muted: #94A3B8;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --apple-blue: #2DD4BF;
+}
+
+html[data-theme="dark"] .apple-auth-page,
+html[data-theme="dark"] .apple-auth-canvas {
   background: #090D10 !important;
+  background-color: #090D10 !important;
   color: #F1F5F9 !important;
 }
 
@@ -12175,16 +12186,209 @@ html[data-theme="dark"] .apple-auth-card {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65) !important;
 }
 
+html[data-theme="dark"] .apple-auth-badge {
+  background: rgba(45, 212, 191, 0.12) !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
+  color: #2DD4BF !important;
+}
+
 html[data-theme="dark"] .apple-auth-title {
   color: #F1F5F9 !important;
 }
 
-html[data-theme="dark"] .apple-auth-sub {
+html[data-theme="dark"] .apple-auth-sub,
+html[data-theme="dark"] .apple-auth-subtitle,
+html[data-theme="dark"] .apple-auth-footer,
+html[data-theme="dark"] .apple-auth-security-note {
   color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-auth-label {
+  color: #CBD5E1 !important;
 }
 
 html[data-theme="dark"] .apple-auth-input {
   background: #090D10 !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
   color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-auth-input:focus {
+  border-color: #2DD4BF !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18) !important;
+}
+
+html[data-theme="dark"] .apple-auth-toggle-pass {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-auth-toggle-pass:hover {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-auth-mode-pill {
+  background: #090D10 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-theme="dark"] .apple-auth-mode-btn {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .apple-auth-mode-btn.active {
+  background: #0F766E !important;
+  color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .apple-auth-submit-btn {
+  background: #0F766E !important;
+  color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .apple-auth-error-banner {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  color: #FCA5A5 !important;
+}
+
+html[data-theme="dark"] .apple-auth-notice-banner {
+  background: rgba(16, 185, 129, 0.14) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  color: #6EE7B7 !important;
+}
+
+/* 7. Search Dropdown, Selected Asset Card & Remaining Modal/Detail Elements */
+html[data-theme="dark"] .asset-search-dropdown {
+  background: #131B24 !important;
+  border: 1px solid rgba(45, 212, 191, 0.22) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.72) !important;
+}
+
+html[data-theme="dark"] .asset-search-item {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .asset-search-item:hover,
+html[data-theme="dark"] .asset-search-item.highlighted {
+  background: rgba(45, 212, 191, 0.14) !important;
+}
+
+html[data-theme="dark"] .asset-search-item-name {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .asset-search-item-sub,
+html[data-theme="dark"] .select-arrow-hint {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .asset-search-item-badge {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+  border: 1px solid rgba(45, 212, 191, 0.24) !important;
+}
+
+html[data-theme="dark"] .selected-asset-card {
+  background: #161F29 !important;
+  border: 1px solid rgba(45, 212, 191, 0.24) !important;
+}
+
+html[data-theme="dark"] .selected-asset-avatar {
+  background: #0F172A !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme="dark"] .selected-asset-name {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .selected-asset-ticker-tag,
+html[data-theme="dark"] .quick-cmp-chip {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.28) !important;
+}
+
+html[data-theme="dark"] .selected-asset-meta,
+html[data-theme="dark"] .selected-market-name {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .live-cmp-pill {
+  background: rgba(16, 185, 129, 0.14) !important;
+  color: #34D399 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+html[data-theme="dark"] .change-asset-btn,
+html[data-theme="dark"] .modal-clear-date-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #CBD5E1 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+html[data-theme="dark"] .change-asset-btn:hover,
+html[data-theme="dark"] .modal-clear-date-btn:hover {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .modal-btn-delete {
+  background: rgba(239, 68, 68, 0.16) !important;
+  color: #FCA5A5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+html[data-theme="dark"] .modal-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.26) !important;
+  color: #FFFFFF !important;
+}
+
+html[data-theme="dark"] .apple-sip-stat-card,
+html[data-theme="dark"] .stock-broker-nav-card,
+html[data-theme="dark"] .stock-invest-now-section,
+html[data-theme="dark"] .stock-market-stats-section {
+  background: #161F29 !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .stock-discover-title {
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .stock-discover-badge,
+html[data-theme="dark"] .stock-market-closed-notice-pill {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.28) !important;
+}
+
+html[data-theme="dark"] .stock-invest-app-arrow {
+  color: #94A3B8 !important;
+}
+
+html[data-theme="dark"] .stock-chart-error-banner {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.32) !important;
+  color: #FCA5A5 !important;
+}
+
+html[data-theme="dark"] .stock-chart-loading-overlay,
+html[data-theme="dark"] .ios-loader-hud {
+  background: rgba(9, 13, 16, 0.8) !important;
+  color: #F1F5F9 !important;
+}
+
+html[data-theme="dark"] .apple-dynamic-island.asset-save-island {
+  background: #131B24 !important;
+  border-color: rgba(45, 212, 191, 0.3) !important;
+  color: #F1F5F9 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+}
+
+html[data-theme="dark"] .modal-price-loader-badge {
+  background: rgba(45, 212, 191, 0.14) !important;
+  color: #2DD4BF !important;
+  border-color: rgba(45, 212, 191, 0.28) !important;
 }

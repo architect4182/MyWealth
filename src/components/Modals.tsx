@@ -1433,8 +1433,8 @@ function EditAssetModalInner({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "rgba(0, 0, 0, 0.025)",
-            border: "1px solid rgba(0, 0, 0, 0.07)",
+            background: "var(--glass-bg-subtle)",
+            border: "1px solid var(--border)",
             borderRadius: "14px",
             padding: "10px 14px",
             fontSize: "12px",
@@ -1460,7 +1460,8 @@ function EditAssetModalInner({
               fontWeight: 600,
               padding: "3px 8px",
               borderRadius: "6px",
-              background: "rgba(0, 0, 0, 0.05)",
+              background: "var(--glass-bg-subtle)",
+              border: "1px solid var(--border)",
               color: "var(--foreground-muted)",
               display: "flex",
               alignItems: "center",
@@ -1821,7 +1822,7 @@ function EditAssetModalInner({
                       style={{
                         border: "none",
                         background: "none",
-                        color: "#004643",
+                        color: "var(--apple-blue)",
                         fontSize: "10.5px",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -2565,8 +2566,8 @@ export function OperationResultModal() {
           <div
             style={{
               width: "100%",
-              background: "#ECE7DB",
-              border: "1px solid rgba(0, 0, 0, 0.08)",
+              background: "var(--glass-bg-subtle)",
+              border: "1px solid var(--border)",
               borderRadius: "14px",
               padding: "12px 14px",
               textAlign: "left",
@@ -2586,8 +2587,8 @@ export function OperationResultModal() {
                     fontWeight: 600,
                     padding: "2px 8px",
                     borderRadius: "6px",
-                    background: "rgba(0, 70, 67, 0.12)",
-                    color: "#004643",
+                    background: "rgba(16, 185, 129, 0.14)",
+                    color: "var(--apple-blue)",
                   }}
                 >
                   {operationResult.details.category}
@@ -2600,7 +2601,7 @@ export function OperationResultModal() {
               style={{
                 gap: "8px",
                 fontSize: "12px",
-                borderTop: "1px solid rgba(0, 0, 0, 0.06)",
+                borderTop: "1px solid var(--border)",
                 paddingTop: "8px",
               }}
             >
